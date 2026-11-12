@@ -1,20 +1,19 @@
-# Replace the role placeholders with GitHub usernames.
 /.kiro/steering/           @fadilaisy
 /.kiro/hooks/              @fadilaisy
 /.kiro/agents/             @fadilaisy
 /.kiro/specs/web-ui/       @fadilaisy
-/.kiro/specs/ingest/       @ROLE2
-/.kiro/specs/compression/  @ROLE2
-/.kiro/specs/detectors/    @ROLE2
-/.kiro/specs/storage/      @ROLE2
-/.kiro/specs/embeddings/   @ROLE3
-/.kiro/specs/agent-mcp/    @ROLE3
-/.kiro/specs/api-deploy/   @ROLE3
-/contracts/                @fadilaisy @ROLE2 @ROLE3
-/services/pipeline/        @ROLE2
-/fixtures/                 @ROLE2
-/services/intel/           @ROLE3
-/infra/                    @ROLE3
+/.kiro/specs/ingest/       @<role2-github-username>
+/.kiro/specs/compression/  @<role2-github-username>
+/.kiro/specs/detectors/    @<role2-github-username>
+/.kiro/specs/storage/      @<role2-github-username>
+/.kiro/specs/embeddings/   @<role3-github-username>
+/.kiro/specs/agent-mcp/    @<role3-github-username>
+/.kiro/specs/api-deploy/   @<role3-github-username>
+/contracts/                @fadilaisy @<role2-github-username> @<role3-github-username>
+/services/pipeline/        @<role2-github-username>
+/fixtures/                 @<role2-github-username>
+/services/intel/           @<role3-github-username>
+/infra/                    @<role3-github-username>
 /web/                      @fadilaisy
 /docs/                     @fadilaisy
 /README.md                 @fadilaisy

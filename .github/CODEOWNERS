@@ -1,0 +1,21 @@
+# Replace the role placeholders with GitHub usernames.
+/.kiro/steering/           @fadilaisy
+/.kiro/hooks/              @fadilaisy
+/.kiro/agents/             @fadilaisy
+/.kiro/specs/web-ui/       @fadilaisy
+/.kiro/specs/ingest/       @ROLE2
+/.kiro/specs/compression/  @ROLE2
+/.kiro/specs/detectors/    @ROLE2
+/.kiro/specs/storage/      @ROLE2
+/.kiro/specs/embeddings/   @ROLE3
+/.kiro/specs/agent-mcp/    @ROLE3
+/.kiro/specs/api-deploy/   @ROLE3
+/contracts/                @fadilaisy @ROLE2 @ROLE3
+/services/pipeline/        @ROLE2
+/fixtures/                 @ROLE2
+/services/intel/           @ROLE3
+/infra/                    @ROLE3
+/web/                      @fadilaisy
+/docs/                     @fadilaisy
+/README.md                 @fadilaisy
+/KIRO.md                   @fadilaisy

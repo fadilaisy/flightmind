@@ -1,0 +1,168 @@
+openapi: 3.0.3
+info:
+  title: FlightMind API (contract C5)
+  version: 1.1.0
+  description: Changed 2026-11-12 for the recorded CAT021 pivot.
+paths:
+  /api/meta:
+    get:
+      summary: Mode, simulated time and dataset info
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Meta' }
+  /api/stream:
+    get:
+      summary: Server-sent events with positions and new events on the replay clock
+      responses:
+        '200':
+          description: text/event-stream
+          content:
+            text/event-stream:
+              schema: { type: string }
+  /api/events:
+    get:
+      summary: Event list for the feed
+      parameters:
+        - { in: query, name: since, schema: { type: string, format: date-time } }
+        - { in: query, name: type, schema: { type: string } }
+        - { in: query, name: airport, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Event' }
+  /api/events/{id}:
+    get:
+      summary: One event with its track and similar past events
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetail' }
+  /api/tracks/{icao24}:
+    get:
+      summary: 4D track points, each with its raw_ref
+      parameters:
+        - { in: path, name: icao24, required: true, schema: { type: string } }
+        - { in: query, name: from, schema: { type: string, format: date-time } }
+        - { in: query, name: to, schema: { type: string, format: date-time } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Track' }
+  /api/raw/{raw_ref}:
+    get:
+      summary: One CAT021 record, decoded, with its original bytes as hex
+      parameters:
+        - { in: path, name: raw_ref, required: true, schema: { type: string }, description: '<recording_file_id>:<record_index>' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RawRecord' }
+        '404':
+          description: Unknown raw_ref
+  /api/ask:
+    post:
+      summary: Ask the analyst agent; every claim is cited
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AskRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AskResponse' }
+components:
+  schemas:
+    Meta:
+      type: object
+      required: [mode, sim_time]
+      properties:
+        mode: { type: string, enum: [replay, live] }
+        sim_time: { type: string, format: date-time }
+        recordings: { type: array, items: { type: string } }
+        airports: { type: array, items: { type: string } }
+    TrackPoint:
+      type: object
+      required: [ts, lat, lon, raw_ref]
+      properties:
+        ts: { type: string, format: date-time }
+        lat: { type: number }
+        lon: { type: number }
+        alt_ft: { type: integer, nullable: true }
+        raw_ref: { type: string }
+        kept_for_event: { type: boolean }
+    Track:
+      type: object
+      required: [icao24, points]
+      properties:
+        icao24: { type: string }
+        callsign: { type: string, nullable: true }
+        points: { type: array, items: { $ref: '#/components/schemas/TrackPoint' } }
+    Event:
+      type: object
+      required: [id, type, icao24, start_ts, end_ts, raw_refs]
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, enum: [go_around, holding, squawk_7500, squawk_7600, squawk_7700] }
+        icao24: { type: string }
+        callsign: { type: string, nullable: true }
+        start_ts: { type: string, format: date-time }
+        end_ts: { type: string, format: date-time }
+        airport: { type: string, nullable: true }
+        severity: { type: integer }
+        raw_refs: { type: array, items: { type: string } }
+    EventDetail:
+      allOf:
+        - $ref: '#/components/schemas/Event'
+        - type: object
+          properties:
+            track: { $ref: '#/components/schemas/Track' }
+            similar: { type: array, items: { $ref: '#/components/schemas/Event' } }
+    RawRecord:
+      type: object
+      required: [raw_ref, recording_file_id, record_index, decoded, hex]
+      properties:
+        raw_ref: { type: string }
+        recording_file_id: { type: string }
+        record_index: { type: integer }
+        sac: { type: integer }
+        sic: { type: integer }
+        decoded: { type: object, additionalProperties: true }
+        hex: { type: string }
+    AskRequest:
+      type: object
+      required: [question]
+      properties:
+        question: { type: string }
+    Citation:
+      type: object
+      required: [kind, id, label]
+      properties:
+        kind: { type: string, enum: [cat021_record, event] }
+        id: { type: string, description: 'raw_ref for cat021_record, uuid for event' }
+        label: { type: string }
+    AskResponse:
+      type: object
+      required: [answer_md, citations, status]
+      properties:
+        answer_md: { type: string }
+        citations: { type: array, items: { $ref: '#/components/schemas/Citation' } }
+        tool_calls: { type: array, items: { type: object, additionalProperties: true } }
+        status: { type: string, enum: [ok, not_enough_evidence] }

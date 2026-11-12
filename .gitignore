@@ -1,0 +1,10 @@
+# Never add .kiro/ here: hiding it can disqualify the entry.
+data/
+*.ast
+*.pcap
+!fixtures/**
+.env
+node_modules/
+__pycache__/
+.venv/
+dist/

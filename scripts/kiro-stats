@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Counts Kiro artifacts and commit trailers for KIRO.md and the write-up.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+K="$ROOT/.kiro"
+
+# Missing folders or no matches count as 0 instead of stopping the script.
+count() { { "$@" 2>/dev/null || true; } | wc -l | tr -d ' '; }
+
+specs=$(count find "$K/specs" -mindepth 1 -maxdepth 1 -type d)
+tasks_done=$(count grep -rhE '^\s*- \[x\]' "$K/specs" --include=tasks.md)
+tasks_open=$(count grep -rhE '^\s*- \[ \]' "$K/specs" --include=tasks.md)
+hooks=$(count find "$K/hooks" -type f -name '*.kiro.hook')
+steering=$(count find "$K/steering" -type f -name '*.md')
+agents=$(count find "$K/agents" -type f)
+kiro_md_lines=$(count grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2} \|' "$ROOT/KIRO.md")
+
+echo "specs=$specs"
+echo "tasks_done=$tasks_done"
+echo "tasks_open=$tasks_open"
+echo "hooks=$hooks"
+echo "steering_files=$steering"
+echo "custom_agents=$agents"
+echo "kiro_md_entries=$kiro_md_lines"
+echo "commits_total=$(count git -C "$ROOT" rev-list HEAD)"
+for t in spec vibe hook none; do
+  echo "commits_kiro_$t=$(count git -C "$ROOT" log --format=%H --grep="^Kiro: $t")"
+done

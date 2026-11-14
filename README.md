@@ -25,6 +25,73 @@ See [KIRO.md](KIRO.md) for how we used it.
 | `scripts/` | Role 1 | `kiro-stats` and other tooling |
 | `docs/kiro/` | Role 1 | Session notes and clip log for the Kiro write-up |
 
+## roles
+FlightMind is split by where the data is. Role 2 owns everything up to a clean row in Postgres. Role 3 owns everything that turns rows into answers. Role 1 owns what the judges see. Each person only asks Kiro to write code in their own folders and specs, so nobody pays credits for the same code twice.
+
+Role 1: PM and lead (Fadil)
+
+Mission: the product, the design, the shared Kiro setup, and every submission deliverable.
+
+Owns: scope decisions and the cut list, the web UI (4D trajectory view, event feed, investigation panel, compression view), design quality (our weakest score), contract approval.
+
+Kiro: writes the steering files, creates the hooks and the data-quality-reviewer agent, owns KIRO.md and the weekly recording review.
+
+Specs: web-ui.
+
+Delivers: demo video, README, Kiro write-up, Devpost submission, advisor quote.
+
+Folders: .kiro/steering, .kiro/hooks, .kiro/agents, web/, docs/.
+
+Does not touch: services/pipeline/ or services/intel/. Requests go to the owner as a Jira issue.
+
+Epics: SCRUM-7, SCRUM-13, SCRUM-14.
+
+Role 2: Data pipeline (Koolkar)
+
+Mission: get recorded CAT021 data in, decode it, shrink it without losing events, detect events, and store it.
+
+Owns: the CAT021 recording and fixtures, the decoder, replay and the shared clock, compression, the detectors (squawk, go-around, holding), the Postgres schema and migrations.
+
+Specs: ingest, compression, detectors, storage.
+
+Proves it with: Hypothesis property tests (decode/encode round-trips, compression never drops an event point) and the raw vs stored size number for the README.
+
+Works with: the advisor on detector thresholds.
+
+Folders: services/pipeline/, fixtures/.
+
+Does not touch: embeddings, the agent, the API or the UI.
+
+Epics: SCRUM-8, SCRUM-9, SCRUM-10.
+
+Role 3: Intelligence and API (Zahran)
+
+Mission: turn stored events into cited answers, serve them through an API and an MCP server, and keep the live URL up.
+
+Owns: the local Docker stack, the mock API (unblocks Fadil's UI), the real API including /api/raw/{raw_ref}, event stories and embeddings, vector search, the agent with citations and the "not enough evidence" rule, the FrankenDB MCP server, deployment.
+
+Specs: embeddings, agent-mcp, api-deploy.
+
+Proves it with: three demo questions answered with citations in under 30 seconds each.
+
+Folders: services/intel/, infra/.
+
+Does not touch: ingest, compression, detectors or UI code.
+
+Epics: SCRUM-11, SCRUM-12.
+
+Shared rules
+
+The roles meet only at the contracts in contracts/. Changing one needs a PR reviewed by the producer and consumer and approved by Fadil.
+
+Definition of done: the spec task is ticked in tasks.md, the tests pass, and there is a KIRO.md line saying what Kiro did and what was fixed by hand.
+
+Every commit ends with a Kiro: trailer (spec, vibe, hook or none).
+
+Sync for 15 minutes every Monday and Thursday: what shipped, what is blocked, credits left.
+
+
+
 ## Contracts (v1, changed 2026-11-12 for the recorded-data pivot)
 
 - **C1 `telemetry`:** adds `sac`, `sic`, `track_number`, `raw_ref`.

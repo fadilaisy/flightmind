@@ -80,10 +80,11 @@ END $$ LANGUAGE plpgsql;
 CREATE TRIGGER events_new_trg AFTER INSERT ON events
   FOR EACH ROW EXECUTE FUNCTION notify_events_new();
 
--- C4: one embedding per event story. Dimension set when Role 3 picks the model.
+-- C4: one embedding per event story.
+-- Model chosen by Role 3 (SCRUM-32): Google text-embedding-004 -> 768 dims.
 CREATE TABLE event_embeddings (
   event_id    uuid PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
   story       text NOT NULL,
   model       text NOT NULL,
-  embedding   vector(1024) NOT NULL        -- TODO(Role 3): match the chosen model
+  embedding   vector(768) NOT NULL         -- Google text-embedding-004 (SCRUM-32)
 );

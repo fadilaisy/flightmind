@@ -12,7 +12,9 @@ the same pull request.
 - **C2 `weather_reports`:** optional, cut list. Do not build features that need it.
 - **C3 `events`:** one row per detected event, with `raw_refs` for every record used.
   Insert triggers `NOTIFY events_new`.
-- **C4 `event_embeddings`:** one vector per event story.
+- **C4 `event_embeddings`:** one vector per event story. Embedding model is Google
+  `text-embedding-004` (768 dims), so `embedding` is `vector(768)`. Changing the model
+  means changing this dimension in the same PR.
 - **C5 HTTP API:** as in `openapi.yaml`. Citations are `{kind, id, label}`; kind is
   `cat021_record` (id = raw_ref) or `event` (id = event uuid).
 - **C6 clock:** `clock.now()` everywhere; replay is the only required mode.

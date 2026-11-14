@@ -1,0 +1,9 @@
+-- FlightMind fixture seed (placeholder).
+-- Owner: Role 2 (Koolkar), SCRUM-22 "Ship fixtures: one short CAT021 recording
+-- plus seed SQL". The local stack (SCRUM-31) loads this file automatically as
+-- the last init step, so the stack runs today with an empty seed and starts
+-- loading real fixture rows the moment this file is filled in.
+--
+-- Expected: INSERTs into recording_files, telemetry, events (and later
+-- event_embeddings) that match contracts/schema.sql. Keep every telemetry row
+-- that an event's raw_refs points at.

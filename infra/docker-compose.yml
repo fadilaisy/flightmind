@@ -1,0 +1,41 @@
+# FlightMind local stack (SCRUM-31)
+# One command for every laptop: `docker compose up` brings up a Postgres that
+# already has TimescaleDB + pgvector, loads contracts/schema.sql, then the
+# fixture seed SQL. Role 3 (Zahran) owns infra/.
+#
+# Usage (from repo root):
+#   docker compose -f infra/docker-compose.yml up -d
+#   docker compose -f infra/docker-compose.yml down        # keep data
+#   docker compose -f infra/docker-compose.yml down -v     # wipe data + re-init
+#
+# Re-init note: the scripts in /docker-entrypoint-initdb.d run ONLY the first
+# time the data volume is empty. After changing schema/seed, re-run with -v.
+# Postgres runs the files in that directory in FILENAME ORDER, so the number
+# prefixes (00_, 01_, 02_) fix the order: extensions, then schema, then seed.
+
+services:
+  db:
+    # timescaledb-ha bundles TimescaleDB AND pgvector in one image, so the
+    # single Postgres can satisfy both `CREATE EXTENSION timescaledb` and
+    # `CREATE EXTENSION vector` from contracts/schema.sql.
+    image: timescale/timescaledb-ha:pg16
+    container_name: flightmind-db
+    environment:
+      POSTGRES_USER: flightmind
+      POSTGRES_PASSWORD: flightmind
+      POSTGRES_DB: flightmind
+    ports:
+      - "5432:5432"
+    volumes:
+      - flightmind_pgdata:/var/lib/postgresql/data
+      - ./db/init/00_extensions.sql:/docker-entrypoint-initdb.d/00_extensions.sql:ro
+      - ../contracts/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ../fixtures/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flightmind -d flightmind"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  flightmind_pgdata:

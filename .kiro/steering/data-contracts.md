@@ -13,8 +13,10 @@ the same pull request.
 - **C3 `events`:** one row per detected event, with `raw_refs` for every record used.
   Insert triggers `NOTIFY events_new`.
 - **C4 `event_embeddings`:** one vector per event story. Embedding model is Google
-  `text-embedding-004` (768 dims), so `embedding` is `vector(768)`. Changing the model
-  means changing this dimension in the same PR.
+  `gemini-embedding-001`, requested at `output_dimensionality=768`, so `embedding` is
+  `vector(768)`. The model natively returns 3072 dims; the service MUST pass
+  `output_dimensionality=768` on every embed call so stored and query vectors match.
+  Changing the model or dimension means changing this dimension in the same PR.
 - **C5 HTTP API:** as in `openapi.yaml`. Citations are `{kind, id, label}`; kind is
   `cat021_record` (id = raw_ref) or `event` (id = event uuid).
 - **C6 clock:** `clock.now()` everywhere; replay is the only required mode.

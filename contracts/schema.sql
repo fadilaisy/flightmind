@@ -81,10 +81,11 @@ CREATE TRIGGER events_new_trg AFTER INSERT ON events
   FOR EACH ROW EXECUTE FUNCTION notify_events_new();
 
 -- C4: one embedding per event story.
--- Model chosen by Role 3 (SCRUM-32): Google text-embedding-004 -> 768 dims.
+-- Model chosen by Role 3 (SCRUM-32): Google gemini-embedding-001, requested at
+-- output_dimensionality=768 (text-embedding-004 was retired on the Gemini API).
 CREATE TABLE event_embeddings (
   event_id    uuid PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
   story       text NOT NULL,
   model       text NOT NULL,
-  embedding   vector(768) NOT NULL         -- Google text-embedding-004 (SCRUM-32)
+  embedding   vector(768) NOT NULL         -- gemini-embedding-001 @ output_dimensionality=768 (SCRUM-32)
 );

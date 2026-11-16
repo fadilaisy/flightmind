@@ -21,7 +21,8 @@ inclusion: always
 - **LLM:** `gemini-3-8-flash` (Google Gemini 3.8 Flash) reached through **Coarena**, a
   gateway/proxy that exposes an OpenAI-compatible endpoint at `https://coarena.ai/api/v1`.
   Key is supplied via the `COARENA_API_KEY` env var (never committed).
-- **Embeddings:** Google `gemini-embedding-001`, called with `output_dimensionality=768`
-  so vectors fit `event_embeddings.embedding = vector(768)`. Key via `GEMINI_API_KEY`.
+- **Embeddings:** Google `gemini-embedding-001`, called with `output_dimensionality=1024`
+  so vectors fit the existing `event_embeddings.embedding = vector(1024)` without changing
+  the contract. Key via `GEMINI_API_KEY`.
 - Both must appear in the README third-party disclosure list, noting that
-  `output_dimensionality=768` applies to the embedding model.
+  `output_dimensionality=1024` applies to the embedding model.

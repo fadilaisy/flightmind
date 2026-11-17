@@ -23,6 +23,27 @@ echo "steering_files=$steering"
 echo "custom_agents=$agents"
 echo "kiro_md_entries=$kiro_md_lines"
 echo "commits_total=$(count git -C "$ROOT" rev-list HEAD)"
-for t in spec vibe hook none; do
-  echo "commits_kiro_$t=$(count git -C "$ROOT" log --format=%H --grep="^Kiro: $t")"
+TYPES="spec vibe hook none"
+for t in $TYPES; do
+  eval "n_$t=$(count git -C "$ROOT" log --format=%H --grep="^Kiro: $t")"
 done
+
+# Apply the "## Trailer corrections" section of KIRO.md. Each line is
+# "sha | was | now | reason". A correction moves one commit from "was" to "now",
+# only when the commit's real trailer still says "was", so a later fix does not count twice.
+corrections=0
+while IFS='|' read -r sha was now _; do
+  sha=$(echo "$sha" | tr -d ' '); was=$(echo "$was" | tr -d ' '); now=$(echo "$now" | tr -d ' ')
+  [ -n "$sha" ] && [ -n "$was" ] && [ -n "$now" ] || continue
+  git -C "$ROOT" cat-file -e "$sha^{commit}" 2>/dev/null || continue
+  actual=$(git -C "$ROOT" log -1 --format='%(trailers:key=Kiro,valueonly)' "$sha" | sed -E 's/^ *([a-z]+).*/\1/' | head -n1)
+  [ "$actual" = "$was" ] || continue
+  eval "n_$was=\$((n_$was - 1))"
+  eval "n_$now=\$((n_$now + 1))"
+  corrections=$((corrections + 1))
+done < <(sed -n '/^## Trailer corrections/,/^## /p' "$ROOT/KIRO.md" | grep -E '^[0-9a-f]{7,40} \|' || true)
+
+for t in $TYPES; do
+  eval "echo commits_kiro_$t=\$n_$t"
+done
+echo "trailer_corrections_applied=$corrections"

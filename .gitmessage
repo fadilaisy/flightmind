@@ -1,8 +1,9 @@
 type(scope): short summary
 
 # Last line must say where the change came from, one of:
-# Kiro: spec <spec>/<task>   e.g. Kiro: spec ingest/2.3
-# Kiro: vibe
-# Kiro: hook
-# Kiro: none
+# Kiro: spec <spec>/<task>   Kiro implemented a spec task, e.g. Kiro: spec ingest/2.3
+# Kiro: vibe                 Kiro wrote or edited the change in a chat session
+# Kiro: hook                 a hook in .kiro/hooks produced the change
+# Kiro: none                 a person typed it without Kiro
+# Rule: whoever typed the diff decides the trailer.
 Kiro: 

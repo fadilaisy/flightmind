@@ -19,3 +19,4 @@ Line format:
 - What Kiro got wrong:
 - What we changed in steering or hooks because of it:
 - Credits used / left (per person):
+2026-11-17 | Role 1 | web-ui/1-2 scaffold and typed mock API client (spec) | Built Vite+React app, API client typed from contracts, mock client, sample fixture, 2 passing tests | nothing

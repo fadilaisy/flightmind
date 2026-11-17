@@ -83,9 +83,10 @@ Design source: Figma "Prototype v2 · light"
 
 Frames 1 to 4 and 8 (load, preview, clean, events review, export) are out of scope for SCRUM-39.
 The overview shows an event list on the left, the map in the middle, a panel on the right, and the charts with the scrubber at the bottom. The 3D view is a toggle inside the Trajectory screen. The Records tab is its own screen, and the record viewer also opens as a dialog.
-2. `fixtures/` is empty. Role 2 or Role 3 must supply the mock data (issue needed).
+2. Zahran's mock API (SCRUM-33, `services/intel/mock_api`) is on main and serves `contracts/openapi.yaml` with CORS on. Local dev: run it with uvicorn on port 8000 and set `VITE_API_BASE=http://localhost:8000`. `web/tests/fixtures/mini.json` stays for unit tests only.
 3. The contract has no block or frame data. R6 shows one block with one record until the contract has more. `raw_ref` has no item offsets, so item offsets come from the decoded record.
 4. The contract has no speed or vertical rate. R4.2 computes them. This is a guess to confirm.
 5. The contract has no flag for "event window" per point. Only `kept_for_event` exists. The window is computed from the event `start_ts` and `end_ts`.
 6. `/api/stream` is not used. Replay is the scrubber.
 7. The WIII runway geometry is not in the contract. It is a static file in `web/`.
+8. Compression size display waits for GET /api/compression/{recording_id} (SCRUM-60).

@@ -117,6 +117,6 @@ All user text lives in `src/strings.ts` so the wording rules can be checked in o
 ## Risks
 | Risk | Plan |
 | --- | --- |
-| Fixtures not ready | Task 2 ships a small fixture inside `web/tests/` for local work |
+| Fixtures not ready | Use the SCRUM-33 mock API; mini.json covers unit tests. |
 | Contract lacks block and offsets | Show what exists; open an issue for Role 1 contract change |
 | 5,000 points slow in 3D | Use one buffer geometry, not one mesh per point |

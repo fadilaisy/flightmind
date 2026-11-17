@@ -13,6 +13,8 @@ Every commit ends with one `Kiro:` trailer.
 
 Rule: who typed the diff decides the trailer.
 
+When Kiro implements a task from a spec's tasks.md, use spec <spec>/<task>, even if you ran it from a chat session. Use vibe for chat work that isn't a spec task.
+
 If a trailer is wrong, do not rewrite the commit. Add a line to the "Trailer corrections"
 section of `KIRO.md`; `scripts/kiro-stats` applies it when it counts.
 

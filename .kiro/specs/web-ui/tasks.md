@@ -3,12 +3,12 @@
 Do not implement until the spec is approved. Tick a box only when the check passes. After each ticked task, add a line to `KIRO.md`.
 Paths are under `web/` unless noted.
 
-- [ ] 1. Scaffold the app
+- [x] 1. Scaffold the app
   - Files: `package.json`, `vite.config.ts`, `tsconfig.json`, `index.html`, `src/main.tsx`
   - Check: `npm run dev` opens a blank page; `npm run build` passes.
   - Reqs: R1
 
-- [ ] 2. API client, types and mock
+- [x] 2. API client, types and mock
   - Files: `src/api/types.ts`, `src/api/client.ts`, `src/api/mockClient.ts`, `tests/fixtures/mini.json`
   - Check: a test loads `/api/meta`, `/api/events`, one track and one raw record, typed with `contracts/types.ts`. A 404 gives "Record not found: <raw_ref>". Base URL switches by env var.
   - Reqs: R2

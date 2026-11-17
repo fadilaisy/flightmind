@@ -23,6 +23,7 @@ inclusion: always
   Key is supplied via the `COARENA_API_KEY` env var (never committed).
 - **Embeddings:** Google `gemini-embedding-001`, called with `output_dimensionality=1024`
   so vectors fit the existing `event_embeddings.embedding = vector(1024)` without changing
-  the contract. Key via `GEMINI_API_KEY`.
+  the contract. Key via `GEMINI_API_KEY`. Embeddings are L2-normalized before storage,
+  because Gemini only returns unit-length vectors at the native 3072 dims.
 - Both must appear in the README third-party disclosure list, noting that
   `output_dimensionality=1024` applies to the embedding model.

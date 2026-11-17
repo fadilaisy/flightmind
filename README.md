@@ -104,6 +104,19 @@ Sync for 15 minutes every Monday and Thursday: what shipped, what is blocked, cr
 Change a contract only by a pull request that edits `contracts/` and
 `.kiro/steering/data-contracts.md` together, reviewed by producer and consumer.
 
+## Third-party services
+
+AI APIs that do real work in FlightMind. Keys come from environment variables and are
+never committed.
+
+| Purpose | Model | Provider | Key (env var) |
+|---------|-------|----------|---------------|
+| LLM (event stories, cited agent answers) | `gemini-3-8-flash` | Coarena, an OpenAI-compatible gateway in front of Google Gemini 3.8 Flash ([model list](https://coarena.ai/api/v1/models)) | `COARENA_API_KEY` |
+| Embeddings (similar-event search) | `gemini-embedding-001`, requested at `output_dimensionality=1024` | Google Gemini API ([docs](https://ai.google.dev/gemini-api/docs/embeddings)) | `GEMINI_API_KEY` |
+
+The 1024 setting applies to the embedding model and matches `event_embeddings.embedding`
+(`vector(1024)`). Embeddings are L2-normalized before storage.
+
 ## Setup
 
 _To be written once `infra/` exists._

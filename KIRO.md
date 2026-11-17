@@ -10,6 +10,8 @@ Line format:
 ## Week of 2026-11-09
 
 <!-- hook lines go here -->
+2026-11-17 | Role 1 | web-ui/spec (SCRUM-39) | Wrote requirements, design and tasks (18) and steering ui.md; Figma not read | nothing
+2026-11-17 | Role 1 | web-ui/spec (SCRUM-39) | Read Figma Foundations through the remote Figma MCP; added colour and type tokens to design.md | nothing
 
 ### Sunday review
 - Stats (`scripts/kiro-stats`):

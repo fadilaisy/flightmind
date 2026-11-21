@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Pipeline property tests",
+  "description": "When a pipeline Python file is saved, run the pipeline tests. Pytest exit code 5 (no tests collected) is not a failure.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["services/pipeline/**/*.py"]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "python -c \"import subprocess, sys; r = subprocess.run([sys.executable, '-m', 'pytest', 'services/pipeline', '-q']); sys.exit(0 if r.returncode in (0, 5) else r.returncode)\""
+  }
+}

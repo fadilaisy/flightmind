@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "raw_ref guard",
+  "description": "When a services Python file is saved, check that raw_ref is never dropped.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["services/**/*.py"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check only the saved file. If any function that returns telemetry points, events or citations can drop `raw_ref` / `raw_refs`, say where in one line. Otherwise say nothing and change nothing."
+  }
+}

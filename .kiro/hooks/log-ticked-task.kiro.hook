@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Log ticked task",
+  "description": "When a spec task is ticked, append one line to KIRO.md.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [".kiro/specs/**/tasks.md"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A tasks.md was just saved. Run `git diff -- <that file>` and act only if a box changed from `[ ]` to `[x]`; otherwise do nothing. For each newly ticked task, first check KIRO.md: if a line for that spec/task already exists, skip it. Otherwise append exactly one line to KIRO.md under the current week, in the format `date | name | spec/task | what Kiro did | fixed by hand`. Name by spec folder: web-ui and scrum-19 = Fadil; ingest, compression, detectors, storage = Koolkar; embeddings, agent-mcp, api-deploy = Zahran. If you cannot tell what was fixed by hand, write `TODO`. Change no other file."
+  }
+}

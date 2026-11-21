@@ -18,6 +18,7 @@ The spec/task column takes a spec and task (`ingest/2.3`) or a Jira key plus `(c
 2026-11-17 | Role 1 | SCRUM-39 (spec) web-ui spec | Wrote requirements, design and 18 tasks plus steering ui.md, then read the Figma Foundations page through the Figma MCP and added colour and type tokens to design.md | nothing
 2026-11-17 | Role 1 | web-ui/1 | Scaffolded Vite + React + TypeScript in web/; npm run build passes | nothing
 2026-11-17 | Role 1 | web-ui/2 | API client typed from contracts/types.ts, mock client, sample fixture, 2 passing tests, "Record not found: <raw_ref>" on 404 | nothing
+2026-11-22 | Fadil | SCRUM-19 (spec) hooks and reviewer agent | Kiro: spec only; hooks and agent files hand-written in chat, not yet re-saved in the Agent Hooks panel (clip pending) | hook and agent files typed by hand from setup-prompts.md; re-save in the panel is still to do
 
 ## Trailer corrections
 
@@ -29,6 +30,7 @@ efcab93 | none | vibe | Kiro chat session wrote it, see docs/kiro/sessions/2026-
 ce2a636 | none | vibe | Kiro chat session wrote it, see docs/kiro/sessions/2026-11-14-scrum-31-32-chat.md
 1b1d747 | none | vibe | Kiro chat session wrote it, see docs/kiro/sessions/2026-11-14-scrum-31-32-chat.md
 e8d5d4d | none | vibe | Kiro chat session wrote it, see docs/kiro/sessions/2026-11-14-scrum-31-32-chat.md
+2766b21 | spec scrum-19/1-4 | none | hook and agent files typed by hand from setup-prompts.md, not generated from the spec; see the SCRUM-19 line above
 
 ### Sunday review
 - Stats (`scripts/kiro-stats`):

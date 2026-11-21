@@ -9,6 +9,7 @@ Source: Jira SCRUM-19 and `docs/kiro/setup-prompts.md`. Owner: Fadil. Folders: `
 4. Each hook changes only what its prompt allows. The log hook edits only `KIRO.md`.
 5. Hooks do not touch `contracts/` except the types hook, which writes only `contracts/types.ts` by running the generator.
 6. The first hook creation is screen-recorded and listed in `docs/kiro/clips.md`.
+7. We build in Kiro Crew, which does not read `.kiro/hooks/`. A Crew `Stop` hook (`scripts/crew-hooks/contract-types-guard.py`) blocks the end of a turn once if `contracts/openapi.yaml` changed and `contracts/types.ts` was not regenerated. The four IDE hooks stay for teammates on the Kiro IDE.
 
 ## Not in scope
 - Pipeline code, spec generation for other roles, any change to `contracts/openapi.yaml`.

@@ -4,7 +4,24 @@ Create each hook from Kiro's Agent Hooks panel and each spec from the Specs pane
 files Kiro writes in `.kiro/hooks/` and `.kiro/specs/<name>/` are in Kiro's own format.
 Commit them as they are.
 
-## Hooks (Role 1)
+## Kiro Crew hook (Role 1)
+
+We build in Kiro Crew. Crew hooks run a shell command on agent events (AgentSpawn,
+UserPromptSubmit, PreToolUse, PostToolUse, Stop) and live in `~/.kiro/crew/hooks.json`,
+not in the repo; Crew does not read `.kiro/hooks/`. See
+https://kiro.dev/docs/crew/capabilities/hooks/.
+
+**Contract types guard.** Dashboard: Agent Capabilities, Hooks, New Hook.
+Event: `Stop`. Command (absolute paths, because the docs do not say which folder hooks run in):
+`python <repo>/scripts/crew-hooks/contract-types-guard.py <repo>`.
+After each agent turn it checks whether `contracts/openapi.yaml` changed without
+`contracts/types.ts` being regenerated. If so it returns `{"decision": "block", "reason": ...}`
+and the agent takes one more turn to run the generator. It blocks at most once per contract state.
+Use "Test" on the Hooks page to see its exit code and output.
+
+## Kiro IDE hooks (Role 1, only for teammates using the IDE)
+
+The files in `.kiro/hooks/` are Kiro IDE agent hooks. Crew ignores them.
 
 1. **Log ticked task.** Trigger: file saved, pattern `.kiro/specs/**/tasks.md`.
    Prompt: "A tasks.md was just saved. Run `git diff -- <that file>` and act only if a box

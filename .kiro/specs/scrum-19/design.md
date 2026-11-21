@@ -4,8 +4,8 @@
 | File | Trigger | Action |
 | --- | --- | --- |
 | `.kiro/hooks/log-ticked-task.kiro.hook` | file edited, `.kiro/specs/**/tasks.md` | ask agent: append one line to `KIRO.md` |
-| `.kiro/hooks/regenerate-contract-types.kiro.hook` | file edited, `contracts/openapi.yaml` | run `npx openapi-typescript contracts/openapi.yaml -o contracts/types.ts` |
-| `.kiro/hooks/pipeline-property-tests.kiro.hook` | file edited, `services/pipeline/**/*.py` | run `pytest services/pipeline -q` |
+| `.kiro/hooks/regenerate-contract-types.kiro.hook` | file edited, `contracts/openapi.yaml` | run `npx --yes openapi-typescript@7 contracts/openapi.yaml -o contracts/types.ts` |
+| `.kiro/hooks/pipeline-property-tests.kiro.hook` | file edited, `services/pipeline/**/*.py` | run `python -m pytest services/pipeline -q` |
 | `.kiro/hooks/raw-ref-guard.kiro.hook` | file edited, `services/**/*.py` | ask agent: check the saved file only |
 | `.kiro/agents/data-quality-reviewer.json` | chosen by hand | read-only review |
 

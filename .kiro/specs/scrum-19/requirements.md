@@ -16,4 +16,6 @@ Source: Jira SCRUM-19 and `docs/kiro/setup-prompts.md`. Owner: Fadil. Folders: `
 ## Open items
 1. The ticket says to create the files inside Kiro so they are in Kiro's own format. These were written by hand in the documented format. Re-save them from the Agent Hooks panel if Kiro rewrites them.
 2. The screen recording needs a person at the Kiro IDE (requirement 6).
-3. The log hook uses names, not roles: Fadil, Koolkar, Zahran.
+3. The log hook uses names, not roles: Fadil, Koolkar, Zahran. The name comes from a spec-folder mapping inside the prompt, because `.github/CODEOWNERS` still has placeholder usernames for Role 2 and Role 3. Older `KIRO.md` rows keep `Role N`.
+4. The log hook compares with `git diff` and skips a spec/task that already has a line.
+5. The raw_ref guard also fires on test files. If that gets noisy, narrow its pattern.

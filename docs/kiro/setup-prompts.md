@@ -7,17 +7,20 @@ Commit them as they are.
 ## Hooks (Role 1)
 
 1. **Log ticked task.** Trigger: file saved, pattern `.kiro/specs/**/tasks.md`.
-   Prompt: "A spec task was just ticked in this tasks.md. Append exactly one line to
-   KIRO.md under the current week, in the format
-   `date | role | spec/task | what Kiro did | fixed by hand`. Take the role from
-   .github/CODEOWNERS. If you cannot tell what was fixed by hand, write `TODO`. Change no
-   other file."
+   Prompt: "A tasks.md was just saved. Run `git diff -- <that file>` and act only if a box
+   changed from `[ ]` to `[x]`. If KIRO.md already has a line for that spec/task, skip it.
+   Otherwise append exactly one line to KIRO.md under the current week, in the format
+   `date | name | spec/task | what Kiro did | fixed by hand`. Name by spec folder: web-ui
+   and scrum-19 = Fadil; ingest, compression, detectors, storage = Koolkar; embeddings,
+   agent-mcp, api-deploy = Zahran. If you cannot tell what was fixed by hand, write `TODO`.
+   Change no other file."
 2. **Regenerate contract types.** Trigger: file saved, pattern `contracts/openapi.yaml`.
-   Action: run command `npx openapi-typescript contracts/openapi.yaml -o contracts/types.ts`
+   Action: run command `npx --yes openapi-typescript@7 contracts/openapi.yaml -o contracts/types.ts`
    if this Kiro version offers a command action; otherwise ask the agent to run it and change
-   nothing else.
+   nothing else. The version is pinned so every machine writes the same `types.ts`.
 3. **Pipeline property tests.** Trigger: file saved, pattern `services/pipeline/**/*.py`.
-   Action: run `pytest services/pipeline -q` (command action if available).
+   Action: run `python -m pytest services/pipeline -q` (command action if available); it
+   uses the active interpreter, so a venv works.
 4. **raw_ref guard.** Trigger: file saved, pattern `services/**/*.py`.
    Prompt: "Check only the saved file. If any function that returns telemetry points,
    events or citations can drop `raw_ref` / `raw_refs`, say where in one line. Otherwise

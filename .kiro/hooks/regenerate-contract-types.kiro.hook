@@ -1,7 +1,7 @@
 {
   "enabled": true,
   "name": "Regenerate contract types",
-  "description": "When contracts/openapi.yaml is saved, regenerate contracts/types.ts.",
+  "description": "When contracts/openapi.yaml is saved, regenerate contracts/types.ts (pinned to openapi-typescript 7).",
   "version": "1",
   "when": {
     "type": "fileEdited",
@@ -9,6 +9,6 @@
   },
   "then": {
     "type": "runCommand",
-    "command": "npx openapi-typescript contracts/openapi.yaml -o contracts/types.ts"
+    "command": "npx --yes openapi-typescript@7 contracts/openapi.yaml -o contracts/types.ts"
   }
 }

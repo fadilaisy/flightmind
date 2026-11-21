@@ -1,7 +1,7 @@
 {
   "enabled": true,
   "name": "Pipeline property tests",
-  "description": "When a pipeline Python file is saved, run the pipeline tests.",
+  "description": "When a pipeline Python file is saved, run the pipeline tests with the active Python.",
   "version": "1",
   "when": {
     "type": "fileEdited",
@@ -9,6 +9,6 @@
   },
   "then": {
     "type": "runCommand",
-    "command": "pytest services/pipeline -q"
+    "command": "python -m pytest services/pipeline -q"
   }
 }

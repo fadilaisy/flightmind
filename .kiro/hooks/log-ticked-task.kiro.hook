@@ -9,6 +9,6 @@
   },
   "then": {
     "type": "askAgent",
-    "prompt": "A spec task was just ticked in this tasks.md. Act only if a box changed from open to ticked; otherwise do nothing. Append exactly one line to KIRO.md under the current week, in the format `date | role | spec/task | what Kiro did | fixed by hand`. Take the role from .github/CODEOWNERS and write the person's name (Fadil, Koolkar or Zahran), not Role 1, 2 or 3. If you cannot tell what was fixed by hand, write `TODO`. Change no other file."
+    "prompt": "A tasks.md was just saved. Run `git diff -- <that file>` and act only if a box changed from `[ ]` to `[x]`; otherwise do nothing. For each newly ticked task, first check KIRO.md: if a line for that spec/task already exists, skip it. Otherwise append exactly one line to KIRO.md under the current week, in the format `date | name | spec/task | what Kiro did | fixed by hand`. Name by spec folder: web-ui and scrum-19 = Fadil; ingest, compression, detectors, storage = Koolkar; embeddings, agent-mcp, api-deploy = Zahran. If you cannot tell what was fixed by hand, write `TODO`. Change no other file."
   }
 }

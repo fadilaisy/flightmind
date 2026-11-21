@@ -18,7 +18,7 @@ The spec/task column takes a spec and task (`ingest/2.3`) or a Jira key plus `(c
 2026-11-17 | Role 1 | SCRUM-39 (spec) web-ui spec | Wrote requirements, design and 18 tasks plus steering ui.md, then read the Figma Foundations page through the Figma MCP and added colour and type tokens to design.md | nothing
 2026-11-17 | Role 1 | web-ui/1 | Scaffolded Vite + React + TypeScript in web/; npm run build passes | nothing
 2026-11-17 | Role 1 | web-ui/2 | API client typed from contracts/types.ts, mock client, sample fixture, 2 passing tests, "Record not found: <raw_ref>" on 404 | nothing
-2026-11-22 | Fadil | SCRUM-19 (spec) hooks and reviewer agent | Wrote spec, four hooks (log ticked task, contract types, pipeline tests, raw_ref guard) and the read-only data-quality-reviewer agent | TODO (details in .kiro/specs/scrum-19/requirements.md, open items)
+2026-11-22 | Fadil | SCRUM-19 (spec) hooks and reviewer agent | Kiro: spec only; hooks and agent files hand-written in chat, not yet re-saved in the Agent Hooks panel (clip pending) | hook and agent files typed by hand from setup-prompts.md; re-save in the panel is still to do
 
 ## Trailer corrections
 

@@ -19,8 +19,10 @@ Commit them as they are.
    if this Kiro version offers a command action; otherwise ask the agent to run it and change
    nothing else. The version is pinned so every machine writes the same `types.ts`.
 3. **Pipeline property tests.** Trigger: file saved, pattern `services/pipeline/**/*.py`.
-   Action: run `python -m pytest services/pipeline -q` (command action if available); it
-   uses the active interpreter, so a venv works.
+   Action: run `python -m pytest services/pipeline -q` through a wrapper that treats exit code
+   5 (no tests collected) as success, so an empty folder is not a failure. A shell
+   `|| test $? -eq 5` works on bash only; the hook file uses a `python -c` wrapper that runs
+   on Windows too. It uses the active interpreter, so a venv works.
 4. **raw_ref guard.** Trigger: file saved, pattern `services/**/*.py`.
    Prompt: "Check only the saved file. If any function that returns telemetry points,
    events or citations can drop `raw_ref` / `raw_refs`, say where in one line. Otherwise

@@ -16,6 +16,10 @@
   - Files: `.kiro/agents/data-quality-reviewer.json`
   - Check: valid JSON; no write tool listed; the four checks are in the prompt.
 
-- [ ] 5. Record the first hook being created (person needed)
+- [x] 5. Crew Stop hook script
+  - Files: `scripts/crew-hooks/contract-types-guard.py`, `docs/kiro/setup-prompts.md`
+  - Check: clean tree prints nothing; changed `openapi.yaml` without new `types.ts` prints one block; same state again prints nothing; always exits 0.
+
+- [ ] 6. Create the Crew hook in the dashboard on a screen recording (person needed)
   - Files: `docs/kiro/clips.md`
-  - Check: a row with the clip file name, date and "log ticked task".
+  - Check: a row with the clip file name, date and "Crew Stop hook"; the clip shows the agent getting blocked once and running the generator.

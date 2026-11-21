@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Pipeline property tests",
+  "description": "When a pipeline Python file is saved, run the pipeline tests.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["services/pipeline/**/*.py"]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "pytest services/pipeline -q"
+  }
+}

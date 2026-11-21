@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Log ticked task",
+  "description": "When a spec task is ticked, append one line to KIRO.md.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [".kiro/specs/**/tasks.md"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A spec task was just ticked in this tasks.md. Act only if a box changed from open to ticked; otherwise do nothing. Append exactly one line to KIRO.md under the current week, in the format `date | role | spec/task | what Kiro did | fixed by hand`. Take the role from .github/CODEOWNERS and write the person's name (Fadil, Koolkar or Zahran), not Role 1, 2 or 3. If you cannot tell what was fixed by hand, write `TODO`. Change no other file."
+  }
+}

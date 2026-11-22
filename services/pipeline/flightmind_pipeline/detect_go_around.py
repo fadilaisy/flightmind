@@ -9,7 +9,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
 
-from flightmind_pipeline.events import DetectedEvent, collect_raw_refs, event_callsign
+from flightmind_pipeline.events import (
+    DetectedEvent,
+    collect_raw_refs,
+    event_callsign,
+    nacp_range,
+)
 from flightmind_pipeline.geo import (
     RUNWAYS,
     WIII_REF,
@@ -148,21 +153,25 @@ def _approach_step(
     hat = hat_ft(point, run.runway, run.source)
     if hat is None:
         return run, None
-    # A climb opens Climb at once, even inside the box (option A, Kool 2026-11-17). Checking the
-    # box first meant a go-around that climbs inside the box never reached Climb.
-    if point.vrate_fpm is not None and point.vrate_fpm >= CLIMB_VRATE_FPM:
-        run.climb_index = index
-        return run, None
+    climbing = point.vrate_fpm is not None and point.vrate_fpm >= CLIMB_VRATE_FPM
     matched = runway_match(point)
     in_box = matched is not None and matched.name == run.runway.name
     if in_box and hat <= CAPTURE_CEILING_HAT_FT:
+        # Option A (Kool 2026-11-17): a climb inside the box opens Climb at once. The box
+        # update still runs first, so the minimum and last_in_box stay current.
         run.last_in_box_ts = point.ts
         if hat < run.min_hat:
             run.min_hat = hat
             run.min_index = index
+        if climbing:
+            run.climb_index = index
         return run, None
+    # Gate review 2026-11-22: the lost-approach timeout must run before a climb outside the box,
+    # so a climb after a long coverage gap cannot open Climb on a stale approach.
     if (point.ts - run.last_in_box_ts).total_seconds() > APPROACH_LOST_S:
         return None, None
+    if climbing:
+        run.climb_index = index
     return run, None
 
 
@@ -206,6 +215,7 @@ def _build_event(
         "alt_msl_ft_at_min": alt_msl_ft_at_min,
         "stabilized_below_1000_ft": run.min_hat < 1000,
         "thresholds": THRESHOLDS_TAG,
+        "nacp_range": nacp_range(window),
     }
     return DetectedEvent(
         type="go_around",
@@ -220,3 +230,4 @@ def _build_event(
         details=details,
         raw_refs=collect_raw_refs(window),
     )
+

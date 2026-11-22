@@ -44,6 +44,16 @@ def collect_raw_refs(window: Sequence[Point]) -> tuple[str, ...]:
     return tuple(p.raw_ref for p in window)
 
 
+def nacp_range(window: Sequence[Point]) -> list[int] | None:
+    """Return [min, max] of the NACp values in the window, or None when no point has one.
+
+    NACp is the position accuracy the aircraft reports. It goes in event details only, as
+    decided 2026-11-16 (plan pick 7a).
+    """
+    values = [p.nacp for p in window if p.nacp is not None]
+    return [min(values), max(values)] if values else None
+
+
 def event_callsign(window: Sequence[Point], track: Sequence[Point]) -> str | None:
     """Return the last callsign in the window, else the last one in the track, else None."""
     in_window = [p.callsign for p in window if p.callsign is not None]

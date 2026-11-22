@@ -1,5 +1,5 @@
 import math
-from datetime import timedelta
+from datetime import UTC, timedelta
 
 from synth import T0
 
@@ -141,3 +141,43 @@ def test_one_point_track_gives_no_events():
 def test_calling_twice_on_the_base_track_gives_equal_results():
     track = _profile("07L", BASE_VRATES)
     assert detect_go_around(track) == detect_go_around(track)
+
+def test_climb_after_a_long_data_gap_outside_the_box_gives_no_event():
+    # Gate review 2026-11-22: approach is lost (no point in the box for more than 30 s) before a
+    # climb outside the box, so that climb must not open Climb on a stale approach.
+    from datetime import datetime, timedelta
+    from math import cos, radians, sin
+
+    from flightmind_pipeline.detect_go_around import detect_go_around
+    from flightmind_pipeline.geo import RUNWAYS
+    from flightmind_pipeline.points import Point
+
+    rwy = next(r for r in RUNWAYS if r.name == "07L")
+    t0 = datetime(2026, 11, 15, 10, 0, tzinfo=UTC)
+
+    def at(along_m: float, seconds: float, vrate: int, hat_ft: float, index: int) -> Point:
+        lat = rwy.lat + along_m * cos(radians(rwy.bearing_deg)) / 111_320
+        lon = rwy.lon + along_m * sin(radians(rwy.bearing_deg)) / (111_320 * cos(radians(rwy.lat)))
+        # hat = baro + (QNH - 1013.25) * 27 - elev, so baro = hat - (QNH - 1013.25) * 27 + elev
+        baro = round(hat_ft - (1010 - 1013.25) * 27 + rwy.elev_ft)
+        return Point(
+            ts=t0 + timedelta(seconds=seconds),
+            record_index=index,
+            raw_ref=f"SYN:{index}",
+            raw_offset=0,
+            icao24="8a09f6",
+            lat=lat,
+            lon=lon,
+            baro_alt_ft=baro,
+            gs_kt=140.0,
+            track_deg=rwy.bearing_deg,
+            vrate_fpm=vrate,
+        )
+
+    track = [
+        at(-3000, 0, -700, 1000, 1),
+        at(-2000, 10, -700, 400, 2),
+        at(5000, 45, 1500, 300, 3),
+        at(5000, 49, 1500, 600, 4),
+    ]
+    assert detect_go_around(track) == []

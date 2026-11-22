@@ -1,7 +1,12 @@
 """Detect emergency squawk codes (7500, 7600, 7700) on one track."""
 from collections.abc import Sequence
 
-from flightmind_pipeline.events import DetectedEvent, collect_raw_refs, event_callsign
+from flightmind_pipeline.events import (
+    DetectedEvent,
+    collect_raw_refs,
+    event_callsign,
+    nacp_range,
+)
 from flightmind_pipeline.geo import airport_for
 from flightmind_pipeline.points import Point
 
@@ -63,6 +68,7 @@ def _build_event(track: Sequence[Point], code: str, start: int, last: int) -> De
         "first_raw_ref": opening.raw_ref,
         "alt_ft": alt_ft,
         "alt_kind": alt_kind,
+        "nacp_range": nacp_range(window),
     }
     return DetectedEvent(
         type=f"squawk_{code}",
@@ -77,3 +83,4 @@ def _build_event(track: Sequence[Point], code: str, start: int, last: int) -> De
         details=details,
         raw_refs=collect_raw_refs(window),
     )
+

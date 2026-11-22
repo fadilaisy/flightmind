@@ -13,7 +13,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
 
-from flightmind_pipeline.events import DetectedEvent, collect_raw_refs, event_callsign
+from flightmind_pipeline.events import (
+    DetectedEvent,
+    collect_raw_refs,
+    event_callsign,
+    nacp_range,
+)
 from flightmind_pipeline.geo import airport_for, angle_diff_deg
 from flightmind_pipeline.points import Point
 
@@ -248,6 +253,7 @@ def _build_event(track: Sequence[Point], lo: int, run: Sequence[_Leg]) -> Detect
         "min_alt_ft": alt_min,
         "max_alt_ft": alt_max,
         "duration_s": (end_ts - start_ts).total_seconds(),
+        "nacp_range": nacp_range(window),
     }
     return DetectedEvent(
         type="holding",
@@ -300,3 +306,4 @@ def _circular_mean(headings: Sequence[float]) -> float:
     sin_sum = sum(math.sin(math.radians(h)) for h in headings)
     cos_sum = sum(math.cos(math.radians(h)) for h in headings)
     return math.degrees(math.atan2(sin_sum, cos_sum)) % 360.0
+

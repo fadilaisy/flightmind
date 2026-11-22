@@ -75,7 +75,7 @@ These values come from the advisor or from memory. Each one is marked "not verif
 **User Story:** As an analyst, I want every event to cite all the records behind it, so that every claim can be checked.
 
 #### Acceptance Criteria
-1. Each event's `raw_refs` SHALL contain every point in `[start_ts, end_ts]` of its track, including points with no position.
+1. Each event's `raw_refs` SHALL contain every point in the event's window, including points with no position. The window is the slice of the track from the opening point to the closing point, by position in the track, not by timestamp. Two points that share a timestamp are cited only when both lie inside the slice (decided after the shared-timestamp fix, 2026-11-17).
 2. The event id SHALL be `uuid5(uuid5(NAMESPACE_URL, "flightmind/events"), f"{type}|{icao24}|{raw_refs[0]}")`.
 3. WHEN a detector is called twice on the same track THEN it SHALL return identical results.
 4. WHEN the track is empty or has one point THEN a detector SHALL return `[]`. The one exception is squawk: a single emergency-code point gives one event.

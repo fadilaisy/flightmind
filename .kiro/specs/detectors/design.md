@@ -45,8 +45,9 @@
 **events.py**
 - `@dataclass(frozen=True) class DetectedEvent(type, icao24, callsign, start_ts, end_ts, airport, lat, lon, severity, details: dict, raw_refs: tuple[str, ...])`
 - `event_id(e) -> uuid.UUID` (see requirement 6.2).
-- `collect_raw_refs(track, start_ts, end_ts) -> tuple[str, ...]` returns every point in the window, in track order.
-- `event_callsign(track, start_ts, end_ts)`: the last non-null callsign in the window, else the last in the track, else None.
+- `collect_raw_refs(window: Sequence[Point]) -> tuple[str, ...]` returns the raw_ref of each point in the window slice, in order. The window is a slice of the track by position, not by timestamp.
+- `event_callsign(window: Sequence[Point], track: Sequence[Point]) -> str | None`: the last non-null callsign in the window, else the last in the track, else None.
+- `nacp_range(window: Sequence[Point]) -> list[int] | None`: [min, max] of NACp in the window, or None. Goes in event details as `nacp_range` (decided 2026-11-16).
 - `nacp_range(points) -> list[int] | None` returns `[min, max]` over non-None NACp values, or None if there are none. Every detector adds it to `details["nacp_range"]`.
 - Severity docstring: 3 = 7500/7700; 2 = 7600 and go-around; 1 = holding.
 

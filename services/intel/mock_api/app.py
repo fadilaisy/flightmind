@@ -93,9 +93,12 @@ def raw(raw_ref: str):
 async def stream():
     """Finite replay of the sample recording as server-sent events.
 
-    The contract does not define the payload yet. Assumption (confirm with Role 1):
-    `event: position` carries {icao24, callsign, ts, lat, lon, alt_ft, raw_ref} and
-    `event: event` carries an Event object, emitted at the event's end_ts.
+    The contract does not define the payload. The web UI does not use this endpoint
+    (web-ui requirements, note 6: "Replay is the scrubber"), so this shape is our own
+    assumption and nothing depends on it: `event: position` carries
+    {icao24, callsign, ts, lat, lon, alt_ft, raw_ref} and `event: event` carries an
+    Event object, emitted at the event's end_ts. Define it in the contract first if a
+    consumer ever needs it.
     """
     delay = float(os.environ.get("MOCK_STREAM_DELAY", "0.05"))
     items = []

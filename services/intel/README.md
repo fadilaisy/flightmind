@@ -25,8 +25,9 @@ Test (checks each response against `openapi.yaml`):
 Notes for the UI:
 
 - CORS is open to any origin (mock only).
-- `/api/stream` is a finite replay. The contract does not define its payload; the mock
-  sends `event: position` and `event: event` records (see the docstring in `app.py`).
+- `/api/stream` is a finite replay. The contract does not define its payload and the web UI
+  does not use it (replay is the scrubber), so the `event: position` and `event: event`
+  records the mock sends are our own assumption (see the docstring in `app.py`).
   Speed is set with `MOCK_STREAM_DELAY` seconds between items (default 0.05).
 - `/api/ask` answers by keyword (7700 / go-around / hold) and otherwise returns
   `not_enough_evidence`. The real agent is SCRUM-36.

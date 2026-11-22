@@ -251,3 +251,16 @@ def test_altitude_missing_on_an_anchor_keeps_an_interior_point_as_shape() -> Non
     result = compress_track(track, set())
     assert "shape" in result.kept_reason.values()
 
+
+
+def test_infinite_altitude_split_is_the_first_point_that_has_the_open_field() -> None:
+    # Gate round (2026-11-22): the first split must be the first point whose geo altitude is
+    # present while the open anchor lacks it. A helper that splits at the first point with any
+    # altitude would keep point 1 here, and this test would catch it.
+    track = _line(5)
+    geo = [None, None, 35000, 35000, 35000]
+    track = [replace(p, geo_alt_ft=g, baro_alt_ft=35000) for p, g in zip(track, geo)]
+    result = compress_track(track, set())
+    assert result.kept_reason[track[2].raw_ref] == "shape"
+    assert track[1].raw_ref not in result.kept_reason
+    assert track[3].raw_ref not in result.kept_reason

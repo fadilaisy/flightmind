@@ -20,6 +20,7 @@ The spec/task column takes a spec and task (`ingest/2.3`) or a Jira key plus `(c
 2026-11-17 | Role 1 | web-ui/1 | Scaffolded Vite + React + TypeScript in web/; npm run build passes | nothing
 2026-11-17 | Role 1 | web-ui/2 | API client typed from contracts/types.ts, mock client, sample fixture, 2 passing tests, "Record not found: <raw_ref>" on 404 | nothing
 2026-11-22 | Fadil | SCRUM-19 (spec) hooks and reviewer agent | Kiro: spec only; hooks and agent files hand-written in chat, not yet re-saved in the Agent Hooks panel (clip pending) | hook and agent files typed by hand from setup-prompts.md; re-save in the panel is still to do
+2026-11-22 | Fadil | SCRUM-19 (chat) Kiro Crew Stop hook | We build in Kiro Crew, which does not read .kiro/hooks/, so the contract-types guard was added as a Crew Stop hook in the dashboard. Demo: the Crew agent edited contracts/openapi.yaml, the hook continued it once ("Continued by a hook"), and the agent ran the openapi-typescript generator itself | the hook script scripts/crew-hooks/contract-types-guard.py was written outside Kiro
 
 ## Trailer corrections
 
@@ -33,9 +34,20 @@ ce2a636 | none | vibe | Kiro chat session wrote it, see docs/kiro/sessions/2026-
 e8d5d4d | none | vibe | Kiro chat session wrote it, see docs/kiro/sessions/2026-11-14-scrum-31-32-chat.md
 2766b21 | spec scrum-19/1-4 | none | hook and agent files typed by hand from setup-prompts.md, not generated from the spec; see the SCRUM-19 line above
 
-### Sunday review
-- Stats (`scripts/kiro-stats`):
+### Sunday review 2026-11-22 (SCRUM-43)
+- Stats (`scripts/kiro-stats`, main at 6cc62b8): 2 specs (web-ui, scrum-19), 7 spec tasks done and 18 open, 4 IDE hooks plus 1 Kiro Crew Stop hook (lives in the Crew dashboard, script in `scripts/crew-hooks/`), 6 steering files, 1 custom agent, 7 KIRO.md entries before this review. 37 commits: `Kiro: spec` 6, `vibe` 15, `hook` 0, `none` 5, after 5 trailer corrections. By person: Fadil and Zahran have commits; Koolkar has none yet.
 - What Kiro sped up:
+  - SCRUM-33: a mock API for all 7 paths of `openapi.yaml` with 12 tests that validate every response against the contract, so the UI could start before the pipeline exists.
+  - SCRUM-39: the web-ui spec (requirements, design, 18 tasks) plus colour and type tokens read from Figma through the Figma MCP.
+  - SCRUM-31: the local Timescale + pgvector stack in one session, checked live.
 - What Kiro got wrong:
+  - SCRUM-31: mounted a subfolder into `/docker-entrypoint-initdb.d`, which Postgres does not scan.
+  - SCRUM-32: switched the contract to `vector(768)` on its own and picked the retired `text-embedding-004`; caught in review.
+  - SCRUM-33: guessed the `/api/stream` payload; the UI does not use it.
+  - SCRUM-19: we wrote hooks in Kiro IDE format, but we build in Kiro Crew, which ignores `.kiro/hooks/`.
 - What we changed in steering or hooks because of it:
-- Credits used / left (per person):
+  - Added the Crew Stop hook that makes the agent regenerate `contracts/types.ts` after it edits `openapi.yaml` (blocks once, then lets the turn end). Demoed on 2026-11-22.
+  - Pinned `openapi-typescript@7` so every machine writes the same `types.ts`; the pipeline test hook treats "no tests collected" as a pass.
+  - Added the "Trailer corrections" section, which `scripts/kiro-stats` applies, and allowed Jira keys with `(chat)` or `(spec)` in the spec/task column.
+- Next week: the pipeline (SCRUM-20, 22, 23, 24) has no commits yet and blocks detection, compression and real citations. Use `Kiro: hook` when a hook does the work, since that count is still 0.
+- Credits used / left (per person): Fadil TODO, Koolkar TODO, Zahran TODO.

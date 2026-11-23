@@ -183,6 +183,10 @@ def _climb_step(
     track: Sequence[Point], run: _Run, climb_index: int, index: int
 ) -> tuple[_Run | None, DetectedEvent | None]:
     point = track[index]
+    # Review 2026-11-23: a climb is confirmed only on fixes that follow each other closely. A gap over
+    # CLIMB_TIMEOUT_S since the previous fix means coverage dropped during the climb; drop the run.
+    if (point.ts - track[index - 1].ts).total_seconds() > CLIMB_TIMEOUT_S:
+        return None, None
     hat = hat_ft(point, run.runway, run.source)
     if hat is None:
         return run, None
@@ -234,5 +238,6 @@ def _build_event(
         details=details,
         raw_refs=collect_raw_refs(window),
     )
+
 
 

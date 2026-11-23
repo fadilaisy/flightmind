@@ -77,7 +77,7 @@ Every constant carries a source comment.
 | `APPROACH_LOST_S` | 30 | |
 | `CLIMB_TIMEOUT_S` | 60 | |
 | `NEAR_WIII_M` | 10000 | |
-| `STABILIZED_HAT_FT` | 1000 | |
+| `MIN_HAT_BELOW_1000_FT` | 1000 | |
 | `QNH_HPA` | 1010 | |
 | `FT_PER_HPA` | 27 | memory |
 | `GEOID_N_FT` | step 0 value, or None | |
@@ -153,5 +153,6 @@ Every constant carries a source comment.
 
 ## Rejected
 - Detecting in the database after a full load: it writes every row and then deletes most of them, so ingest is slower.
+
 
 

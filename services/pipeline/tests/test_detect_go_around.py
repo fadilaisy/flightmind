@@ -200,3 +200,13 @@ def test_in_box_climb_after_a_coverage_gap_does_not_reuse_the_stale_approach():
     ]
     assert detect_go_around(descent + climb) == []
 
+
+
+def test_gap_during_a_climb_does_not_confirm_a_go_around():
+    # Review 2026-11-23: a climb opens in the box, coverage drops for 900 s, then one fix in the box
+    # would confirm the climb. The gap must end the run instead.
+    from dataclasses import replace
+
+    head = _profile("07R", [-700] * 30 + [1500] * 2)
+    tail = [replace(p, ts=p.ts + timedelta(seconds=900), record_index=33, raw_ref="SYN:33") for p in _profile("07R", [1500])]
+    assert detect_go_around(head + tail) == []

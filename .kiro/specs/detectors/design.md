@@ -155,7 +155,3 @@ Every constant carries a source comment.
 
 ## Rejected
 - Detecting in the database after a full load: it writes every row and then deletes most of them, so ingest is slower.
-
-
-
-

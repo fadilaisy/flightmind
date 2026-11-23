@@ -214,6 +214,8 @@ def test_gap_during_a_climb_does_not_confirm_a_go_around():
     assert detect_go_around(head + tail) == []
 
 
+# Review 2026-11-23b: climb opens at index 94; sparse fixes under 60 s apart would confirm 111 s
+# after the climb start. The hard cap must stop it.
 def test_confirm_later_than_the_climb_timeout_does_not_emit():
     base = _profile("07L", BASE_VRATES)
     probe = base[:95] + [

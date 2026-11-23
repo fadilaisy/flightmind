@@ -241,7 +241,3 @@ def _build_event(
         details=details,
         raw_refs=collect_raw_refs(window),
     )
-
-
-
-

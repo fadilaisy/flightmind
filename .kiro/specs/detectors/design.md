@@ -100,8 +100,10 @@ Every constant carries a source comment.
   - If `vrate >= 500` and HAT is known: go to Climb with `climb_start = p`.
 - **Climb:**
   - If `vrate < 500`: go back to Approach and re-evaluate the same point.
-  - If `ts − climb_start >= 4` AND `HAT − min_hat >= 150` AND `min_hat <= 2500`: emit, then go to Idle.
+  - If the gap since the previous fix is over 60 s (`CLIMB_GAP_S`): drop the run and go to Idle, with no event. Coverage dropped during the climb.
+  - If `ts − climb_start >= 4` AND `HAT − min_hat >= 150` AND `min_hat <= 2500` AND `ts − climb_start <= 60 s` (`CLIMB_TIMEOUT_S`): emit, then go to Idle. The 60 s cap is hard: a confirm later than that never emits.
   - Else, if `ts − climb_start > 60 s`: go to Idle.
+  - Trade-off (review 2026-11-23): a go-around is missed if coverage returns mid-climb, because the run is dropped and nothing re-arms on the point that drops it. A new descent in the box is needed to arm again.
 - **End of track:** drop any open state.
 
 **Event**
@@ -153,6 +155,7 @@ Every constant carries a source comment.
 
 ## Rejected
 - Detecting in the database after a full load: it writes every row and then deletes most of them, so ingest is slower.
+
 
 
 

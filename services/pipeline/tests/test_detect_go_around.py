@@ -1,4 +1,5 @@
 import math
+from dataclasses import replace
 from datetime import UTC, timedelta
 
 from synth import T0
@@ -186,7 +187,6 @@ def test_climb_after_a_long_data_gap_outside_the_box_gives_no_event():
 def test_in_box_climb_after_a_coverage_gap_does_not_reuse_the_stale_approach():
     # Review 2026-11-22: 30 descending points into 07R, then a 15-minute gap, then 10 points back
     # in the box climbing at +1500 fpm. The old approach must be dropped, not reused.
-    from dataclasses import replace
 
     descent = _profile("07R", [-700] * 30)
     climb = [
@@ -205,8 +205,19 @@ def test_in_box_climb_after_a_coverage_gap_does_not_reuse_the_stale_approach():
 def test_gap_during_a_climb_does_not_confirm_a_go_around():
     # Review 2026-11-23: a climb opens in the box, coverage drops for 900 s, then one fix in the box
     # would confirm the climb. The gap must end the run instead.
-    from dataclasses import replace
 
     head = _profile("07R", [-700] * 30 + [1500] * 2)
-    tail = [replace(p, ts=p.ts + timedelta(seconds=900), record_index=33, raw_ref="SYN:33") for p in _profile("07R", [1500])]
+    tail = [
+        replace(p, ts=p.ts + timedelta(seconds=900), record_index=33, raw_ref="SYN:33")
+        for p in _profile("07R", [1500])
+    ]
     assert detect_go_around(head + tail) == []
+
+
+def test_confirm_later_than_the_climb_timeout_does_not_emit():
+    base = _profile("07L", BASE_VRATES)
+    probe = base[:95] + [
+        replace(base[96], ts=base[96].ts + timedelta(seconds=50), record_index=96, raw_ref="SYN:96"),
+        replace(base[105], ts=base[105].ts + timedelta(seconds=100), record_index=105, raw_ref="SYN:105"),
+    ]
+    assert detect_go_around(probe) == []

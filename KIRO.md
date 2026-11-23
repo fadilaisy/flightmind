@@ -22,6 +22,16 @@ The spec/task column takes a spec and task (`ingest/2.3`) or a Jira key plus `(c
 2026-11-22 | Fadil | SCRUM-19 (spec) hooks and reviewer agent | Kiro: spec only; hooks and agent files hand-written in chat, not yet re-saved in the Agent Hooks panel (clip pending) | hook and agent files typed by hand from setup-prompts.md; re-save in the panel is still to do
 2026-11-22 | Fadil | SCRUM-19 (chat) Kiro Crew Stop hook | We build in Kiro Crew, which does not read .kiro/hooks/, so the contract-types guard was added as a Crew Stop hook in the dashboard. Demo: the Crew agent edited contracts/openapi.yaml, the hook continued it once ("Continued by a hook"), and the agent ran the openapi-typescript generator itself | the hook script scripts/crew-hooks/contract-types-guard.py was written outside Kiro
 
+## Week of 2026-11-16
+
+2026-11-22 | Role 2 | detectors/1-2 | Kiro-assisted (subagent workers and architect): points, pcap reader, decoder wrapper, tracks, runway geometry, 12 tests; commit 2c583ee | fixed by hand: runway tolerance 30 m to 45 m (advisor coordinates give 42.4 m); airport radius 72,224 m to 74,080 m (40 NM)
+2026-11-22 | Role 2 | detectors/3 | squawk detector, 9 tests; commit 1950a7e | fixed by hand: shared-timestamp citations moved from timestamp windows to record position after a test caught it
+2026-11-22 | Role 2 | detectors/4 | go-around detector, 11 tests; commit 5565def | fixed by hand: option A (climb checked before the runway box) after the first test run found no event; gate round 1 added the lost-approach timeout ahead of the climb check
+2026-11-22 | Role 2 | detectors/5 | holding detector, 9 tests; commit b9a5de9 | nothing
+2026-11-22 | Role 2 | compression/6 | NACp-gated Douglas-Peucker with SED, 15 tests; commits d964575, 780edac | fixed by hand: gate found the property test read tolerances from the code under test; table moved to literals; speed fix for quadratic scan (531 s to 29 s on hour 00, identical output)
+2026-11-22 | Role 2 | storage/7 | transactional writer and CLI, 65 tests with database; commit 11b4835 | fixed by hand: re-run delete range widened to stored and new range; accuracy statement wording
+2026-11-22 | Role 2 | storage/9-10 | storage benchmark, rowstore vs columnstore vs DuckDB; commit 7ca8cc2 | fixed by hand: DuckDB Q2 moved to Postgres bench.events; Q3 uses all 20 refs; results file rewritten per run
+
 ## Trailer corrections
 
 Commits are never rewritten. A wrong trailer is fixed here, and `scripts/kiro-stats` moves
@@ -34,13 +44,6 @@ ce2a636 | none | vibe | Kiro chat session wrote it, see docs/kiro/sessions/2026-
 e8d5d4d | none | vibe | Kiro chat session wrote it, see docs/kiro/sessions/2026-11-14-scrum-31-32-chat.md
 2766b21 | spec scrum-19/1-4 | none | hook and agent files typed by hand from setup-prompts.md, not generated from the spec; see the SCRUM-19 line above
 
-2026-11-22 | Role 2 | detectors 1-2 (plan steps 1-2) | Kiro-assisted (subagent workers and architect): points, pcap reader, decoder wrapper, tracks, runway geometry, 12 tests; commit 2c583ee | fixed by hand: runway tolerance 30 m to 45 m (advisor coordinates give 42.4 m); airport radius 72,224 m to 74,080 m (40 NM)
-2026-11-22 | Role 2 | detectors 3 (plan step 3) | squawk detector, 9 tests; commit 1950a7e | fixed by hand: shared-timestamp citations moved from timestamp windows to record position after a test caught it
-2026-11-22 | Role 2 | detectors 4 (plan step 4) | go-around detector, 11 tests; commit 5565def | fixed by hand: option A (climb checked before the runway box) after the first test run found no event; gate round 1 added the lost-approach timeout ahead of the climb check
-2026-11-22 | Role 2 | detectors 5 (plan step 5) | holding detector, 9 tests; commit b9a5de9 | nothing
-2026-11-22 | Role 2 | compression 6 (plan step 6) | NACp-gated Douglas-Peucker with SED, 15 tests; commits d964575, 780edac | fixed by hand: gate found the property test read tolerances from the code under test; table moved to literals; speed fix for quadratic scan (531 s to 29 s on hour 00, identical output)
-2026-11-22 | Role 2 | storage 7 (plan step 7) | transactional writer and CLI, 65 tests with database; commit 11b4835 | fixed by hand: re-run delete range widened to stored and new range; accuracy statement wording
-2026-11-22 | Role 2 | storage 9-10 (plan steps 9-10) | storage benchmark, rowstore vs columnstore vs DuckDB; commit 7ca8cc2 | fixed by hand: DuckDB Q2 moved to Postgres bench.events; Q3 uses all 20 refs; results file rewritten per run
 
 ### Sunday review 2026-11-22 (SCRUM-43)
 - Stats (`scripts/kiro-stats`, main at 6cc62b8): 2 specs (web-ui, scrum-19), 7 spec tasks done and 18 open, 4 IDE hooks plus 1 Kiro Crew Stop hook (lives in the Crew dashboard, script in `scripts/crew-hooks/`), 6 steering files, 1 custom agent, 7 KIRO.md entries before this review. 37 commits: `Kiro: spec` 6, `vibe` 15, `hook` 0, `none` 5, after 5 trailer corrections. By person: Fadil and Zahran have commits; Koolkar has none yet.

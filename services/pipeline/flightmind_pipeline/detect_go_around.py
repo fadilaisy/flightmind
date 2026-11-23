@@ -43,6 +43,8 @@ BOX_BEFORE_M = 5556  # 3.0 NM before threshold
 BOX_AFTER_M = 2778  # 1.5 NM past threshold
 APPROACH_LOST_S = 30
 CLIMB_TIMEOUT_S = 60
+# Largest gap between two fixes that still counts as one climb (review 2026-11-23).
+CLIMB_GAP_S = 60
 # Rule A of the brief. The brief gives no source; it is not in its constant list.
 APPROACH_RADIUS_M = 10000
 QNH_HPA = 1010
@@ -184,8 +186,8 @@ def _climb_step(
 ) -> tuple[_Run | None, DetectedEvent | None]:
     point = track[index]
     # Review 2026-11-23: a climb is confirmed only on fixes that follow each other closely. A gap over
-    # CLIMB_TIMEOUT_S since the previous fix means coverage dropped during the climb; drop the run.
-    if (point.ts - track[index - 1].ts).total_seconds() > CLIMB_TIMEOUT_S:
+    # CLIMB_GAP_S since the previous fix means coverage dropped during the climb; drop the run.
+    if (point.ts - track[index - 1].ts).total_seconds() > CLIMB_GAP_S:
         return None, None
     hat = hat_ft(point, run.runway, run.source)
     if hat is None:
@@ -196,6 +198,7 @@ def _climb_step(
         elapsed >= CLIMB_HOLD_S
         and rebound >= REBOUND_FT
         and run.min_hat <= MAX_MIN_HAT_FT
+        and elapsed <= CLIMB_TIMEOUT_S
     ):
         return None, _build_event(track, run, index, hat)
     if elapsed > CLIMB_TIMEOUT_S:
@@ -238,6 +241,7 @@ def _build_event(
         details=details,
         raw_refs=collect_raw_refs(window),
     )
+
 
 
 

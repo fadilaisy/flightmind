@@ -50,7 +50,7 @@ Step 0 (storage spec, task 0.1) must be done first. It supplies `GEOID_N_FT` and
   - [x] 4.1 Write `flightmind_pipeline/detect_go_around.py` with the constants and state machine from design.md. Set `GEOID_N_FT` from Toolchain Status step 0.6, or None if it was not found.
     - _Requirements: 4, 6_
   - [x] 4.2 Write `tests/test_detect_go_around.py`. The base case is a synthetic 1 Hz track at 140 kt on 07L: 3 NM out at 1,000 ft HAT, -700 fpm, minimum 400 ft, then +1,500 fpm for 20 s. Expected results:
-    - base → one event, runway 07L, min_hat 400 ± 10, refs from the arm point to the confirm point, `stabilized_below_1000_ft` true;
+    - base → one event, runway 07L, min_hat 400 ± 10, refs from the arm point to the confirm point, `min_hat_below_1000_ft` true;
     - on_ground at the minimum → none;
     - 3 s climb → none;
     - 100 ft rebound → none;
@@ -76,5 +76,6 @@ Step 0 (storage spec, task 0.1) must be done first. It supplies `GEOID_N_FT` and
 - [x] 5.3 Run the spec-level checks:
   - `& $py -m mypy flightmind_pipeline` and `& $py -m ruff check .` report 0 errors;
   - `Select-String -Path flightmind_pipeline\*.py -Pattern 'datetime\.now|utcnow|time\.time\(|date\.today'` finds no matches.
+
 
 

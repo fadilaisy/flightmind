@@ -157,6 +157,10 @@ def _approach_step(
     matched = runway_match(point)
     in_box = matched is not None and matched.name == run.runway.name
     if in_box and hat <= CAPTURE_CEILING_HAT_FT:
+        # Review 2026-11-22: a stale approach must not survive a coverage gap just because the next
+        # fix lands back in the box. Drop it; the aircraft needs a new descent to re-arm.
+        if (point.ts - run.last_in_box_ts).total_seconds() > APPROACH_LOST_S:
+            return None, None
         # Option A (Kool 2026-11-17): a climb inside the box opens Climb at once. The box
         # update still runs first, so the minimum and last_in_box stay current.
         run.last_in_box_ts = point.ts
@@ -213,7 +217,7 @@ def _build_event(
         "max_vrate_fpm": max(vrates) if vrates else None,
         "alt_source": run.source,
         "alt_msl_ft_at_min": alt_msl_ft_at_min,
-        "stabilized_below_1000_ft": run.min_hat < 1000,
+        "min_hat_below_1000_ft": run.min_hat < 1000,
         "thresholds": THRESHOLDS_TAG,
         "nacp_range": nacp_range(window),
     }
@@ -230,4 +234,5 @@ def _build_event(
         details=details,
         raw_refs=collect_raw_refs(window),
     )
+
 

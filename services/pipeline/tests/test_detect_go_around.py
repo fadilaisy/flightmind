@@ -93,7 +93,7 @@ def test_base_profile_gives_one_go_around_on_07L_with_refs_from_arm_to_confirm()
     assert event.type == "go_around"
     assert event.details["runway"] == "07L"
     assert 390 <= event.details["min_hat_ft"] <= 410
-    assert event.details["stabilized_below_1000_ft"] is True
+    assert event.details["min_hat_below_1000_ft"] is True
     # Arm at SYN:1. The rebound first reaches 150 ft at index 99, which is record 100.
     assert event.raw_refs == tuple(f"SYN:{i}" for i in range(1, 101))
 
@@ -181,3 +181,22 @@ def test_climb_after_a_long_data_gap_outside_the_box_gives_no_event():
         at(5000, 49, 1500, 600, 4),
     ]
     assert detect_go_around(track) == []
+
+
+def test_in_box_climb_after_a_coverage_gap_does_not_reuse_the_stale_approach():
+    # Review 2026-11-22: 30 descending points into 07R, then a 15-minute gap, then 10 points back
+    # in the box climbing at +1500 fpm. The old approach must be dropped, not reused.
+    from dataclasses import replace
+
+    descent = _profile("07R", [-700] * 30)
+    climb = [
+        replace(
+            p,
+            ts=p.ts + timedelta(seconds=930),
+            record_index=30 + k + 1,
+            raw_ref=f"SYN:{30 + k + 1}",
+        )
+        for k, p in enumerate(_profile("07R", [1500] * 10))
+    ]
+    assert detect_go_around(descent + climb) == []
+

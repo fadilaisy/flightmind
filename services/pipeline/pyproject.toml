@@ -4,7 +4,12 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = ["psycopg[binary]"]
 
+[project.optional-dependencies]
+dev = ["pytest", "hypothesis", "ruff", "mypy"]
+bench = ["duckdb"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
 markers = ["db: needs the FlightMind Postgres database"]
+

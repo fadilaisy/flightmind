@@ -108,8 +108,8 @@ Every constant carries a source comment.
 - `type="go_around"`, `airport="WIII"`, `severity=2`.
 - `start_ts` = the arm point's time; `end_ts` = the confirming point's time.
 - `lat`/`lon` come from the minimum point.
-- `details = {runway, min_hat_ft, min_raw_ref, rebound_ft, max_vrate_fpm, alt_source, alt_msl_ft_at_min, stabilized_below_1000_ft, nacp_range, thresholds: "advisor-2026-11-16-unverified"}`.
-- `stabilized_below_1000_ft` = `min_hat_ft < 1000`.
+- `details = {runway, min_hat_ft, min_raw_ref, rebound_ft, max_vrate_fpm, alt_source, alt_msl_ft_at_min, min_hat_below_1000_ft, nacp_range, thresholds: "advisor-2026-11-16-unverified"}`.
+- `min_hat_below_1000_ft` = `min_hat_ft < 1000`.
 
 ## Holding (`detect_holding.py`)
 **Constants**
@@ -153,4 +153,5 @@ Every constant carries a source comment.
 
 ## Rejected
 - Detecting in the database after a full load: it writes every row and then deletes most of them, so ingest is slower.
+
 

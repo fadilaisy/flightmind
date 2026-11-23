@@ -72,7 +72,7 @@ def point_from_block(
         raw_ref=f"{recording_id}:{record_index}",
         raw_offset=raw_offset,
         icao24=icao24,
-        callsign=callsign.strip() or None if isinstance(callsign, str) else None,
+        callsign=(callsign.strip() or None) if isinstance(callsign, str) else None,
         lat=i130.get("Lat"),
         lon=i130.get("Lon"),
         geo_alt_ft=(
@@ -90,3 +90,4 @@ def point_from_block(
         sac=i010.get("SAC"),
         sic=i010.get("SIC"),
     )
+

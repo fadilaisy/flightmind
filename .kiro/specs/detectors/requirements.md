@@ -60,7 +60,7 @@ These values come from the advisor or from memory. Each one is marked "not verif
 4. IF `on_ground` is True THEN the detector SHALL return to Idle.
 5. IF the track ends while a state is open THEN the detector SHALL emit no event.
 6. IF HAT or vrate is None THEN that point SHALL NOT cause a state change on its own.
-7. The event SHALL record `stabilized_below_1000_ft` and the altitude source (`geo` or `baro_qnh`).
+7. The event SHALL record `min_hat_below_1000_ft` and the altitude source (`geo` or `baro_qnh`).
 
 ### Requirement 5: holding events
 **User Story:** As an analyst, I want racetrack holdings detected, so that I can study delays. This is a must-have for the demo.
@@ -81,4 +81,5 @@ These values come from the advisor or from memory. Each one is marked "not verif
 4. WHEN the track is empty or has one point THEN a detector SHALL return `[]`. The one exception is squawk: a single emergency-code point gives one event.
 5. NACp SHALL appear only in event `details` (as `nacp_range`) and in the compression report. It SHALL NOT be added as a telemetry column.
 6. No detector SHALL read wall-clock time (C6).
+
 

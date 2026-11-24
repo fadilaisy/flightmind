@@ -1,4 +1,4 @@
-import type { EventDetail, FlightEvent, Meta, RawRecord, Track } from "./types";
+import type { AskResponse, EventDetail, FlightEvent, Meta, RawRecord, Track } from "./types";
 
 export interface Api {
   meta(): Promise<Meta>;
@@ -6,6 +6,7 @@ export interface Api {
   event(id: string): Promise<EventDetail>;
   track(icao24: string): Promise<Track>;
   raw(rawRef: string): Promise<RawRecord>;
+  ask(question: string): Promise<AskResponse>;
 }
 
 export class ApiError extends Error {
@@ -32,6 +33,16 @@ export function httpApi(baseUrl: string): Api {
     events: () => get<FlightEvent[]>("/api/events"),
     event: (id) => get<EventDetail>(`/api/events/${encodeURIComponent(id)}`),
     track: (icao24) => get<Track>(`/api/tracks/${encodeURIComponent(icao24)}`),
+    ask: async (question) => {
+      const url = `${baseUrl}/api/ask`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+      if (!res.ok) throw new ApiError(res.status, url, `Request failed: ${res.status} ${url}`);
+      return (await res.json()) as AskResponse;
+    },
     raw: async (rawRef) => {
       try {
         return await get<RawRecord>(`/api/raw/${encodeURIComponent(rawRef)}`);

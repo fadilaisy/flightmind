@@ -25,6 +25,11 @@ export function mockApi(data: MockData): Api {
       if (!t) throw new ApiError(404, `/api/tracks/${icao24}`, `Track not found: ${icao24}`);
       return t;
     },
+    ask: async () => ({
+      answer_md: "",
+      citations: [],
+      status: "not_enough_evidence" as const,
+    }),
     raw: async (rawRef) => {
       const r = data.raw[rawRef];
       if (!r) throw new ApiError(404, `/api/raw/${rawRef}`, `Record not found: ${rawRef}`);

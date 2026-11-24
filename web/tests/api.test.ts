@@ -14,6 +14,12 @@ describe("mock api", () => {
     expect((await api.raw(track.points[3].raw_ref)).hex).toMatch(/^[0-9A-F]+$/);
   });
 
+  it("answers not_enough_evidence from the mock ask", async () => {
+    const r = await api.ask("anything");
+    expect(r.status).toBe("not_enough_evidence");
+    expect(r.citations).toEqual([]);
+  });
+
   it("returns a clear message for an unknown raw_ref", async () => {
     await expect(api.raw("rec01:999")).rejects.toThrow("Record not found: rec01:999");
   });

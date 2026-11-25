@@ -13,7 +13,7 @@ Design source: Figma "Prototype v2 · light"
 - **Scrubber:** the shared time control. Its value is one timestamp.
 
 ## R1. App shell and tabs
-1. The app shows three tabs: Map, 3D, Records. Map is selected on load.
+1. The app shows three top tabs: Events, Trajectory, Records. Trajectory is selected on load. A Map / 3D / Profile toggle sits inside Trajectory.
 2. The selected tab is kept in the URL so a link reopens it.
 3. All labels use sentence case. No all-caps labels, no trailing arrows.
 4. The header shows `mode` and `sim_time` from `/api/meta`, with a "sample data" label while the mock API is used.

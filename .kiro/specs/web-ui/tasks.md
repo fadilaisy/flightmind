@@ -16,7 +16,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
 
 - [x] 3. Tokens and shell with tabs
   - Files: `src/styles/tokens.css`, `src/strings.ts`, `src/views/Shell.tsx`
-  - Check: three tabs; Map is the default; the tab shows in the URL; header shows mode, sim_time and "sample data".
+  - Check: top tabs Events, Trajectory, Records; Trajectory is the default; a Map / 3D / Profile toggle sits inside Trajectory; the tab shows in the URL; header shows mode, sim_time and "sample data".
   - Reqs: R1, R8.1
 
 - [x] 4. Store

@@ -126,4 +126,4 @@ File RSgriaKxz59KrI9eWvrsr0. Tokens checked against get_variable_defs on 58:1847
 
 | Frame | Node id | Task | Differences |
 | --- | --- | --- | --- |
-| 5 · Trajectory, Map (default), App bar | 58:1847 (bar 58:1848) | 3 | No logo mark. No Load recording button or file name (frames 1 to 3 out of scope). Tabs are Map, 3D, Records, not Clean, Events, Trajectory, Export. Header adds sim_time and a sample data label. |
+| 5 Â· Trajectory, Map (default), App bar | 58:1847 (bar 58:1848) | 3 | No logo mark. No Load recording button or file name (frames 1 to 3 out of scope). Tabs are Map, 3D, Records, not Clean, Events, Trajectory, Export. Header adds sim_time and a sample data label. |

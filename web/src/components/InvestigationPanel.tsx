@@ -1,9 +1,11 @@
 import { useState } from "react";
 import type { Api } from "../api/client";
 import type { AskResponse, EventDetail } from "../api/types";
+import { buildAskQuestion } from "../domain/askContext";
 import { rawRefCitation } from "../domain/citations";
 import { EVENT_LABEL } from "../domain/eventLabels";
-import { STATE_LABEL, type EventState } from "../domain/eventState";
+import { STATE_BADGE, STATE_LABEL, type EventState } from "../domain/eventState";
+import { formatWindow, formatWindowTitle } from "../domain/format";
 import { STR } from "../strings";
 import { CitationChip } from "./CitationChip";
 
@@ -24,11 +26,13 @@ export function InvestigationPanel({ api, event, state, onSetState, onOpenRecord
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!question.trim()) return;
+    const typed = question.trim();
+    if (!typed) return;
     setBusy(true);
     setError(null);
     try {
-      setAnswer(await api.ask(question.trim()));
+      // The API takes only `question`; the event goes in as a prefix the user never sees.
+      setAnswer(await api.ask(buildAskQuestion(event, typed)));
     } catch (err) {
       setAnswer(null);
       setError((err as Error).message);
@@ -38,18 +42,17 @@ export function InvestigationPanel({ api, event, state, onSetState, onOpenRecord
   }
 
   const who = event.callsign ?? event.icao24;
-  const stateBadge = state === "confirmed" ? "b-ok" : "b-grey";
 
   return (
-    <>
-      <section className="card" aria-label="Investigation panel">
-        <span className={`badge ${stateBadge}`}>{STATE_LABEL[state]}</span>
+    <section aria-label="Investigation panel">
+      <div className="block">
+        <span className={`badge ${STATE_BADGE[state]}`}>{STATE_LABEL[state]}</span>
         <h2 style={{ marginTop: 8 }}>
           {who} · {EVENT_LABEL[event.type]}
         </h2>
-        <h3 style={{ marginTop: 12 }}>{STR.whyFlagged}</h3>
-        <p className="mono" style={{ margin: "0 0 12px" }}>
-          {event.start_ts} to {event.end_ts}
+        <h3>{STR.flaggedWindow}</h3>
+        <p className="mono" style={{ margin: "0 0 12px" }} title={formatWindowTitle(event.start_ts, event.end_ts)}>
+          {formatWindow(event.start_ts, event.end_ts)}
         </p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {state === "to_review" ? (
@@ -67,9 +70,9 @@ export function InvestigationPanel({ api, event, state, onSetState, onOpenRecord
             </button>
           )}
         </div>
-      </section>
+      </div>
 
-      <section className="card" aria-label={STR.recordsInWindow}>
+      <div className="block">
         <h3>
           {STR.recordsInWindow} ({event.raw_refs.length})
         </h3>
@@ -78,9 +81,9 @@ export function InvestigationPanel({ api, event, state, onSetState, onOpenRecord
             <CitationChip key={r} citation={rawRefCitation(r)} onOpenRecord={onOpenRecord} onOpenEvent={onOpenEvent} />
           ))}
         </div>
-      </section>
+      </div>
 
-      <section className="card">
+      <div className="block">
         <form onSubmit={submit} style={{ display: "flex", gap: 6 }}>
           <input
             aria-label="Ask about this event"
@@ -105,7 +108,7 @@ export function InvestigationPanel({ api, event, state, onSetState, onOpenRecord
             </div>
           </div>
         )}
-      </section>
-    </>
+      </div>
+    </section>
   );
 }

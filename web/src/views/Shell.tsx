@@ -41,10 +41,14 @@ export function Shell({
     api.meta().then(setMeta).catch(() => setMetaFailed(true));
   }, [api]);
 
-  const open = useCallback((next: Tab) => {
-    window.history.pushState(null, "", tabUrl(window.location.search, next));
-    setTab(next);
-  }, []);
+  const open = useCallback(
+    (next: Tab) => {
+      if (next === tab) return;
+      window.history.pushState(null, "", tabUrl(window.location.search, next));
+      setTab(next);
+    },
+    [tab],
+  );
 
   const recording = meta?.recordings?.[0];
 
@@ -53,8 +57,8 @@ export function Shell({
       <header className="appbar">
         <div className="logo">
           <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M2 14 L10 4 L18 14" fill="none" stroke="#1d4ed8" strokeWidth="2" />
-            <circle cx="10" cy="4" r="2" fill="#0aa2c0" />
+            <path d="M2 14 L10 4 L18 14" />
+            <circle cx="10" cy="4" r="2" />
           </svg>
           {STR.brand}
         </div>
@@ -63,7 +67,9 @@ export function Shell({
           {TABS.map((t) => (
             <button
               key={t}
+              id={`tab-${t}`}
               role="tab"
+              aria-controls="tabpanel"
               className={t === tab ? "on" : undefined}
               aria-selected={t === tab}
               onClick={() => open(t)}
@@ -73,19 +79,27 @@ export function Shell({
           ))}
         </nav>
         <div className="spacer" />
-        {meta && (
-          <span className="muted" style={{ fontSize: 12.5 }}>
-            {meta.mode === "live" ? STR.modeLive : STR.modeReplay}
-            {" · "}
-            <span className="mono" title={meta.sim_time}>
-              {STR.simTime} {meta.sim_time.slice(11, 19)} UTC
-            </span>
-          </span>
-        )}
+        <span className="muted" style={{ fontSize: 12.5 }}>
+          {[
+            meta && (meta.mode === "live" ? STR.modeLive : STR.modeReplay),
+            usingSample && STR.sampleData,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+          {meta && (
+            <>
+              {" · "}
+              <span title={meta.sim_time}>
+                {STR.simTime} {meta.sim_time.slice(11, 19)} UTC
+              </span>
+            </>
+          )}
+        </span>
         {metaFailed && <span role="alert">{STR.metaUnavailable}</span>}
-        {usingSample && <span className="badge b-grey">{STR.sampleData}</span>}
       </header>
-      <div role="tabpanel">{children(tab)}</div>
+      <div id="tabpanel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
+        {children(tab)}
+      </div>
     </>
   );
 }

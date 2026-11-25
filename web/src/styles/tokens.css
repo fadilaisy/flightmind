@@ -97,6 +97,7 @@ nav.tabs button.on { color: var(--ink); border-color: var(--primary); font-weigh
 .b-event { background: var(--event-soft); color: #8a5600; }
 .b-red { background: var(--red-soft); color: var(--red); }
 .b-ok { background: var(--green-soft); color: var(--green); }
+.b-dim { background: var(--panel); color: var(--faint); border: 1px solid var(--line); }
 .b-grey { background: #eef1f5; color: var(--muted); }
 .chip {
   font-family: var(--mono); font-size: 12px; border: 1px solid #b9d9e3; background: var(--track-soft);
@@ -107,7 +108,9 @@ nav.tabs button.on { color: var(--ink); border-color: var(--primary); font-weigh
 
 .three { display: grid; grid-template-columns: 290px 1fr 310px; height: calc(100vh - 52px); }
 .side { background: var(--panel); border-right: 1px solid var(--line); overflow: auto; display: flex; flex-direction: column; }
-.side.r { border-right: 0; border-left: 1px solid var(--line); background: var(--bg); gap: 12px; padding: 16px; }
+.side.r { border-right: 0; border-left: 1px solid var(--line); }
+.block { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.block.slot { height: 120px; flex: none; }
 .sidehead { padding: 14px 16px 8px; }
 .search { margin: 0 16px 10px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
 .filters { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 16px 10px; }
@@ -127,10 +130,11 @@ nav.tabs button.on { color: var(--ink); border-color: var(--primary); font-weigh
 .viewport { position: relative; border: 1px solid var(--line); border-radius: 8px; background: #eaf1f8; height: 430px; overflow: hidden; }
 .chartbox { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); height: 138px; }
 .scrub { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); height: 44px; }
-.slot { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
 .why li { margin: 4px 0; }
 .claim { padding: 10px 0; border-top: 1px solid #edf1f6; }
 
 button:focus-visible, input:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .data { font-family: var(--font-data); font-size: 13px; line-height: 20px; }
 .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 24px; }
+.logo path { fill: none; stroke: var(--primary); stroke-width: 2; }
+.logo circle { fill: var(--track); }

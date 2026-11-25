@@ -34,3 +34,7 @@ export function saveState(storage: KeyValueStorage, eventId: string, state: Even
   else all[eventId] = state;
   storage.setItem(STORAGE_KEY, JSON.stringify(all));
 }
+
+export function loadAllStates(storage: KeyValueStorage): Record<string, EventState> {
+  return { ...readAll(storage) };
+}

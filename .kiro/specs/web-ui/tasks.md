@@ -19,7 +19,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: three tabs; Map is the default; the tab shows in the URL; header shows mode, sim_time and "sample data".
   - Reqs: R1, R8.1
 
-- [ ] 4. Store
+- [x] 4. Store
   - Files: `src/state/store.ts`
   - Check: unit test: setting `scrubTs` or `rawRef` updates all subscribers; event state survives a reload.
   - Reqs: R3.8, R4.4, R5.2

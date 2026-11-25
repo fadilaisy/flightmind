@@ -66,6 +66,11 @@ export function getStore(): Store {
   return shared;
 }
 
+/**
+ * The selector must return a single value (a string, number or a stored object), never a new
+ * object or array built on each call. useSyncExternalStore compares with Object.is, so a fresh
+ * object every time loops forever. Call useStore once per value.
+ */
 export function useStore<T>(select: (s: AppState) => T): T {
   const s = getStore();
   return useSyncExternalStore(s.subscribe, () => select(s.getState()));

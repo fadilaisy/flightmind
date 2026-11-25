@@ -32,7 +32,13 @@ export function App() {
   useEffect(() => {
     api
       .events()
-      .then(setEvents)
+      .then((list) => {
+        setEvents(list);
+        // Open the first event on load, unless one is already selected.
+        if (list.length > 0 && getStore().getState().eventId === null) {
+          getStore().selectEvent(list[0].id, list[0].icao24);
+        }
+      })
       .catch((e: Error) => setError(e.message));
   }, [api]);
 

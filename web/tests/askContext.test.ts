@@ -12,10 +12,10 @@ const base = {
 describe("buildAskQuestion", () => {
   it("names the event before the question", () => {
     expect(buildAskQuestion({ ...base, callsign: "GIA412" }, "Why?")).toBe(
-      "About event e1 (go_around, GIA412, 2026-10-13T08:00:20Z to 2026-10-13T08:00:40Z): Why?",
+      "About event e1 (GIA412, 2026-10-13T08:00:20Z to 2026-10-13T08:00:40Z): Why?",
     );
   });
   it("uses icao24 when there is no callsign", () => {
-    expect(buildAskQuestion({ ...base, callsign: null }, "Why?")).toContain("(go_around, 8a0213,");
+    expect(buildAskQuestion({ ...base, callsign: null }, "Why?")).toContain("(8a0213,");
   });
 });

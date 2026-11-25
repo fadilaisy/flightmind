@@ -65,8 +65,15 @@ Errors come back as tool errors with a readable message, and the server keeps ru
 | Body not JSON | `The API answered 200 but the body was not valid JSON.` |
 | Empty `icao24` | `icao24 is required, for example 8A0F21.` |
 
-Not yet verified in a Kiro window (task 7 of the spec): that workspace servers start in the
-workspace root, and whether Kiro Crew reads `.kiro/settings/mcp.json` at all.
+Checked on 2026-11-25 with the official `mcp` Python SDK client over stdio (not with Kiro):
+six calls against the mock API, all as expected. Known aircraft returns 60 points with a
+`raw_ref` each, `from` narrows it to 30, an unknown aircraft, a missing `icao24` and a stopped
+API each return a tool error, and the server answered correctly after the API came back.
+
+Not yet verified in Kiro (task 7 of the spec): that workspace servers start in the workspace
+root, and whether Kiro Crew reads `.kiro/settings/mcp.json` at all. Until it is checked, assume
+Kiro Crew does not, and add the server by hand in Customize, Connections, MCP Servers with an
+absolute path to `run.py`.
 
 Notes:
 

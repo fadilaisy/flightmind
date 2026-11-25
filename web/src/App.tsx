@@ -1,15 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createApi, type Api } from "./api/client";
 import { mockApi, type MockData } from "./api/mockClient";
-import type { EventDetail, FlightEvent } from "./api/types";
-import { EventFeed } from "./components/EventFeed";
-import { InvestigationPanel } from "./components/InvestigationPanel";
-import { RawRecordViewer } from "./components/RawRecordViewer";
-import { EVENT_LABEL } from "./domain/eventLabels";
-import { formatWindow, formatWindowTitle } from "./domain/format";
+import type { FlightEvent } from "./api/types";
+import { StateBox } from "./components/StateBox";
 import { getStore, useStore } from "./state/store";
 import { STR } from "./strings";
+import { EventsView } from "./views/EventsView";
 import { Shell } from "./views/Shell";
+import { TrajectoryView } from "./views/TrajectoryView";
 import mini from "../tests/fixtures/mini.json";
 
 export function App() {
@@ -19,17 +17,16 @@ export function App() {
     [],
   );
   const usingSample = !import.meta.env.VITE_API_BASE;
-  const store = getStore();
 
   const eventId = useStore((s) => s.eventId);
-  const rawRef = useStore((s) => s.rawRef);
   const eventStates = useStore((s) => s.eventStates);
 
-  const [events, setEvents] = useState<FlightEvent[]>([]);
-  const [selected, setSelected] = useState<EventDetail | null>(null);
+  const [events, setEvents] = useState<FlightEvent[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setError(null);
+    setEvents(null);
     api
       .events()
       .then((list) => {
@@ -42,75 +39,35 @@ export function App() {
       .catch((e: Error) => setError(e.message));
   }, [api]);
 
-  // The store holds which event is selected; this loads its detail.
-  useEffect(() => {
-    if (!eventId) {
-      setSelected(null);
-      return;
+  useEffect(load, [load]);
+
+  function body(tab: string) {
+    if (error) {
+      return (
+        <div className="wrap">
+          <StateBox kind="error" title={STR.apiUnreachable} text={error}>
+            <button type="button" className="btn sm" onClick={load}>{STR.retry}</button>
+          </StateBox>
+        </div>
+      );
     }
-    let current = true;
-    api
-      .event(eventId)
-      .then((d) => current && setSelected(d))
-      .catch((e: Error) => current && setError(e.message));
-    return () => {
-      current = false;
-    };
-  }, [api, eventId]);
-
-  function select(id: string) {
-    setError(null);
-    const e = events.find((x) => x.id === id) ?? selected;
-    store.selectEvent(id, e && e.id === id ? e.icao24 : null);
+    if (events === null) {
+      return (
+        <div className="wrap">
+          <StateBox kind="loading" title={STR.loadingEvents} />
+        </div>
+      );
+    }
+    if (tab === "events") return <EventsView events={events} states={eventStates} />;
+    if (tab === "trajectory") {
+      return <TrajectoryView api={api} events={events} eventId={eventId} states={eventStates} />;
+    }
+    return <p style={{ padding: 16 }}>{STR.tabPending}</p>;
   }
-
-  const trajectory = (
-    <div className="three">
-      <EventFeed events={events} states={eventStates} selectedId={eventId} onSelect={select} />
-      <div className="center">
-        {error && <p role="alert">{error}</p>}
-        <div className="titlebar">
-          <h2>{selected ? (selected.callsign ?? selected.icao24) : STR.eventsTitle}</h2>
-          {selected && (
-            <span className="mono muted" title={formatWindowTitle(selected.start_ts, selected.end_ts)}>
-              {selected.icao24} · {EVENT_LABEL[selected.type]} · {formatWindow(selected.start_ts, selected.end_ts)}
-            </span>
-          )}
-          <div className="spacer" />
-          <div className="seg">
-            <button className="on">{STR.viewMap}</button>
-            <button disabled title={STR.notBuilt}>{STR.view3d}</button>
-            <button disabled title={STR.notBuilt}>{STR.viewProfile}</button>
-          </div>
-        </div>
-        <div className="viewport" aria-label="Map area" />
-        <div className="chartbox" aria-label="Charts area" />
-        <div className="scrub" aria-label="Scrubber area" />
-        {rawRef && <RawRecordViewer api={api} rawRef={rawRef} onClose={() => store.setRawRef(null)} />}
-      </div>
-      <aside className="side r" aria-label="Investigation">
-        <div className="block slot" aria-label="Compression card area">
-          <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>{STR.compressionEmpty}</p>
-        </div>
-        {selected ? (
-          <InvestigationPanel
-            api={api}
-            event={selected}
-            state={eventStates[selected.id] ?? "to_review"}
-            onSetState={store.setEventState}
-            onOpenRecord={store.setRawRef}
-            onOpenEvent={select}
-          />
-        ) : (
-          <p className="muted block">{STR.selectEvent}</p>
-        )}
-      </aside>
-    </div>
-  );
 
   return (
     <Shell api={api} usingSample={usingSample}>
-      {(tab) => (tab === "trajectory" ? trajectory : <p style={{ padding: 16 }}>{STR.tabPending}</p>)}
+      {body}
     </Shell>
   );
 }

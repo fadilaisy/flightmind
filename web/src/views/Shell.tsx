@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import type { Api } from "../api/client";
 import type { Meta } from "../api/types";
 import { STR, TAB_LABEL } from "../strings";
+import { navigate } from "./nav";
 
 export type Tab = keyof typeof TAB_LABEL;
 export const TABS = Object.keys(TAB_LABEL) as Tab[];
@@ -44,8 +45,7 @@ export function Shell({
   const open = useCallback(
     (next: Tab) => {
       if (next === tab) return;
-      window.history.pushState(null, "", tabUrl(window.location.search, next));
-      setTab(next);
+      navigate({ tab: next });
     },
     [tab],
   );

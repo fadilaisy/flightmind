@@ -138,3 +138,19 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--focus-ring)
 .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 24px; }
 .logo path { fill: none; stroke: var(--primary); stroke-width: 2; }
 .logo circle { fill: var(--track); }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 16px 0; }
+.stats .big { font-size: 32px; line-height: 40px; font-weight: 600; letter-spacing: -1px; }
+.stats .big.ok { color: var(--green); }
+.eventsbar { padding-top: 12px; border-bottom: 1px solid var(--line); }
+.eventsbar .search { max-width: 360px; display: block; }
+tr.confirmed td { background: var(--green-soft); }
+tr.dismissed td { color: var(--faint); }
+.statebox { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 16px; }
+.statebox.error { border-color: var(--red); }
+.statebox p { margin: 4px 0 8px; }
+table { border-collapse: collapse; width: 100%; }
+th { font-weight: 500; color: var(--muted); text-align: left; font-size: 12.5px; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+td { padding: 7px 8px; border-bottom: 1px solid #edf1f6; vertical-align: top; }
+tr.click { cursor: pointer; }
+tr.click:hover td { background: #f0f4fa; }
+tr.sel td { background: var(--primary-soft); }

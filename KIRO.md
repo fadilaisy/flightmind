@@ -1,4 +1,4 @@
-﻿# How we built FlightMind with Kiro
+# How we built FlightMind with Kiro
 
 One line per finished spec task or Jira ticket (spec tasks are written by the "log ticked
 task" hook), plus a short review every Sunday. This file is the source for the Devpost Kiro

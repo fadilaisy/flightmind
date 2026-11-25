@@ -70,10 +70,19 @@ six calls against the mock API, all as expected. Known aircraft returns 60 point
 `raw_ref` each, `from` narrows it to 30, an unknown aircraft, a missing `icao24` and a stopped
 API each return a tool error, and the server answered correctly after the API came back.
 
-Not yet verified in Kiro (task 7 of the spec): that workspace servers start in the workspace
-root, and whether Kiro Crew reads `.kiro/settings/mcp.json` at all. Until it is checked, assume
-Kiro Crew does not, and add the server by hand in Customize, Connections, MCP Servers with an
-absolute path to `run.py`.
+Checked in Kiro on 2026-11-25 (task 7 of the spec, clip in `docs/kiro/scrum-34/`):
+
+- The Kiro IDE skips the workspace `.kiro/settings/mcp.json` while the folder is in Restricted
+  Mode. Click "Restricted Mode" in the status bar, choose Trust, then run Developer: Reload
+  Window. `flightmind` then shows as Connected (1 tool) under MCP Servers.
+- The relative path in `args` works, so Kiro starts workspace servers in the workspace root.
+- Through Kiro's chat CLI (`kiro-cli chat` from the repo root, which reads the same file):
+  `8A0F21` returned 60 points with `raw_ref`, `ZZZZZZ` returned the unknown-aircraft message,
+  and with the API stopped it returned the unreachable message. The server stayed up.
+
+Still not checked: whether Kiro Crew reads `.kiro/settings/mcp.json`. Until it is, assume it
+does not, and add the server by hand in Customize, Connections, MCP Servers with an absolute
+path to `run.py`.
 
 Notes:
 

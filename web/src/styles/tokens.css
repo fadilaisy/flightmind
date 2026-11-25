@@ -1,0 +1,66 @@
+/* Tokens from Figma "Foundations" (see .kiro/specs/web-ui/design.md). */
+:root {
+  --blue-100: #caf0f8;
+  --blue-200: #ade8f4;
+  --blue-300: #90e0ef;
+  --blue-400: #48cae4;
+  --blue-500: #00b4d8;
+  --blue-700: #0077b6;
+  --blue-800: #023e8a;
+  --blue-900: #03045e;
+  --bg-canvas: #f3f3f3;
+  --bg-surface: #ffffff;
+  --bg-raised: #e4f8ff;
+  --border-subtle: #adE8f4;
+  --border-strong: #0077b6;
+  --text-primary: #03045e;
+  --text-secondary: #383838;
+  --text-muted: #525252;
+  --event-amber: #f2b13c;
+  --alert-red: #f0524f;
+  --ok-green: #4cc38a;
+  --cite-text: #023e8a;
+  --cite-bg: #e4f8ff;
+  --cite-border: #90e0ef;
+  --focus-ring: #0077b6;
+  --shadow-soft: 0 1px 3px rgba(3, 4, 94, 0.12);
+  --font-text: Inter, system-ui, sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, monospace;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font: 14px/20px var(--font-text);
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: var(--shadow-soft);
+  padding: 12px;
+}
+
+.data {
+  font-family: var(--font-data);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.chip {
+  font: 11px/16px var(--font-data);
+  color: var(--cite-text);
+  background: var(--cite-bg);
+  border: 1px solid var(--cite-border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  cursor: pointer;
+}

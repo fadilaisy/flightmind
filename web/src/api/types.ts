@@ -7,3 +7,4 @@ export type Track = components["schemas"]["Track"];
 export type FlightEvent = components["schemas"]["Event"];
 export type EventDetail = components["schemas"]["EventDetail"];
 export type RawRecord = components["schemas"]["RawRecord"];
+export type AskResponse = components["schemas"]["AskResponse"];

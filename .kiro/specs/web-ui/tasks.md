@@ -64,7 +64,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: line and points in three styles; marker follows the scrubber; exaggeration factor shown; a 5,000-point track scrubs without lag.
   - Reqs: R5, R8.3
 
-- [ ] 13. Item metadata table
+- [x] 13. Item metadata table
   - Files: `src/domain/itemMeta.ts`, `tests/itemMeta.test.ts`
   - Check: I021/071 and I021/040 have name, unit, LSB and datum where they apply; unknown items return the raw value only.
   - Reqs: R6.3, R6.7

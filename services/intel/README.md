@@ -80,6 +80,9 @@ Checked in Kiro on 2026-11-25 (task 7 of the spec, clip in `docs/kiro/scrum-34/`
   `8A0F21` returned 60 points with `raw_ref`, `ZZZZZZ` returned the unknown-aircraft message,
   and with the API stopped it returned the unreachable message. The server stayed up.
 
+The calls above were driven through `kiro-cli` by Claude Code, not typed into the IDE chat
+panel by a person. That check and the Kiro Crew one below are task 9 of the spec.
+
 Still not checked: whether Kiro Crew reads `.kiro/settings/mcp.json`. Until it is, assume it
 does not, and add the server by hand in Customize, Connections, MCP Servers with an absolute
 path to `run.py`.

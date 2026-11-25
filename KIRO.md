@@ -1,4 +1,4 @@
-# How we built FlightMind with Kiro
+﻿# How we built FlightMind with Kiro
 
 One line per finished spec task or Jira ticket (spec tasks are written by the "log ticked
 task" hook), plus a short review every Sunday. This file is the source for the Devpost Kiro
@@ -21,6 +21,7 @@ The spec/task column takes a spec and task (`ingest/2.3`) or a Jira key plus `(c
 2026-11-17 | Role 1 | web-ui/2 | API client typed from contracts/types.ts, mock client, sample fixture, 2 passing tests, "Record not found: <raw_ref>" on 404 | nothing
 2026-11-22 | Fadil | SCRUM-19 (spec) hooks and reviewer agent | Kiro: spec only; hooks and agent files hand-written in chat, not yet re-saved in the Agent Hooks panel (clip pending) | hook and agent files typed by hand from setup-prompts.md; re-save in the panel is still to do
 2026-11-22 | Fadil | SCRUM-19 (chat) Kiro Crew Stop hook | We build in Kiro Crew, which does not read .kiro/hooks/, so the contract-types guard was added as a Crew Stop hook in the dashboard. Demo: the Crew agent edited contracts/openapi.yaml, the hook continued it once ("Continued by a hook"), and the agent ran the openapi-typescript generator itself | the hook script scripts/crew-hooks/contract-types-guard.py was written outside Kiro
+2026-11-25 | Fadil | SCRUM-40 (spec) event feed and investigation panel | Kiro wrote the spec (6 tasks) and the web code: event feed with states, investigation panel with ask box and citation chips, raw record viewer with hex and ASCII; build and 11 tests pass | by hand: TODO, tasks 3 to 5 not yet checked in a browser against the SCRUM-33 mock API
 
 ## Trailer corrections
 

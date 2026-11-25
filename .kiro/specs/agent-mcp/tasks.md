@@ -49,7 +49,8 @@ Implements `requirements.md` and `design.md` in this folder. All paths are relat
   - A person must do this task at a Kiro window. If no one is available, leave it unchecked and say so in the final report; do not mark it done from the tests alone.
   - _Requirements: 3.1, 3.2, 5.1, 5.4_
 
-- [ ] 8. Hand-offs and log
+- [x] 8. Hand-offs and log
+  - **Result (2026-11-26):** Role 1 issue for the root README line is fadilaisy/flightmind#16. The SCRUM-34 lines are in `KIRO.md` (agent-mcp and agent-mcp/7). Commits use the `Kiro:` trailer; the task 7 work is in PR #15.
   - Open an issue for Role 1 asking for the `mcp` and `httpx` line in the root `README.md` third-party list, noting nothing else changes there.
   - Add the SCRUM-34 line to `KIRO.md` following the existing row format, with the date, Role 3 and the `(chat)` task suffix used for SCRUM-33.
   - Commit with the `Kiro:` trailer from `.gitmessage`. Stage files by name, not `git add .`.

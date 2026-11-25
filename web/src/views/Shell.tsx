@@ -6,10 +6,10 @@ import { STR, TAB_LABEL } from "../strings";
 export type Tab = keyof typeof TAB_LABEL;
 export const TABS = Object.keys(TAB_LABEL) as Tab[];
 
-/** Reads ?tab= from a query string. Anything unknown falls back to the Map tab. */
+/** Reads ?tab= from a query string. Anything unknown falls back to Trajectory. */
 export function parseTab(search: string): Tab {
   const value = new URLSearchParams(search).get("tab");
-  return TABS.find((t) => t === value) ?? "map";
+  return TABS.find((t) => t === value) ?? "trajectory";
 }
 
 export function tabUrl(search: string, tab: Tab): string {
@@ -46,16 +46,25 @@ export function Shell({
     setTab(next);
   }, []);
 
+  const recording = meta?.recordings?.[0];
+
   return (
-    <div className="shell">
+    <>
       <header className="appbar">
-        <span className="brand">{STR.brand}</span>
-        <nav role="tablist" aria-label={STR.tabsLabel}>
+        <div className="logo">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M2 14 L10 4 L18 14" fill="none" stroke="#1d4ed8" strokeWidth="2" />
+            <circle cx="10" cy="4" r="2" fill="#0aa2c0" />
+          </svg>
+          {STR.brand}
+        </div>
+        {meta && <span className="file">{recording ?? STR.noRecording}</span>}
+        <nav className="tabs" role="tablist" aria-label={STR.tabsLabel}>
           {TABS.map((t) => (
             <button
               key={t}
               role="tab"
-              className="tab"
+              className={t === tab ? "on" : undefined}
               aria-selected={t === tab}
               onClick={() => open(t)}
             >
@@ -63,24 +72,20 @@ export function Shell({
             </button>
           ))}
         </nav>
-        <span className="spacer" />
-        <div className="status">
-          {meta && (
-            <>
-              <span>
-                <span className="dot" aria-hidden="true" />
-                {meta.mode === "live" ? STR.modeLive : STR.modeReplay}
-              </span>
-              <span className="data" title={meta.sim_time}>
-                {STR.simTime} {meta.sim_time.slice(11, 19)} UTC
-              </span>
-            </>
-          )}
-          {metaFailed && <span role="alert">{STR.metaUnavailable}</span>}
-          {usingSample && <span className="sample">{STR.sampleData}</span>}
-        </div>
+        <div className="spacer" />
+        {meta && (
+          <span className="muted" style={{ fontSize: 12.5 }}>
+            {meta.mode === "live" ? STR.modeLive : STR.modeReplay}
+            {" · "}
+            <span className="mono" title={meta.sim_time}>
+              {STR.simTime} {meta.sim_time.slice(11, 19)} UTC
+            </span>
+          </span>
+        )}
+        {metaFailed && <span role="alert">{STR.metaUnavailable}</span>}
+        {usingSample && <span className="badge b-grey">{STR.sampleData}</span>}
       </header>
       <div role="tabpanel">{children(tab)}</div>
-    </div>
+    </>
   );
 }

@@ -1,60 +1,83 @@
+import { useState } from "react";
 import type { FlightEvent } from "../api/types";
 import { EVENT_LABEL, isSquawk } from "../domain/eventLabels";
 import { STATE_LABEL, type EventState } from "../domain/eventState";
+import { STR } from "../strings";
 
 interface Props {
   events: FlightEvent[];
   states: Record<string, EventState>;
   selectedId: string | null;
   onSelect: (id: string) => void;
-  onSetState: (id: string, state: EventState) => void;
 }
 
-export function EventFeed({ events, states, selectedId, onSelect, onSetState }: Props) {
-  if (events.length === 0) return <p>No events in this recording.</p>;
+export function EventFeed({ events, states, selectedId, onSelect }: Props) {
+  const [type, setType] = useState<FlightEvent["type"] | "all">("all");
+  const [query, setQuery] = useState("");
+
+  const stateOf = (id: string): EventState => states[id] ?? "to_review";
+  const confirmed = events.filter((e) => stateOf(e.id) === "confirmed").length;
+  const dismissed = events.filter((e) => stateOf(e.id) === "dismissed").length;
+  const types = [...new Set(events.map((e) => e.type))];
+  const q = query.trim().toLowerCase();
+  const shown = events.filter(
+    (e) =>
+      (type === "all" || e.type === type) &&
+      (!q || e.icao24.toLowerCase().includes(q) || (e.callsign ?? "").toLowerCase().includes(q)),
+  );
+
   return (
-    <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 8 }}>
-      {events.map((e) => {
-        const state = states[e.id] ?? "to_review";
-        const selected = e.id === selectedId;
-        return (
-          <li
+    <aside className="side" aria-label={STR.eventsTitle}>
+      <div className="sidehead">
+        <h2 style={{ margin: 0 }}>{STR.eventsTitle}</h2>
+        <div className="muted" style={{ fontSize: 12.5 }}>
+          {events.length} flagged · {confirmed} confirmed · {dismissed} dismissed
+        </div>
+      </div>
+      <input
+        className="search"
+        type="search"
+        aria-label={STR.searchLabel}
+        placeholder={STR.searchLabel}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <div className="filters">
+        <button type="button" className={type === "all" ? "on" : undefined} onClick={() => setType("all")}>
+          {STR.filterAll}
+        </button>
+        {types.map((t) => (
+          <button key={t} type="button" className={type === t ? "on" : undefined} onClick={() => setType(t)}>
+            {EVENT_LABEL[t]}
+          </button>
+        ))}
+      </div>
+      <div>
+        {events.length === 0 && <p style={{ padding: "0 16px" }}>{STR.noEvents}</p>}
+        {events.length > 0 && shown.length === 0 && <p style={{ padding: "0 16px" }}>{STR.noMatches}</p>}
+        {shown.map((e) => (
+          <button
             key={e.id}
-            className="card"
-            style={{
-              borderColor: selected ? "var(--border-strong)" : undefined,
-              borderLeft: `4px solid ${isSquawk(e.type) ? "var(--alert-red)" : "var(--event-amber)"}`,
-            }}
+            type="button"
+            className={`evrow${e.id === selectedId ? " sel" : ""}`}
+            onClick={() => onSelect(e.id)}
           >
-            <button
-              type="button"
-              onClick={() => onSelect(e.id)}
-              style={{ all: "unset", cursor: "pointer", display: "block", width: "100%" }}
-            >
-              <strong>{EVENT_LABEL[e.type]}</strong>
-              <div className="data">
-                {e.callsign ?? "no callsign"} · {e.icao24}
-                {e.airport ? ` · ${e.airport}` : ""}
-              </div>
-              <div className="data" style={{ color: "var(--text-muted)" }}>
-                {e.start_ts} to {e.end_ts} · {e.raw_refs.length} records
-              </div>
-            </button>
-            <div style={{ display: "flex", gap: 6, marginTop: 8, alignItems: "center" }}>
-              <span>{STATE_LABEL[state]}</span>
-              <button type="button" onClick={() => onSetState(e.id, "confirmed")} disabled={state === "confirmed"}>
-                Confirm
-              </button>
-              <button type="button" onClick={() => onSetState(e.id, "dismissed")} disabled={state === "dismissed"}>
-                Dismiss
-              </button>
-              <button type="button" onClick={() => onSetState(e.id, "to_review")} disabled={state === "to_review"}>
-                Back to review
-              </button>
+            <div className="top">
+              <span className={`badge ${isSquawk(e.type) ? "b-red" : "b-event"}`}>{EVENT_LABEL[e.type]}</span>
+              <span className="mono muted" title={e.start_ts}>
+                {e.start_ts.slice(11, 19)}Z
+              </span>
             </div>
-          </li>
-        );
-      })}
-    </ul>
+            <div className="who">
+              {e.callsign ?? STR.noCallsign} <span className="mono muted" style={{ fontWeight: 400 }}>{e.icao24}</span>
+            </div>
+            <div className="st">
+              {STATE_LABEL[stateOf(e.id)]} · {e.raw_refs.length} {STR.records}
+            </div>
+          </button>
+        ))}
+      </div>
+      <div className="foot">{STR.eventsDisclaimer}</div>
+    </aside>
   );
 }

@@ -6,6 +6,8 @@ import { EventFeed } from "./components/EventFeed";
 import { InvestigationPanel } from "./components/InvestigationPanel";
 import { RawRecordViewer } from "./components/RawRecordViewer";
 import { loadState, saveState, type EventState } from "./domain/eventState";
+import { Shell } from "./views/Shell";
+import { STR } from "./strings";
 import mini from "../tests/fixtures/mini.json";
 
 export function App() {
@@ -42,11 +44,11 @@ export function App() {
     setStates((prev) => ({ ...prev, [id]: s }));
   }
 
-  return (
+  const mapTab = (
     <main style={{ display: "grid", gridTemplateColumns: "360px 1fr", gap: 16, padding: 16 }}>
       <div>
         <h1 style={{ font: "600 20px/28px var(--font-text)", margin: "0 0 8px" }}>
-          Events{usingSample ? " (sample data)" : ""}
+          Events
         </h1>
         {error && <p role="alert">{error}</p>}
         <EventFeed
@@ -66,5 +68,11 @@ export function App() {
         {rawRef && <RawRecordViewer api={api} rawRef={rawRef} onClose={() => setRawRef(null)} />}
       </div>
     </main>
+  );
+
+  return (
+    <Shell api={api} usingSample={usingSample}>
+      {(tab) => (tab === "map" ? mapTab : <p style={{ padding: 16 }}>{STR.tabPending}</p>)}
+    </Shell>
   );
 }

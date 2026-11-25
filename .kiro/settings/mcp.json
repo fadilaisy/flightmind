@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "flightmind": {
+      "command": "python",
+      "args": ["services/intel/mcp_server/run.py"],
+      "env": { "FLIGHTMIND_API_BASE": "http://localhost:8000" },
+      "disabled": false,
+      "autoApprove": ["get_track"]
+    }
+  }
+}

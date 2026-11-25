@@ -29,7 +29,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: tests cover flagged, event window and kept; a point on the window edge counts as inside.
   - Reqs: R3.3
 
-- [ ] 6. Event list with states
+- [x] 6. Event list with states
   - Files: `src/components/EventList.tsx`
   - Check: list shows type, callsign, window, state; the three state buttons work; a click selects the event.
   - Reqs: R3.4, R3.8

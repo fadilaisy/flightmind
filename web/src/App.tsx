@@ -5,7 +5,11 @@ import type { EventDetail, FlightEvent } from "./api/types";
 import { EventFeed } from "./components/EventFeed";
 import { InvestigationPanel } from "./components/InvestigationPanel";
 import { RawRecordViewer } from "./components/RawRecordViewer";
-import { loadState, saveState, type EventState } from "./domain/eventState";
+import { EVENT_LABEL } from "./domain/eventLabels";
+import { formatWindow, formatWindowTitle } from "./domain/format";
+import { getStore, useStore } from "./state/store";
+import { STR } from "./strings";
+import { Shell } from "./views/Shell";
 import mini from "../tests/fixtures/mini.json";
 
 export function App() {
@@ -15,11 +19,14 @@ export function App() {
     [],
   );
   const usingSample = !import.meta.env.VITE_API_BASE;
+  const store = getStore();
+
+  const eventId = useStore((s) => s.eventId);
+  const rawRef = useStore((s) => s.rawRef);
+  const eventStates = useStore((s) => s.eventStates);
 
   const [events, setEvents] = useState<FlightEvent[]>([]);
-  const [states, setStates] = useState<Record<string, EventState>>({});
   const [selected, setSelected] = useState<EventDetail | null>(null);
-  const [rawRef, setRawRef] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,44 +34,83 @@ export function App() {
       .events()
       .then((list) => {
         setEvents(list);
-        setStates(Object.fromEntries(list.map((e) => [e.id, loadState(localStorage, e.id)])));
+        // Open the first event on load, unless one is already selected.
+        if (list.length > 0 && getStore().getState().eventId === null) {
+          getStore().selectEvent(list[0].id, list[0].icao24);
+        }
       })
       .catch((e: Error) => setError(e.message));
   }, [api]);
 
+  // The store holds which event is selected; this loads its detail.
+  useEffect(() => {
+    if (!eventId) {
+      setSelected(null);
+      return;
+    }
+    let current = true;
+    api
+      .event(eventId)
+      .then((d) => current && setSelected(d))
+      .catch((e: Error) => current && setError(e.message));
+    return () => {
+      current = false;
+    };
+  }, [api, eventId]);
+
   function select(id: string) {
     setError(null);
-    api.event(id).then(setSelected).catch((e: Error) => setError(e.message));
+    const e = events.find((x) => x.id === id) ?? selected;
+    store.selectEvent(id, e && e.id === id ? e.icao24 : null);
   }
 
-  function setState(id: string, s: EventState) {
-    saveState(localStorage, id, s);
-    setStates((prev) => ({ ...prev, [id]: s }));
-  }
+  const trajectory = (
+    <div className="three">
+      <EventFeed events={events} states={eventStates} selectedId={eventId} onSelect={select} />
+      <div className="center">
+        {error && <p role="alert">{error}</p>}
+        <div className="titlebar">
+          <h2>{selected ? (selected.callsign ?? selected.icao24) : STR.eventsTitle}</h2>
+          {selected && (
+            <span className="mono muted" title={formatWindowTitle(selected.start_ts, selected.end_ts)}>
+              {selected.icao24} · {EVENT_LABEL[selected.type]} · {formatWindow(selected.start_ts, selected.end_ts)}
+            </span>
+          )}
+          <div className="spacer" />
+          <div className="seg">
+            <button className="on">{STR.viewMap}</button>
+            <button disabled title={STR.notBuilt}>{STR.view3d}</button>
+            <button disabled title={STR.notBuilt}>{STR.viewProfile}</button>
+          </div>
+        </div>
+        <div className="viewport" aria-label="Map area" />
+        <div className="chartbox" aria-label="Charts area" />
+        <div className="scrub" aria-label="Scrubber area" />
+        {rawRef && <RawRecordViewer api={api} rawRef={rawRef} onClose={() => store.setRawRef(null)} />}
+      </div>
+      <aside className="side r" aria-label="Investigation">
+        <div className="block slot" aria-label="Compression card area">
+          <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>{STR.compressionEmpty}</p>
+        </div>
+        {selected ? (
+          <InvestigationPanel
+            api={api}
+            event={selected}
+            state={eventStates[selected.id] ?? "to_review"}
+            onSetState={store.setEventState}
+            onOpenRecord={store.setRawRef}
+            onOpenEvent={select}
+          />
+        ) : (
+          <p className="muted block">{STR.selectEvent}</p>
+        )}
+      </aside>
+    </div>
+  );
 
   return (
-    <main style={{ display: "grid", gridTemplateColumns: "360px 1fr", gap: 16, padding: 16 }}>
-      <div>
-        <h1 style={{ font: "600 20px/28px var(--font-text)", margin: "0 0 8px" }}>
-          Events{usingSample ? " (sample data)" : ""}
-        </h1>
-        {error && <p role="alert">{error}</p>}
-        <EventFeed
-          events={events}
-          states={states}
-          selectedId={selected?.id ?? null}
-          onSelect={select}
-          onSetState={setState}
-        />
-      </div>
-      <div style={{ display: "grid", gap: 16, alignContent: "start" }}>
-        {selected ? (
-          <InvestigationPanel api={api} event={selected} onOpenRecord={setRawRef} onOpenEvent={select} />
-        ) : (
-          <p>Select an event to open the investigation panel.</p>
-        )}
-        {rawRef && <RawRecordViewer api={api} rawRef={rawRef} onClose={() => setRawRef(null)} />}
-      </div>
-    </main>
+    <Shell api={api} usingSample={usingSample}>
+      {(tab) => (tab === "trajectory" ? trajectory : <p style={{ padding: 16 }}>{STR.tabPending}</p>)}
+    </Shell>
   );
 }

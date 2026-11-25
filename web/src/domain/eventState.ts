@@ -34,3 +34,14 @@ export function saveState(storage: KeyValueStorage, eventId: string, state: Even
   else all[eventId] = state;
   storage.setItem(STORAGE_KEY, JSON.stringify(all));
 }
+
+export function loadAllStates(storage: KeyValueStorage): Record<string, EventState> {
+  return { ...readAll(storage) };
+}
+
+/** Badge class per state. Dismissed is not the same as to review. */
+export const STATE_BADGE: Record<EventState, string> = {
+  to_review: "b-grey",
+  confirmed: "b-ok",
+  dismissed: "b-dim",
+};

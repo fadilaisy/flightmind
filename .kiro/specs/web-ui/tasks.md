@@ -2,6 +2,7 @@
 
 Do not implement until the spec is approved. Tick a box only when the check passes. After each ticked task, add a line to `KIRO.md`.
 Paths are under `web/` unless noted.
+For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15), first read the matching Figma frame through the Figma MCP, as `.kiro/steering/ui.md` says. A task's check also needs the view to match its frame, or the KIRO.md line lists the differences.
 
 - [x] 1. Scaffold the app
   - Files: `package.json`, `vite.config.ts`, `tsconfig.json`, `index.html`, `src/main.tsx`
@@ -13,12 +14,12 @@ Paths are under `web/` unless noted.
   - Check: a test loads `/api/meta`, `/api/events`, one track and one raw record, typed with `contracts/types.ts`. A 404 gives "Record not found: <raw_ref>". Base URL switches by env var.
   - Reqs: R2
 
-- [ ] 3. Tokens and shell with tabs
+- [x] 3. Tokens and shell with tabs
   - Files: `src/styles/tokens.css`, `src/strings.ts`, `src/views/Shell.tsx`
-  - Check: three tabs; Map is the default; the tab shows in the URL; header shows mode, sim_time and "sample data".
+  - Check: top tabs Events, Trajectory, Records; Trajectory is the default; a Map / 3D / Profile toggle sits inside Trajectory; the tab shows in the URL; header shows mode, sim_time and "sample data".
   - Reqs: R1, R8.1
 
-- [ ] 4. Store
+- [x] 4. Store
   - Files: `src/state/store.ts`
   - Check: unit test: setting `scrubTs` or `rawRef` updates all subscribers; event state survives a reload.
   - Reqs: R3.8, R4.4, R5.2

@@ -120,3 +120,10 @@ All user text lives in `src/strings.ts` so the wording rules can be checked in o
 | Fixtures not ready | Use the SCRUM-33 mock API; mini.json covers unit tests. |
 | Contract lacks block and offsets | Show what exists; open an issue for Role 1 contract change |
 | 5,000 points slow in 3D | Use one buffer geometry, not one mesh per point |
+
+## Figma frames read
+File RSgriaKxz59KrI9eWvrsr0. Tokens checked against get_variable_defs on 58:1847: colours, radius 4/8/12/999 and type match. blue-600 is not in the frame's variables, so it keeps the Foundations value.
+
+| Frame | Node id | Task | Differences |
+| --- | --- | --- | --- |
+| 5 · Trajectory, Map (default), App bar | 58:1847 (bar 58:1848) | 3 | No logo mark. No Load recording button or file name (frames 1 to 3 out of scope). Tabs are Map, 3D, Records, not Clean, Events, Trajectory, Export. Header adds sim_time and a sample data label. |

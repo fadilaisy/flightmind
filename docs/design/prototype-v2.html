@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FlightMind · Prototype v2 (light)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f7fb;--panel:#fff;--line:#dbe3ee;--ink:#14213a;--muted:#5b6b85;--faint:#8a98ad;--primary:#1d4ed8;--primary-soft:#e6edff;--track:#0aa2c0;--track-soft:#dff4f8;--event-soft:#fdf2dc;--red:#c8322a;--red-soft:#fbe5e3;--green:#1f8a4c;--green-soft:#e2f4ea;--mono:"JetBrains Mono",ui-monospace,monospace}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer}
+.mono{font-family:var(--mono);font-size:12.5px}.muted{color:var(--muted)}.faint{color:var(--faint)}
+header{height:52px;display:flex;align-items:center;gap:20px;padding:0 20px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.logo{font-weight:600;display:flex;align-items:center;gap:8px}.logo svg{width:20px;height:20px}
+.file{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:6px;padding:3px 8px;background:var(--bg)}
+nav.tabs{display:flex;gap:2px;margin-left:8px}
+nav.tabs button{border:0;background:none;padding:15px 10px;color:var(--muted);border-bottom:2px solid transparent}
+nav.tabs button.on{color:var(--ink);border-color:var(--primary);font-weight:500}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:6px 12px}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.sm{padding:3px 9px;font-size:13px}.btn.ghost{border-color:transparent;background:none;color:var(--primary)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:none;padding:4px 12px;font-size:13px}
+.seg button.on{background:var(--primary-soft);color:var(--primary);font-weight:500}
+.screen{display:none}.screen.on{display:block}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 24px}
+h1{font-size:22px;font-weight:600;margin:0 0 4px}h2{font-size:16px;font-weight:600;margin:0 0 10px}h3{font-size:14px;font-weight:600;margin:0 0 8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px}
+.grid{display:grid;gap:16px}
+table{border-collapse:collapse;width:100%}
+th{font-weight:500;color:var(--muted);text-align:left;font-size:12.5px;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:7px 8px;border-bottom:1px solid #edf1f6}
+tr.sel td{background:var(--primary-soft)}tr.click{cursor:pointer}tr.click:hover td{background:#f0f4fa}
+.badge{display:inline-flex;align-items:center;font-size:12px;font-weight:500;border-radius:4px;padding:1px 7px}
+.b-event{background:var(--event-soft);color:#8a5600}.b-red{background:var(--red-soft);color:var(--red)}.b-ok{background:var(--green-soft);color:var(--green)}.b-grey{background:#eef1f5;color:var(--muted)}
+.chip{font-family:var(--mono);font-size:12px;border:1px solid #b9d9e3;background:var(--track-soft);color:#05677a;border-radius:4px;padding:1px 7px;cursor:pointer;white-space:nowrap}
+.chip:hover{border-color:var(--track)}.chip.ev{border-color:#f0d39b;background:var(--event-soft);color:#8a5600}
+.three{display:grid;grid-template-columns:290px 1fr 310px;height:calc(100vh - 52px)}
+.side{background:var(--panel);border-right:1px solid var(--line);overflow:auto;display:flex;flex-direction:column}
+.side.r{border-right:0;border-left:1px solid var(--line)}
+.sidehead{padding:14px 16px 8px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 10px}
+.filters button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:2px 10px;font-size:12.5px}
+.filters button.on{border-color:var(--primary);color:var(--primary);background:var(--primary-soft)}
+.evrow{padding:10px 16px;border-top:1px solid #edf1f6;cursor:pointer}
+.evrow:hover{background:#f6f9fc}.evrow.sel{background:var(--track-soft)}
+.evrow .top{display:flex;justify-content:space-between;align-items:center}
+.evrow .who{font-weight:600;margin-top:4px}.evrow .st{font-size:12.5px;color:var(--muted)}
+.foot{margin-top:auto;padding:12px 16px;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}
+.center{padding:16px 20px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 10px;font-size:13px}
+.kv span:nth-child(even){font-family:var(--mono);font-size:12.5px;text-align:right}
+.viewport{position:relative;border:1px solid var(--line);border-radius:8px;background:#eaf1f8;height:430px;overflow:hidden}
+.viewport svg{width:100%;height:100%;display:block}
+.tip{position:absolute;background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12.5px;box-shadow:0 1px 4px rgba(20,33,58,.08)}
+.legend{position:absolute;left:12px;bottom:10px;display:flex;gap:14px;font-size:12px;background:rgba(255,255,255,.9);padding:4px 10px;border-radius:6px}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px}
+.scrub{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:8px 12px}
+.scrub input{flex:1}
+.drop{border:1.5px dashed #a9b8cc;border-radius:10px;padding:40px;text-align:center;background:var(--panel)}
+.step{display:grid;grid-template-columns:24px 1fr auto auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid #edf1f6}
+.hex{font-family:var(--mono);font-size:13px;line-height:1.9}
+.hex .row{display:flex;gap:14px}.hex .off{color:var(--faint);width:56px}
+.hex b{font-weight:400;padding:1px 2px;border-radius:3px;cursor:pointer}
+.hex b.hl{background:var(--event-soft);outline:1px solid #f0c46b}
+.tree{font-family:var(--mono);font-size:12.5px;line-height:1.8}
+.tree div{cursor:pointer;padding:0 4px;border-radius:3px}.tree div:hover{background:#f0f4fa}.tree div.on{background:var(--event-soft)}
+.tree .i1{padding-left:18px}.tree .i2{padding-left:36px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 14px;border-radius:6px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
+.toast.on{opacity:1}
+.claim{padding:10px 0;border-top:1px solid #edf1f6}.why li{margin:4px 0}
+.bar{height:8px;border-radius:4px;background:var(--primary)}
+.pill{position:fixed;right:12px;bottom:12px;font-size:12px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--muted);z-index:9}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><svg viewBox="0 0 20 20"><path d="M2 14 L10 4 L18 14" fill="none" stroke="#1d4ed8" stroke-width="2"/><circle cx="10" cy="4" r="2" fill="#0aa2c0"/></svg>FlightMind</div>
+  <span class="file" id="fileLabel">no recording loaded</span>
+  <nav class="tabs" id="tabs">
+    <button data-go="load">Load</button><button data-go="preview">Preview</button><button data-go="clean">Clean</button><button data-go="events">Events</button><button data-go="traj">Trajectory</button><button data-go="records">Records</button><button data-go="export">Export</button>
+  </nav>
+  <div class="spacer"></div><span class="muted" style="font-size:12.5px">Recorded data, offline</span>
+</header>
+<main>
+
+<section class="screen" id="s-load"><div class="wrap" style="max-width:860px">
+  <h1>Load a recording</h1>
+  <p class="muted">Open a capture. FlightMind finds the ASTERIX streams in it; nothing is changed on disk.</p>
+  <div class="drop"><p style="margin:0 0 12px"><b>Drop a .pcap, .pcapng or .atx file</b></p>
+    <button class="btn primary" onclick="loadSample()">Use sample: wiii-2026-10-03.pcapng</button></div>
+  <div class="card" id="streams" style="margin-top:16px;display:none">
+    <h2>UDP streams found</h2>
+    <table><thead><tr><th>Use</th><th>Source → destination</th><th>Category</th><th>SAC / SIC</th><th>Frames</th><th>Records</th></tr></thead><tbody>
+      <tr><td><input type="radio" name="st" checked></td><td class="mono">10.4.1.20:8600 → 239.1.1.21:8600</td><td>CAT021</td><td class="mono">25 / 4</td><td class="mono">96,412</td><td class="mono">1,420,318</td></tr>
+      <tr><td><input type="radio" name="st" disabled></td><td class="mono">10.4.1.22:8610 → 239.1.1.62:8610</td><td>CAT062</td><td class="mono">25 / 9</td><td class="mono">41,077</td><td class="faint">not supported yet</td></tr>
+    </tbody></table>
+    <div style="margin-top:14px;display:flex;justify-content:flex-end"><button class="btn primary" onclick="go('preview')">Decode CAT021 stream</button></div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-preview"><div class="wrap">
+  <h1>Decoded preview</h1>
+  <p class="muted">First 8 of 1,420,318 records, decoded as CAT021 edition 2.6. Check the fields look right before cleaning.</p>
+  <div class="grid" style="grid-template-columns:1fr 300px">
+    <div class="card" style="padding:0;overflow:auto"><table><thead><tr><th>Time (I021/071)</th><th>Target (I021/080)</th><th>Callsign</th><th>Lat</th><th>Lon</th><th>Geo height</th><th>Source</th></tr></thead><tbody id="prevRows"></tbody></table></div>
+    <div class="card"><h3>Field quality</h3>
+      <div class="kv"><span>Position (I021/130)</span><span>99.8%</span><span>Geometric height (I021/140)</span><span>97.1%</span><span>Barometric altitude (I021/145)</span><span>99.5%</span><span>Callsign (I021/170)</span><span>88.4%</span><span>On-ground flag (I021/040)</span><span>100%</span></div>
+      <p class="muted" style="font-size:12.5px">Share of records where the item is present. Sample numbers.</p>
+      <button class="btn primary" style="width:100%" onclick="go('clean')">Continue to cleaning</button></div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-clean"><div class="wrap">
+  <h1>Clean and reduce</h1>
+  <p class="muted">Each step sets records aside with a reason. Nothing is deleted; quarantined records can be restored.</p>
+  <div class="grid" style="grid-template-columns:1fr 320px">
+    <div class="card" id="recipe"></div>
+    <div class="grid" style="align-content:start">
+      <div class="card"><h3>Error bound</h3>
+        <div class="seg" id="bound"><button data-b="10">10 m</button><button class="on" data-b="25">25 m</button><button data-b="50">50 m</button></div>
+        <p class="muted" style="font-size:12.5px;margin:8px 0 0">Points are dropped only where the track can be rebuilt within this distance. Flagged windows are always kept at full resolution.</p></div>
+      <div class="card"><h3>Result</h3>
+        <div style="font-size:28px;font-weight:600" id="ratio">7.6×</div><div class="mono muted" id="sizes"></div>
+        <div style="margin:10px 0 4px;font-size:12.5px">Raw</div><div class="bar" style="width:100%"></div>
+        <div style="margin:8px 0 4px;font-size:12.5px">Stored</div><div class="bar" id="storedBar" style="background:var(--track)"></div>
+        <p class="muted" style="font-size:12.5px">Sample numbers.</p>
+        <button class="btn primary" style="width:100%" onclick="go('events')">Apply and find events</button></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-events"><div class="wrap">
+  <h1>Events to review</h1>
+  <p class="muted">Found by fixed rules in the data itself, before any ATC report. Nothing counts as an incident until you confirm it.</p>
+  <div class="seg" id="evFilter" style="margin-bottom:12px"><button class="on" data-f="all">All</button><button data-f="review">To review</button><button data-f="confirmed">Confirmed</button><button data-f="dismissed">Dismissed</button></div>
+  <div class="card" style="padding:0"><table><thead><tr><th>Type</th><th>Aircraft</th><th>Time</th><th>Why flagged</th><th>Status</th><th></th></tr></thead><tbody id="evTable"></tbody></table></div>
+</div></section>
+
+<section class="screen" id="s-traj"><div class="three">
+  <aside class="side">
+    <div class="sidehead"><h2 style="margin:0">Events</h2><div class="muted" style="font-size:12.5px" id="evCount"></div></div>
+    <div class="filters" id="sideFilters"></div><div id="sideList"></div>
+    <div class="foot">Flagged by rules for human review. Not incidents until you confirm them.</div>
+  </aside>
+  <div class="center">
+    <div style="display:flex;align-items:center;gap:10px">
+      <h2 style="margin:0" id="tTitle"></h2><span class="mono muted" id="tSub"></span><div class="spacer"></div>
+      <div class="seg" id="viewSeg"><button class="on" data-v="map">Map</button><button data-v="3d">3D</button><button data-v="profile">Profile</button></div>
+      <button class="btn sm" onclick="go('records')">Show raw points</button>
+    </div>
+    <div class="viewport" id="vp"></div>
+    <div class="card" style="padding:10px 14px"><div class="muted" style="font-size:12.5px;margin-bottom:4px">Altitude over time</div><svg viewBox="0 0 600 90" style="width:100%;height:90px" id="altSvg"></svg></div>
+    <div class="scrub"><button class="btn sm" id="play">▶</button><span class="mono" id="tNow">14:02:31Z</span><input type="range" min="0" max="100" value="52" id="range"><span class="mono muted">13:40 → 14:20Z</span></div>
+  </div>
+  <aside class="side r" id="rightPanel"></aside>
+</div></section>
+
+<section class="screen" id="s-record"><div class="wrap">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+    <button class="btn sm" onclick="go('traj')">Back to trajectory</button>
+    <h1 style="margin:0">Raw record</h1><span class="chip">rec 0412:1183</span><div class="spacer"></div>
+    <div class="seg" id="recSeg"><button class="on" data-r="fields">Fields</button><button data-r="wire">Wireshark-style</button></div>
+  </div>
+  <div id="recFields" class="grid" style="grid-template-columns:1fr 1fr">
+    <div class="card"><h3>Decoded fields · record 3 · 44 bytes · 8A0213</h3><table id="fieldTable"></table></div>
+    <div class="card"><h3>Bytes (record offset)</h3><div class="hex" id="hexA"></div>
+      <div class="card" style="margin-top:14px;background:var(--bg)" id="itemBox"></div>
+      <h3 style="margin-top:14px">Cited by</h3>
+      <p style="margin:0">Claim 2 of the GIA412 go-around pattern: “Then climbed at up to 1,900 fpm. No on-ground flag was set.”</p></div>
+  </div>
+  <div id="recWire" style="display:none" class="grid">
+    <div class="card" style="padding:0"><table><thead><tr><th>Frame</th><th>Time</th><th>Block</th><th>Record</th><th>Offset</th><th>Len</th><th>Target</th></tr></thead><tbody id="wireRows"></tbody></table></div>
+    <div class="grid" style="grid-template-columns:1fr 1fr">
+      <div class="card"><h3>Decode</h3><div class="tree" id="tree"></div></div>
+      <div class="card"><h3>Bytes (frame offset)</h3><div class="hex" id="hexB"></div>
+        <div style="margin-top:12px;display:flex;gap:8px"><button class="btn sm" onclick="copyFilter()">Copy Wireshark filter</button><button class="btn sm" onclick="toast('Saved gia412-14-02.pcap (3 frames)')">Export .pcap slice</button></div></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-records"><div class="wrap">
+  <h1>Records</h1>
+  <p class="muted">Every raw record behind the selected window, block by block.</p>
+  <div class="card" style="margin-bottom:12px;display:flex;gap:10px;align-items:center">
+    <span class="mono" style="flex:1;background:var(--bg);padding:6px 10px;border-radius:6px" id="filt">asterix.021_080 == 0x8A0213 &amp;&amp; i021_071 &gt;= 14:02:30Z &amp;&amp; i021_071 &lt;= 14:02:33Z</span>
+    <button class="btn sm" onclick="copyFilter()">Copy filter</button></div>
+  <div class="grid" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="card"><h3>Blocks</h3><table><thead><tr><th>Frame</th><th>Offset</th><th>Len</th><th>Cat</th></tr></thead><tbody>
+      <tr class="sel"><td class="mono">18,342</td><td class="mono">0x2A</td><td class="mono">183</td><td>021</td></tr>
+      <tr><td class="mono">18,343</td><td class="mono">0x2A</td><td class="mono">141</td><td>021</td></tr>
+      <tr><td class="mono">18,344</td><td class="mono">0x2A</td><td class="mono">178</td><td>021</td></tr></tbody></table></div>
+    <div class="card"><h3>Records in frame 18,342</h3><table><thead><tr><th>#</th><th>Offset</th><th>Len</th><th>Fields</th><th>Target</th></tr></thead><tbody id="recList"></tbody></table></div>
+    <div class="card"><h3>Items · record 3</h3><table><thead><tr><th>Item</th><th>Byte</th><th>Value</th></tr></thead><tbody id="itemList"></tbody></table>
+      <div style="margin-top:10px">Cited by <span class="chip ev" onclick="openEvent('GIA412')">evt GIA412 claim 2 · climb-out</span></div>
+      <button class="btn sm" style="margin-top:10px" onclick="go('record');setRec('wire')">Open in byte view</button></div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-export"><div class="wrap" style="max-width:900px">
+  <h1>Export</h1>
+  <p class="muted">Everything needed to reproduce this analysis, with your review decisions.</p>
+  <div class="card">
+    <div class="step" style="border:0"><input type="checkbox" checked><div><b>cleaned.parquet</b><div class="muted">1,401,203 kept records with raw_ref back to the capture</div></div><span class="mono">41.2 MB</span><span></span></div>
+    <div class="step"><input type="checkbox" checked><div><b>events.csv</b><div class="muted" id="expEvents"></div></div><span class="mono">4 KB</span><span></span></div>
+    <div class="step"><input type="checkbox" checked><div><b>quarantine.csv</b><div class="muted">Set-aside records and the rule that set each one aside</div></div><span class="mono">1.1 MB</span><span></span></div>
+    <div class="step"><input type="checkbox" checked><div><b>recipe.json</b><div class="muted">Cleaning steps, error bound and input file checksum</div></div><span class="mono">2 KB</span><span></span></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn primary" onclick="toast('Exported 4 files to flightmind-wiii-2026-10-03.zip')">Export 4 files</button></div>
+  </div>
+</div></section>
+</main>
+<div class="toast" id="toast"></div>
+<div class="pill" id="pill">Prototype · sample data · press P to hide</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._);t._=setTimeout(()=>t.classList.remove('on'),1800)}
+let loaded=false;
+function loadSample(){loaded=true;$('#streams').style.display='block';$('#fileLabel').textContent='wiii-2026-10-03.pcapng · 1,420,318 records · SAC 25 / SIC 4'}
+function go(id){if(id!=='load'&&!loaded)loadSample();$$('.screen').forEach(s=>s.classList.toggle('on',s.id==='s-'+id));
+  const tab=id==='record'?'traj':id;$$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.go===tab));scrollTo(0,0);if(id==='traj')renderTraj()}
+$$('#tabs button').forEach(b=>b.onclick=()=>go(b.dataset.go));
+addEventListener('keydown',e=>{if(e.key==='p'||e.key==='P')$('#pill').style.display=$('#pill').style.display==='none'?'':'none'});
+
+const prev=[["14:02:30.90Z","8A0213","GIA412","−6.12051","106.65102","1,225 ft","ADS-B"],["14:02:31.12Z","76CEF1","SIA235","−6.31877","106.40211","9,850 ft","ADS-B"],["14:02:31.40Z","8A0213","GIA412","−6.12030","106.65180","1,250 ft","ADS-B"],["14:02:31.55Z","8A0377","LNI760","−6.02114","106.81920","4,000 ft","ADS-B"],["14:02:31.71Z","8A01C9","CTV1043","−6.25010","106.90011","2,875 ft","ADS-B"],["14:02:31.90Z","8A0213","GIA412","−6.12009","106.65259","1,281 ft","ADS-B"],["14:02:32.04Z","8A0612","—","−6.40551","106.77310","—","ADS-B"],["14:02:32.33Z","8A04F1","AWQ8291","−5.98012","106.52018","6,100 ft","ADS-B"]];
+$('#prevRows').innerHTML=prev.map(r=>`<tr>${r.map((c,i)=>`<td class="${i==2||i==6?'':'mono'}">${c}</td>`).join('')}</tr>`).join('');
+
+const steps=[["Duplicate records","Same target, time and position received twice",1104,true],["Out-of-range position","Outside the 250 NM coverage of SAC 25 / SIC 4",612,true],["Impossible climb rate","Above 8,000 fpm between consecutive records",126,true],["Low-quality position","NIC below 5",2410,false],["Thin redundant points","Removed where the track can be rebuilt within the error bound",1214777,true]];
+function renderRecipe(){const b=+$('#bound .on').dataset.b;const f={10:.78,25:1,50:1.12}[b];
+  $('#recipe').innerHTML='<h2>Recipe v3</h2>'+steps.map((s,i)=>`<div class="step"><input type="checkbox" ${s[3]?'checked':''} data-i="${i}"><div><b>${s[0]}</b><div class="muted" style="font-size:13px">${s[1]}</div></div><span class="mono">${(i==4?Math.round(s[2]*f):s[2]).toLocaleString()} records</span><button class="btn ghost sm" onclick="toast('Restored view: ${s[0].toLowerCase()} shown on the map')">Review</button></div>`).join('')+'<p class="muted" style="font-size:12.5px;margin-bottom:0">Counts are sample numbers.</p>';
+  $$('#recipe input').forEach(c=>c.onchange=()=>{steps[c.dataset.i][3]=c.checked;calc()});calc()}
+function calc(){const b=+$('#bound .on').dataset.b;let r={10:5.9,25:7.6,50:9.1}[b];if(!steps[4][3])r=1.2;$('#ratio').textContent=r.toFixed(1)+'×';$('#sizes').textContent=`312.8 MB → ${(312.8/r).toFixed(1)} MB`;$('#storedBar').style.width=(100/r)+'%'}
+$$('#bound button').forEach(b=>b.onclick=()=>{$$('#bound button').forEach(x=>x.classList.toggle('on',x===b));renderRecipe()});
+renderRecipe();
+
+const events=[
+ {id:'LNI760',icao:'8A0377',type:'Holding',t:'09:18:44Z',d:'2 laps, 7 min 40 s',why:'Turned through 720° within 6 NM, 2 laps',st:'review'},
+ {id:'CTV1043',icao:'8A01C9',type:'Go-around',t:'11:26:05Z',d:'31 supporting records',why:'Lowest 310 ft, then climbed 2,900 ft, no on-ground flag',st:'review'},
+ {id:'SJV096',icao:'8A0612',type:'Squawk 7600',t:'12:09:13Z',d:'squawk held 6 min 02 s',why:'Mode 3/A 7600 for 362 s',st:'review',red:1},
+ {id:'GIA412',icao:'8A0213',type:'Go-around',t:'14:02:31Z',d:'38 supporting records',why:'Lowest 250 ft (rule: below 1,000 ft), then climbed 3,250 ft, no on-ground flag',st:'confirmed'},
+ {id:'AWQ8291',icao:'8A04F1',type:'Squawk 7700',t:'15:47:09Z',d:'squawk held 4 min 12 s',why:'Mode 3/A 7700 for 252 s',st:'review',red:1},
+ {id:'BTK6551',icao:'8A05A2',type:'Holding',t:'16:31:52Z',d:'1 lap, 4 min 05 s',why:'One 360° turn, 4 NM wide',st:'dismissed'},
+ {id:'QZ7521',icao:'8A02DE',type:'Go-around',t:'17:12:46Z',d:'27 supporting records',why:'Lowest 480 ft, then climbed 2,100 ft, no on-ground flag',st:'review'}];
+const stLabel={review:'To review',confirmed:'Confirmed by you',dismissed:'Dismissed by you'},stCls={review:'b-grey',confirmed:'b-ok',dismissed:'b-grey'};
+let evF='all',sideF='all',cur='GIA412',view='map';
+function setSt(id,s){events.find(e=>e.id===id).st=s;toast(`${id}: ${stLabel[s].toLowerCase()}`);renderEvents();if($('#s-traj').classList.contains('on'))renderTraj();expText()}
+function badge(e){return `<span class="badge ${e.red?'b-red':'b-event'}">${e.type}</span>`}
+function renderEvents(){$('#evTable').innerHTML=events.filter(e=>evF==='all'||e.st===evF).map(e=>`<tr><td>${badge(e)}</td><td><b>${e.id}</b> <span class="mono muted">${e.icao}</span></td><td class="mono">${e.t}</td><td style="max-width:360px">${e.why}</td><td><span class="badge ${stCls[e.st]}">${stLabel[e.st]}</span></td><td style="white-space:nowrap"><button class="btn sm" onclick="openEvent('${e.id}')">Open</button> ${e.st==='review'?`<button class="btn sm" onclick="setSt('${e.id}','confirmed')">Confirm</button> <button class="btn sm" onclick="setSt('${e.id}','dismissed')">Dismiss</button>`:`<button class="btn ghost sm" onclick="setSt('${e.id}','review')">Undo</button>`}</td></tr>`).join('')}
+$$('#evFilter button').forEach(b=>b.onclick=()=>{evF=b.dataset.f;$$('#evFilter button').forEach(x=>x.classList.toggle('on',x===b));renderEvents()});
+renderEvents();
+function openEvent(id){cur=id;go('traj')}
+function expText(){const c=events.filter(e=>e.st==='confirmed').length,d=events.filter(e=>e.st==='dismissed').length;$('#expEvents').textContent=`7 flagged events with your review: ${c} confirmed, ${d} dismissed, ${7-c-d} to review`}
+expText();
+
+function renderTraj(){
+  const c=events.filter(e=>e.st==='confirmed').length,d=events.filter(e=>e.st==='dismissed').length;
+  $('#evCount').textContent=`7 flagged · ${c} confirmed · ${d} dismissed`;
+  $('#sideFilters').innerHTML=['all','Go-around','Holding','Squawk'].map(t=>`<button class="${sideF===t?'on':''}" data-t="${t}">${t==='all'?'All':t}</button>`).join('');
+  $$('#sideFilters button').forEach(b=>b.onclick=()=>{sideF=b.dataset.t;renderTraj()});
+  $('#sideList').innerHTML=events.filter(e=>sideF==='all'||e.type.startsWith(sideF)).map(e=>`<div class="evrow ${e.id===cur?'sel':''}" onclick="cur='${e.id}';renderTraj()"><div class="top">${badge(e)}<span class="mono muted">${e.t}</span></div><div class="who">${e.id} <span class="mono muted" style="font-weight:400">${e.icao}</span></div><div class="st">${stLabel[e.st]} · ${e.d}</div></div>`).join('');
+  const e=events.find(x=>x.id===cur);
+  $('#tTitle').textContent=e.id;$('#tSub').textContent=`${e.icao} · ${e.type.toLowerCase()} pattern · ${e.t}`;
+  drawView();drawAlt();renderPanel(e)}
+function trackPts(){const p=[];for(let i=0;i<=60;i++){const t=i/60;let x,y;
+  if(t<.45){x=20+t/.45*420;y=330-t/.45*120}else{const a=(t-.45)/.55*Math.PI*1.3;x=440+Math.sin(a)*140;y=210-Math.sin(a*.9)*70+(1-Math.cos(a))*80}p.push([x,y,t])}return p}
+function alt(t){return t<.42?3200-t/.42*2950:t<.55?250+(t-.42)/.13*1000:1250+(t-.55)/.45*2250}
+function drawView(){const vp=$('#vp'),pts=trackPts(),ev=pts.filter(p=>p[2]>.36&&p[2]<.55);
+  if(view==='map'){vp.innerHTML=`<svg viewBox="0 0 760 430" preserveAspectRatio="xMidYMid slice">
+   <rect width="760" height="430" fill="#eef3f7"/><path d="M0 0H760V40C600 60 420 30 200 55 100 65 40 50 0 60Z" fill="#d6e6f5"/>
+   <g stroke="#d5dde7">${[...Array(9)].map((_,i)=>`<line x1="${i*95}" y1="0" x2="${i*95}" y2="430"/>`).join('')}${[...Array(5)].map((_,i)=>`<line x1="0" y1="${i*95}" x2="760" y2="${i*95}"/>`).join('')}</g>
+   <rect x="250" y="170" width="160" height="90" fill="#dfe5ec" transform="rotate(-20 330 215)"/>
+   <line x1="270" y1="240" x2="395" y2="180" stroke="#7d8a9b" stroke-width="5"/>
+   <text x="300" y="130" font-size="11" fill="#5b6b85">WIII · Soekarno–Hatta</text><text x="240" y="262" font-size="10" fill="#1d4ed8">25R</text>
+   <polyline points="${pts.map(p=>p[0]+','+p[1]).join(' ')}" fill="none" stroke="#0aa2c0" stroke-width="2"/>
+   <polyline points="${ev.map(p=>p[0]+','+p[1]).join(' ')}" fill="none" stroke="#d98a0b" stroke-width="5" opacity=".85"/>
+   ${pts.filter((_,i)=>i%4==0).map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="#fff" stroke="#0aa2c0"/>`).join('')}
+   <circle cx="${pts[30][0]}" cy="${pts[30][1]}" r="5" fill="#14213a"/>
+   <text x="560" y="135" font-size="10" fill="#c8322a">6 s coverage gap</text><text x="700" y="30" font-size="11">N ↑</text>
+   <line x1="600" y1="400" x2="720" y2="400" stroke="#14213a"/><text x="600" y="415" font-size="10">0</text><text x="700" y="415" font-size="10">4 km</text>
+   <text x="12" y="20" font-size="10" fill="#5b6b85">Positions from I021/130 · basemap © OpenStreetMap contributors</text></svg>
+   <div class="tip" style="left:430px;top:250px"><div class="mono">14:02:31.4Z</div><div class="mono muted">−6.1203, 106.6518 · 1,250 ft · ↑ 1,900 fpm</div><span class="chip" onclick="go('record')">rec 0412:1183</span></div>
+   <div class="legend"><span><i style="background:#0aa2c0"></i>Kept point</span><span><i style="background:#d98a0b"></i>Flagged window, full resolution</span></div>`}
+  else if(view==='3d'){const P=p=>[p[0]*.8+80+(1-p[2])*30,p[1]*.55+120-(alt(p[2])/4000)*150];
+   vp.innerHTML=`<svg viewBox="0 0 760 430"><rect width="760" height="430" fill="#eef3f7"/>
+   <polygon points="80,380 700,380 620,250 160,250" fill="#e3e9f0" stroke="#cdd6e2"/>
+   ${[0,1,2,3,4].map(i=>`<line x1="${80+i*155}" y1="380" x2="${160+i*115}" y2="250" stroke="#d3dbe6"/>`).join('')}
+   ${pts.filter((_,i)=>i%3==0).map(p=>{const q=P(p);return `<line x1="${q[0]}" y1="${q[1]}" x2="${q[0]}" y2="${p[1]*.25+270}" stroke="#c6d3e0"/>`}).join('')}
+   <polyline points="${pts.map(p=>P(p).join(',')).join(' ')}" fill="none" stroke="#0aa2c0" stroke-width="2.5"/>
+   <polyline points="${ev.map(p=>P(p).join(',')).join(' ')}" fill="none" stroke="#d98a0b" stroke-width="5"/>
+   <text x="14" y="22" font-size="11" fill="#5b6b85">3D · lat, lon, geometric height (orbit not wired in prototype)</text></svg>
+   <div class="legend"><span><i style="background:#0aa2c0"></i>Track</span><span><i style="background:#d98a0b"></i>Flagged window</span></div>`}
+  else{vp.innerHTML=`<svg viewBox="0 0 760 430"><rect width="760" height="430" fill="#fff"/>
+   ${[0,1000,2000,3000,4000].map(a=>`<line x1="50" x2="740" y1="${390-a/4000*340}" y2="${390-a/4000*340}" stroke="#edf1f6"/><text x="8" y="${394-a/4000*340}" font-size="10" fill="#5b6b85">${a/1000}k ft</text>`).join('')}
+   <polyline points="${pts.map(p=>`${50+p[2]*690},${390-alt(p[2])/4000*340}`).join(' ')}" fill="none" stroke="#0aa2c0" stroke-width="2"/>
+   <polyline points="${ev.map(p=>`${50+p[2]*690},${390-alt(p[2])/4000*340}`).join(' ')}" fill="none" stroke="#d98a0b" stroke-width="4"/>
+   <text x="50" y="22" font-size="11" fill="#5b6b85">Profile · geometric height (I021/140) along track</text></svg>`}}
+function drawAlt(){let d='';for(let i=0;i<=100;i++)d+=`${i*6},${85-alt(i/100)/3600*75} `;const x=$('#range').value*6;
+  $('#altSvg').innerHTML=`<rect x="216" width="114" height="90" fill="#fdf2dc"/><polyline points="${d}" fill="none" stroke="#0aa2c0" stroke-width="2"/><line x1="${x}" x2="${x}" y1="0" y2="90" stroke="#14213a"/><text x="220" y="12" font-size="10" fill="#8a5600">flagged window 13:58:10–14:06:52Z</text>`}
+$$('#viewSeg button').forEach(b=>b.onclick=()=>{view=b.dataset.v;$$('#viewSeg button').forEach(x=>x.classList.toggle('on',x===b));drawView()});
+$('#range').oninput=()=>{const m=Math.round($('#range').value*.4);$('#tNow').textContent=`${String(13+Math.floor((40+m)/60)).padStart(2,'0')}:${String((40+m)%60).padStart(2,'0')}:31Z`;drawAlt()};
+let timer=null;$('#play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('#play').textContent='▶';return}$('#play').textContent='❚❚';timer=setInterval(()=>{const r=$('#range');r.value=(+r.value+1)%101;r.oninput()},120)};
+function reviewBtns(e){return e.st==='review'?`<div style="display:flex;gap:8px"><button class="btn primary sm" onclick="setSt('${e.id}','confirmed')">Confirm</button><button class="btn sm" onclick="setSt('${e.id}','dismissed')">Dismiss as false alarm</button></div>`:`<button class="btn ghost sm" onclick="setSt('${e.id}','review')">Undo: back to review</button>`}
+function renderPanel(e){const p=$('#rightPanel');
+  if(e.id!=='GIA412'){p.innerHTML=`<div class="sidehead"><span class="badge ${stCls[e.st]}">${stLabel[e.st]}</span><h2 style="margin-top:8px">${e.id} · ${e.type.toLowerCase()} pattern</h2><h3>Why flagged</h3><p>${e.why}.</p><p class="muted" style="font-size:12.5px">The full cited write-up is shown for GIA412 in this prototype.</p>${reviewBtns(e)}</div>`;return}
+  p.innerHTML=`<div class="sidehead"><span class="badge ${stCls[e.st]}">${stLabel[e.st]}</span>
+   <h2 style="margin-top:8px">GIA412 · go-around pattern at WIII</h2>
+   <h3>Why flagged</h3><ul class="why" style="padding-left:18px;margin:0 0 10px"><li>Came down to 250 ft on approach to RWY 25 (rule: below 1,000 ft)</li><li>Then climbed 3,250 ft (rule: more than 1,000 ft)</li><li>No on-ground flag (I021/040) in the window</li></ul>
+   <h3>Summary</h3>
+   <div class="claim">Descended on approach to RWY 25 to a lowest geometric height of 250 ft at 14:01:58Z. <span class="chip" onclick="go('records')">rec 0412:1171</span></div>
+   <div class="claim">Then climbed at up to 1,900 fpm. No on-ground flag was set in any record. <span class="chip" onclick="go('record')">rec 0412:1183</span></div>
+   <div class="claim muted">Why the aircraft climbed: ATC instructions and weather are not in CAT021. There is a 6 s coverage gap at 14:02:44Z.</div>
+   <div class="kv" style="margin:12px 0"><span>Lowest height</span><span>250 ft</span><span>Max climb</span><span>1,900 fpm</span><span>Supporting records</span><span>38</span></div>
+   ${reviewBtns(e)}</div>`}
+
+const bytes='15 00 2C FB 8E 11 19 04 01 20 34 BA 1E 31 FE FB 85 3B 8A 02 13 00 C8 0A 23 41 05 E1 01 09 4F 1C 38 00 00 4B 47 49 41 34 31 32 20 20'.split(' ');
+const items=[["I021/010","SAC/SIC","25 / 4",[6,7],'Data source identifier'],["I021/040","Target report descriptor","GBS = 0 (airborne)",[8,9],'On-ground flag not set'],["I021/130","Position","−6.1203, 106.6518",[10,17],'WGS-84, LSB 180/2²³ deg'],["I021/080","Target address","8A0213",[18,20],'24-bit ICAO address'],["I021/140","Geometric height","1,250 ft",[21,22],'0x00C8 = 200 × 6.25 ft = 1,250 ft'],["I021/071","Time of applicability","14:02:31.40Z",[23,25],'LSB 1/128 s since midnight'],["I021/155","Vertical rate","+1,900 fpm",[26,27],'LSB 6.25 fpm'],["I021/170","Callsign","GIA412",[35,43],'6-bit ICAO characters']];
+let selItem=4;
+function hexHTML(base){let h='';const it=items[selItem];for(let r=0;r<bytes.length;r+=8){h+=`<div class="row"><span class="off">0x${(base+r).toString(16).toUpperCase().padStart(3,'0')}</span>${bytes.slice(r,r+8).map((b,i)=>{const k=r+i;return `<b class="${k>=it[3][0]&&k<=it[3][1]?'hl':''}" data-k="${k}">${b}</b>`}).join(' ')}</div>`}return h}
+function renderRecord(){
+  $('#fieldTable').innerHTML='<tr><th>Item</th><th>Name</th><th>Value</th></tr>'+items.map((it,i)=>`<tr class="click ${i===selItem?'sel':''}" onclick="selItem=${i};renderRecord()"><td class="mono">${it[0]}</td><td>${it[1]}</td><td class="mono">${it[2]}</td></tr>`).join('');
+  $('#hexA').innerHTML=hexHTML(0);$('#hexB').innerHTML=hexHTML(0x89);
+  const it=items[selItem];$('#itemBox').innerHTML=`<b>${it[0]} ${it[1]}</b><div class="mono">bytes ${it[3][0]}–${it[3][1]} · ${bytes.slice(it[3][0],it[3][1]+1).join(' ')}</div><div class="muted">${it[4]}</div>`;
+  $('#tree').innerHTML=`<div>Frame 18,342 · UDP 8600</div><div class="i1">ASTERIX block · CAT 021 · len 183</div><div class="i1">Record 3 @0x5F · 44 bytes · 8A0213</div>`+items.map((it,i)=>`<div class="i2 ${i===selItem?'on':''}" onclick="selItem=${i};renderRecord()">${it[0]} ${it[1]}: ${it[2]}</div>`).join('');
+  $$('.hex b').forEach(b=>b.onclick=()=>{const k=+b.dataset.k,i=items.findIndex(it=>k>=it[3][0]&&k<=it[3][1]);if(i>=0){selItem=i;renderRecord()}});
+  $('#wireRows').innerHTML=[["18,341","14:02:30.902","1","2","0x2F","48","76CEF1"],["18,342","14:02:31.400","1","3","0x5F","44","8A0213"],["18,343","14:02:31.903","1","1","0x03","46","8A0213"]].map((r,i)=>`<tr class="${i==1?'sel':''}">${r.map(c=>`<td class="mono">${c}</td>`).join('')}</tr>`).join('');
+  $('#recList').innerHTML=[["1","0x03","42","14","8A0377"],["2","0x2F","48","16","76CEF1"],["3","0x5F","44","15","8A0213"],["4","0x8B","46","15","8A0377"]].map((r,i)=>`<tr class="${i==2?'sel':''}">${r.map(c=>`<td class="mono">${c}</td>`).join('')}</tr>`).join('');
+  $('#itemList').innerHTML=items.map((it,i)=>`<tr class="click ${i===selItem?'sel':''}" onclick="selItem=${i};renderRecord()"><td class="mono">${it[0]}</td><td class="mono">${it[3][0]}</td><td class="mono">${it[2]}</td></tr>`).join('')}
+function setRec(r){$$('#recSeg button').forEach(b=>b.classList.toggle('on',b.dataset.r===r));$('#recFields').style.display=r==='fields'?'':'none';$('#recWire').style.display=r==='wire'?'':'none'}
+$$('#recSeg button').forEach(b=>b.onclick=()=>setRec(b.dataset.r));
+function copyFilter(){navigator.clipboard?.writeText($('#filt').textContent).catch(()=>{});toast('Wireshark filter copied')}
+renderRecord();go('load');
+</script>
+</body>
+</html>

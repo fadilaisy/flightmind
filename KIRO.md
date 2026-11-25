@@ -28,6 +28,7 @@ The spec/task column takes a spec and task (`ingest/2.3`) or a Jira key plus `(c
 2026-11-25 | Fadil | web-ui/5 | pointStyle and inWindow with colours from the prototype; window edges count as inside; 8 tests | nothing
 2026-11-25 | Fadil | web-ui/6 | Events tab like Figma frame 4: stat cards, filter chips and search, table with badge, aircraft, flagged window, records, state and Confirm / Dismiss / Back to review; row click opens Trajectory; loading and error boxes; detector settings, altitude sparkline and Go to export left out (not in the contract or out of scope) | nothing
 2026-11-25 | Fadil | web-ui/13 | itemMeta for I021/010, 040, 070, 071, 080, 130, 140, 145, 155, 160, 170 with unit, LSB and datum; plain mock keys map to their items; describeDecoded gives one row per nested key; done before task 7 so the map tooltip can use the datum. derive.ts (task 9) is in the same commit | nothing
+2026-11-25 | Fadil | web-ui/9 | derive() gives kt and ft/min from positions (haversine, 6,371,008.8 m); null altitude or a step under 0.5 s gives null; 6 tests; code was committed with task 13 | nothing
 
 ## Trailer corrections
 

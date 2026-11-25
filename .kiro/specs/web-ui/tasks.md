@@ -44,7 +44,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: points draw in three styles; hover shows `ts`, lat, lon, altitude with unit and datum, `raw_ref`; selecting an event zooms to its window.
   - Reqs: R3.2, R3.5, R3.6, R7
 
-- [ ] 9. Derived speed and vertical rate
+- [x] 9. Derived speed and vertical rate
   - Files: `src/domain/derive.ts`, `tests/derive.test.ts`
   - Check: tests with known points give the expected kt and ft/min; null altitude gives null; a step under 0.5 s gives null.
   - Reqs: R4.2, R4.3

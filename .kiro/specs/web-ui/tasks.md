@@ -24,7 +24,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: unit test: setting `scrubTs` or `rawRef` updates all subscribers; event state survives a reload.
   - Reqs: R3.8, R4.4, R5.2
 
-- [ ] 5. Point style and window logic
+- [x] 5. Point style and window logic
   - Files: `src/domain/pointStyle.ts`, `src/domain/window.ts`, `tests/pointStyle.test.ts`
   - Check: tests cover flagged, event window and kept; a point on the window edge counts as inside.
   - Reqs: R3.3

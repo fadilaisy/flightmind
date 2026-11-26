@@ -54,7 +54,7 @@ uvicorn serve:app  (one container, non-root)
       '-- any other path          --> static files from FLIGHTMIND_WEB_DIST
 ```
 
-Phase 2 changes two things and no code: `FLIGHTMIND_API_APP` points at the real API, and the real API reads a second Railway service running Postgres.
+Phase 2 changes two things and no code: `FLIGHTMIND_API_APP` points at the real API, and the real API reads a second Railway service running Postgres (superseded on 2026-11-26 by Vercel, see requirement 9).
 
 ```
 web service (serve.py + real API) --private network--> db service (timescaledb-ha:pg16 + volume)
@@ -209,7 +209,7 @@ Consequences:
 - The page cannot tell it is on the mock, so the "Sample data" label does not show. That is Open item 1, a Role 1 decision.
 - When Role 1 adds a same-origin base, change the build argument and delete the comment in the Dockerfile.
 
-## Railway setup (what lives outside the repo) — superseded on 2026-11-26 by Vercel, see the update at the top
+## Railway setup (what lives outside the repo) — superseded on 2026-11-26 by Vercel, see requirement 9
 
 Written in `infra/README.md`, because these settings are not in a config file (no `railway.json`):
 

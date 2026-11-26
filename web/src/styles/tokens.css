@@ -263,8 +263,8 @@ tr.sel td { background: var(--primary-soft); }
 .chartrows { position: absolute; inset: 0; }
 .chartrow { position: absolute; left: 0; right: 0; }
 .chartrow .uplot { font-family: var(--font-data); }
-.charttitle { position: absolute; left: 15px; top: 5px; font-size: 11px; line-height: 16px; font-weight: 500; color: var(--text-muted); white-space: nowrap; }
-.laneLabel { position: absolute; left: 16px; font-size: 11px; color: var(--axis-muted); white-space: nowrap; }
+.charttitle { position: absolute; z-index: 1; background: var(--bg-surface); padding-right: 4px; left: 15px; top: 5px; font-size: 11px; line-height: 16px; font-weight: 500; color: var(--text-muted); white-space: nowrap; }
+.laneLabel { position: absolute; left: 16px; z-index: 1; background: var(--bg-surface); padding-right: 4px; font-size: 11px; color: var(--axis-muted); white-space: nowrap; }
 .chartflag { position: absolute; top: 5px; font-size: 12px; line-height: 16px; color: var(--event-amber); white-space: nowrap; }
 .chartcursor { position: absolute; top: 15px; bottom: 1px; width: 1px; background: var(--ink-navy); pointer-events: none; }
 .chartval { position: absolute; margin-left: 6px; font-family: var(--font-data); font-size: 11px; color: var(--ink-navy); pointer-events: none; white-space: nowrap; }

@@ -3,7 +3,7 @@ import "uplot/dist/uPlot.min.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FlightEvent, Track } from "../api/types";
 import { derive } from "../domain/derive";
-import { formatWindow, formatWindowTitle } from "../domain/format";
+import { formatWindow, formatWindowCompact } from "../domain/format";
 import { altitudeDatum } from "../domain/itemMeta";
 import { AMBER_COLOR, windowColor } from "../domain/mapColors";
 import { clockZ, signedInt, thousands } from "../domain/pointText";
@@ -231,7 +231,7 @@ export function Charts({ points, event, scrubTs, onGoTo }: Props) {
   const speedNow = d.speedKt[idx];
   const rateNow = d.verticalRateFpm[idx];
   // Keep the label clear of the two buttons at the top right.
-  const flagLeft = Math.max(210, Math.min(xAt(Math.max(ws, v0)) - 4, width - 15 - 300 - 215));
+  const flagLeft = Math.max(210, Math.min(xAt(Math.max(ws, v0)) - 4, width - 15 - 300 - 200));
 
   return (
     <div className="chartbox" aria-label={STR.chartsLabel}>
@@ -251,8 +251,8 @@ export function Charts({ points, event, scrubTs, onGoTo }: Props) {
           <span className="charttitle">
             {STR.chartAltitudeLabel} ({altitudeDatum()}), ft
           </span>
-          <span className="chartflag" title={formatWindowTitle(event.start_ts, event.end_ts)} style={{ left: flagLeft, color: color === AMBER_COLOR ? AMBER_COLOR : color }}>
-            {STR.flaggedWindowCap} {formatWindow(event.start_ts, event.end_ts)}
+          <span className="chartflag" title={`${STR.flaggedWindowCap} ${formatWindow(event.start_ts, event.end_ts)}`} style={{ left: flagLeft, color: color === AMBER_COLOR ? AMBER_COLOR : color }}>
+            {STR.flaggedWindowCap} {formatWindowCompact(event.start_ts, event.end_ts)}
           </span>
           <span className="laneLabel" style={{ top: SPEED_TOP + 1 }}>{STR.chartSpeedLabel}</span>
           <span className="laneLabel" style={{ top: RATE_TOP + 1 }}>{STR.chartRateLabel}</span>

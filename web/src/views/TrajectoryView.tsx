@@ -149,7 +149,7 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
             <div className="chartbox" aria-label={STR.chartsLabel} />
           ))}
         {selected && track.status === "ready" ? (
-          <Scrubber points={track.track.points} event={selected} />
+          <Scrubber points={track.track.points} event={selected} events={events.filter((e) => e.icao24 === selected.icao24)} />
         ) : (
           <div className="scrub" aria-label={STR.scrubberLabel} />
         )}

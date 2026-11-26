@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import type { FlightEvent, Track } from "../api/types";
-import { formatTime } from "../domain/format";
+import { SHORT_LABEL, isSquawk } from "../domain/eventLabels";
+import { clockZ } from "../domain/pointText";
+import playIcon from "../assets/figma/icon-play.svg";
 import { getStore, useStore } from "../state/store";
 import { STR } from "../strings";
 
@@ -34,19 +36,24 @@ export function windowIndexes(points: TrackPoint[], event: Pick<FlightEvent, "st
   return first < 0 ? null : [first, last];
 }
 
-const clock = (iso: string) => iso.slice(11, 19);
-const PLAY_MS = 250;
+const TICK_MS = 100;
+const SPEEDS = [1, 2, 4, 8] as const;
+const THUMB = 14;
 
 interface Props {
   points: TrackPoint[];
   event: Pick<FlightEvent, "start_ts" | "end_ts">;
+  /** Every event of this aircraft; each one gets a tick on the track. */
+  events?: Pick<FlightEvent, "id" | "type" | "start_ts">[];
 }
 
 /** The only writer of scrubTs. Moves one point at a time. */
-export function Scrubber({ points, event }: Props) {
+export function Scrubber({ points, event, events = [] }: Props) {
   const store = getStore();
   const scrubTs = useStore((s) => s.scrubTs);
   const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(8);
+  const simMs = useRef(0);
   const last = points.length - 1;
   const index = Math.min(snapIndex(points, scrubTs), Math.max(0, last));
   const band = useMemo(() => windowIndexes(points, event), [points, event]);
@@ -63,16 +70,23 @@ export function Scrubber({ points, event }: Props) {
     if (!current || !points.some((p) => p.ts === current)) store.setScrubTs(points[0].ts);
   }, [points, store]);
 
+  // Playback runs the shown time forward at x1, x2, x4 or x8 of the recording's own clock.
   useEffect(() => {
     if (!playing) return;
+    simMs.current = Date.parse(points[snapIndex(points, store.getState().scrubTs)].ts);
+    const end = Date.parse(points[last].ts);
     const id = window.setInterval(() => {
-      const i = snapIndex(points, store.getState().scrubTs);
-      if (i >= last) setPlaying(false);
-      else moveTo(i + 1);
-    }, PLAY_MS);
+      simMs.current += TICK_MS * speed;
+      if (simMs.current >= end) {
+        moveTo(last);
+        setPlaying(false);
+      } else {
+        moveTo(snapIndex(points, new Date(simMs.current).toISOString()));
+      }
+    }, TICK_MS);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing, points]);
+  }, [playing, points, speed]);
 
   function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     const step = e.shiftKey ? 10 : 1;
@@ -84,17 +98,25 @@ export function Scrubber({ points, event }: Props) {
 
   if (points.length === 0) return <div className="scrub" aria-label={STR.scrubberLabel} />;
   const pct = (i: number) => (last > 0 ? (i / last) * 100 : 0);
+  // The native thumb travels from half its width to the other end, so marks use the same span.
+  const at = (p: number) => `calc(${THUMB / 2}px + (100% - ${THUMB}px) * ${p / 100})`;
+  const ticks = events.map((e) => {
+    const t = Date.parse(e.start_ts);
+    const found = points.findIndex((p) => Date.parse(p.ts) >= t);
+    return { e, i: found < 0 ? last : found };
+  });
   return (
     <div className="scrub" aria-label={STR.scrubberLabel}>
-      <button
-        type="button"
-        className="btn sm"
-        aria-label={playing ? STR.pause : STR.play}
-        onClick={() => setPlaying((p) => !p)}
-      >
-        {playing ? "❚❚" : "▶"}
+      <button type="button" className="playbtn" aria-label={playing ? STR.pause : STR.play} onClick={() => setPlaying((p) => !p)}>
+        {playing ? (
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M3 1.5H5V10.5H3ZM7 1.5H9V10.5H7Z" fill="#03045E" />
+          </svg>
+        ) : (
+          <img src={playIcon} alt="" />
+        )}
       </button>
-      <span className="mono scrubnow" title={STR.timeItem}>{formatTime(points[index].ts)}</span>
+      <span className="scrubnow" title={STR.timeItem}>{clockZ(points[index].ts)}</span>
       <div className="scrubtrack">
         <input
           type="range"
@@ -102,8 +124,9 @@ export function Scrubber({ points, event }: Props) {
           max={Math.max(0, last)}
           step={1}
           value={index}
+          style={{ "--p": at(pct(index)) } as CSSProperties}
           aria-label={STR.scrubberSlider}
-          aria-valuetext={formatTime(points[index].ts)}
+          aria-valuetext={clockZ(points[index].ts)}
           onChange={(e) => moveTo(Number(e.target.value))}
           onKeyDown={onKeyDown}
         />
@@ -115,10 +138,30 @@ export function Scrubber({ points, event }: Props) {
             style={{ left: `${pct(band[0])}%`, width: `${Math.max(pct(band[1]) - pct(band[0]), 0.8)}%` }}
           />
         )}
+        {ticks.map(({ e, i }) => (
+          <button
+            key={e.id}
+            type="button"
+            className={`scrubtick${isSquawk(e.type) ? " red" : ""}`}
+            style={{ left: at(pct(i)) }}
+            title={`${SHORT_LABEL[e.type]} ${clockZ(e.start_ts)}`}
+            aria-label={`${SHORT_LABEL[e.type]} ${clockZ(e.start_ts)}`}
+            onClick={() => moveTo(i)}
+          />
+        ))}
       </div>
-      <span className="mono muted scrubrange">
-        {clock(points[0].ts)} to {clock(points[last].ts)} UTC
+      <span className="scrubrange">
+        {clockZ(points[0].ts)} → {clockZ(points[last].ts)}
       </span>
+      <button
+        type="button"
+        className="speed"
+        title={STR.speedLabel}
+        aria-label={`${STR.speedLabel} x${speed}`}
+        onClick={() => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length])}
+      >
+        ×{speed}
+      </button>
     </div>
   );
 }

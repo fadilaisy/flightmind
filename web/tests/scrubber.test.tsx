@@ -1,4 +1,4 @@
-﻿// @vitest-environment jsdom
+// @vitest-environment jsdom
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -54,8 +54,8 @@ describe("snapIndex", () => {
 describe("Scrubber", () => {
   it("starts on the first point and writes scrubTs", () => {
     expect(getStore().getState().scrubTs).toBe(points[0].ts);
-    expect(host.textContent).toContain("08:00:00 UTC");
-    expect(host.textContent).toContain("08:00:00 to 08:04:00 UTC");
+    expect(host.textContent).toContain("08:00:00Z");
+    expect(host.textContent).toContain("08:00:00Z → 08:04:00Z");
   });
   it("moves one point with an arrow key", () => {
     key("ArrowRight");
@@ -83,6 +83,33 @@ describe("Scrubber", () => {
       slider().dispatchEvent(new Event("input", { bubbles: true }));
     });
     expect(getStore().getState().scrubTs).toBe(points[7].ts);
+  });
+  it("puts a tick on the track for each event of the aircraft, red for a squawk", () => {
+    act(() =>
+      root.render(
+        <Scrubber
+          points={points}
+          event={event}
+          events={[
+            { id: "a", type: "go_around", start_ts: points[3].ts },
+            { id: "b", type: "squawk_7700", start_ts: points[10].ts },
+          ]}
+        />,
+      ),
+    );
+    const ticks = host.querySelectorAll<HTMLElement>(".scrubtick");
+    expect(ticks).toHaveLength(2);
+    expect(ticks[1].className).toContain("red");
+    act(() => ticks[1].click());
+    expect(getStore().getState().scrubTs).toBe(points[10].ts);
+  });
+  it("cycles the speed label 1, 2, 4, 8 on click", () => {
+    const btn = host.querySelector<HTMLButtonElement>(".speed")!;
+    expect(btn.textContent).toBe("×8");
+    act(() => btn.click());
+    expect(btn.textContent).toBe("×1");
+    act(() => btn.click());
+    expect(btn.textContent).toBe("×2");
   });
   it("shades the flagged window on the slider", () => {
     const band = host.querySelector<HTMLElement>(".scrubband")!;

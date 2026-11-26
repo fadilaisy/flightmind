@@ -1,5 +1,5 @@
 import type { AskResponse, CompressionReport, EventDetail, FlightEvent, Meta, RawRecord, Track } from "./types";
-import type { Recording, CreateRecordingRequest } from "./uploadTypes";
+import type { CreateRecordingRequest, QuarantinePage, Recipe, Recording, RecordingPreview } from "./uploadTypes";
 
 export interface Api {
   meta(): Promise<Meta>;
@@ -20,6 +20,11 @@ export interface Api {
   processRecording(id: string, streamId: string): Promise<Recording>;
   listRecordings(): Promise<Recording[]>;
   getRecording(id: string): Promise<Recording>;
+  recordingPreview(id: string, stream: string, limit?: number): Promise<RecordingPreview>;
+  recordingRecipe(id: string): Promise<Recipe>;
+  recordingQuarantine(id: string, offset: number, limit: number): Promise<QuarantinePage>;
+  /** The export zip: cleaned.csv, events.csv, quarantine.csv, recipe.json. */
+  exportRecording(id: string): Promise<Blob>;
 }
 
 export class ApiError extends Error {
@@ -86,6 +91,17 @@ export function httpApi(baseUrl: string): Api {
     processRecording: (id, streamId) => postJson<Recording>(`${rec(id)}/process`, { stream_id: streamId }),
     listRecordings: () => get<Recording[]>("/api/recordings"),
     getRecording: (id) => get<Recording>(rec(id)),
+    recordingPreview: (id, stream, limit = 8) =>
+      get<RecordingPreview>(`${rec(id)}/preview?stream=${encodeURIComponent(stream)}&limit=${limit}`),
+    recordingRecipe: (id) => get<Recipe>(`${rec(id)}/recipe`),
+    recordingQuarantine: (id, offset, limit) =>
+      get<QuarantinePage>(`${rec(id)}/quarantine?offset=${offset}&limit=${limit}`),
+    exportRecording: async (id) => {
+      const url = `${baseUrl}${rec(id)}/export`;
+      const res = await fetch(url);
+      if (!res.ok) throw new ApiError(res.status, url, `Request failed: ${res.status} ${url}`);
+      return res.blob();
+    },
   };
 }
 
@@ -94,3 +110,4 @@ export function createApi(mock: () => Api): Api {
   const base = import.meta.env.VITE_API_BASE as string | undefined;
   return base ? httpApi(base) : mock();
 }
+

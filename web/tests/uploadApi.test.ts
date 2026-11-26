@@ -65,7 +65,7 @@ describe("mock recordings", () => {
     const { id } = await api.createRecording({ filename: "a.ast", size_bytes: 10 });
     await api.completeRecording(id);
     advance(MOCK_TIMELINE.scanMs);
-    await api.processRecording(id, "s1");
+    await api.processRecording(id, "raw");
     advance(MOCK_TIMELINE.queuedMs + 1500);
     const r = await api.getRecording(id);
     expect(r.status).toBe("decoding");

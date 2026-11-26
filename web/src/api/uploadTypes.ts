@@ -1,3 +1,5 @@
+import type { RawRecord } from "./types";
+
 // Temporary types for the recording upload contract (SCRUM-62, upload plan section 1).
 // They get replaced by `contracts/types.ts` once SCRUM-62 merges. Keep them identical to the contract until then.
 
@@ -66,3 +68,48 @@ export interface CreateRecordingRequest {
 export interface ProcessRecordingRequest {
   stream_id: string;
 }
+
+// Upload plan 6.1: decoded preview, cleaning recipe, quarantine and export.
+
+export interface FieldQuality {
+  /** For example "I021/130". */
+  item: string;
+  label: string;
+  present_pct: number;
+}
+
+export interface RecordingPreview {
+  records: RawRecord[];
+  field_quality: FieldQuality[];
+  /** Set when the quality figures come from a sample, not every record. */
+  sample_size?: number;
+}
+
+export interface RecipeStep {
+  code: string;
+  label: string;
+  records_in: number;
+  set_aside: number;
+  reason: string;
+}
+
+export interface Recipe {
+  input_sha256: string;
+  steps: RecipeStep[];
+  tolerance_note: string;
+  raw_bytes: number;
+  stored_bytes: number;
+  ratio: number;
+}
+
+export interface QuarantineItem {
+  raw_ref: string;
+  step_code: string;
+  reason: string;
+}
+
+export interface QuarantinePage {
+  total: number;
+  items: QuarantineItem[];
+}
+

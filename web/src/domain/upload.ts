@@ -41,8 +41,6 @@ export const MSG = {
   tooLarge: "This file is larger than 2 GB.",
   badType: "FlightMind reads .pcap, .pcapng, .atx, .ast and .bin files.",
   notCat021: "The start of this file is not pcap, pcapng or ASTERIX CAT021 data.",
-  noSupportedStream: "This recording has no CAT021 stream FlightMind can read.",
-  severalStreams: "This recording has more than one CAT021 stream. Choosing a stream is not built yet.",
 } as const;
 
 export function extensionOf(name: string): string {
@@ -163,21 +161,21 @@ export class UploadError extends Error {
 
 export type NextAction =
   | { kind: "wait" }
-  | { kind: "process"; streamId: string }
+  | { kind: "scanned" }
   | { kind: "ready" }
-  | { kind: "failed"; error: string }
-  | { kind: "choose"; message: string };
+  | { kind: "failed"; error: string };
 
 /** What to do with a recording after a poll. */
 export function nextAction(r: Recording): NextAction {
   if (r.status === "failed") return { kind: "failed", error: r.error ?? "Processing failed." };
   if (r.status === "ready") return { kind: "ready" };
-  if (r.status === "scanned") {
-    const supported = r.streams.filter((s) => s.supported);
-    if (supported.length === 1) return { kind: "process", streamId: supported[0].id };
-    return { kind: "choose", message: supported.length === 0 ? MSG.noSupportedStream : MSG.severalStreams };
-  }
+  if (r.status === "scanned") return { kind: "scanned" };
   return { kind: "wait" };
+}
+
+/** The id of the stream to preview at once, for a raw file that has the single stream "raw". Otherwise null. */
+export function rawStreamId(r: Recording): string | null {
+  return r.streams.length === 1 && r.streams[0].id === "raw" && r.streams[0].supported ? "raw" : null;
 }
 
 export interface FollowOptions {
@@ -188,15 +186,14 @@ export interface FollowOptions {
 }
 
 export type FollowResult =
+  | { kind: "scanned"; recording: Recording }
   | { kind: "ready"; recording: Recording }
   | { kind: "failed"; recording: Recording; error: string }
-  | { kind: "choose"; recording: Recording; message: string }
   | { kind: "stopped" };
 
-/** Poll GET /api/recordings/{id} every 2 s. Calls process once when exactly one stream is supported. */
+/** Poll GET /api/recordings/{id} every 2 s until the recording is scanned, ready or failed. Never starts processing. */
 export async function followRecording(api: Api, id: string, options: FollowOptions): Promise<FollowResult> {
   const sleep = options.sleep ?? wait;
-  let processed = false;
   for (;;) {
     if (options.shouldStop?.()) return { kind: "stopped" };
     let r: Recording;
@@ -208,16 +205,15 @@ export async function followRecording(api: Api, id: string, options: FollowOptio
     options.onUpdate(r);
     const action = nextAction(r);
     if (action.kind === "ready") return { kind: "ready", recording: r };
+    if (action.kind === "scanned") return { kind: "scanned", recording: r };
     if (action.kind === "failed") return { kind: "failed", recording: r, error: action.error };
-    if (action.kind === "choose") return { kind: "choose", recording: r, message: action.message };
-    if (action.kind === "process" && !processed) {
-      processed = true;
-      try {
-        options.onUpdate(await api.processRecording(id, action.streamId));
-      } catch (e) {
-        throw new UploadError(errorText(e, "process"), e);
-      }
-    }
     await sleep(POLL_MS);
   }
+}
+
+/** Statuses while the server works on a chosen stream. */
+export const PROCESSING_STATUSES: readonly RecordingStatus[] = ["queued", "decoding", "filtering", "detecting", "storing"];
+
+export function isProcessing(status: RecordingStatus): boolean {
+  return PROCESSING_STATUSES.includes(status);
 }

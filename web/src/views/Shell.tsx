@@ -10,6 +10,9 @@ import { navigate } from "./nav";
 export type Tab = keyof typeof TAB_LABEL;
 export const TABS = Object.keys(TAB_LABEL) as Tab[];
 
+/** Tabs that only make sense once a recording is selected. */
+export const RECORDING_TABS: Tab[] = ["preview", "clean", "export"];
+
 /** Reads ?tab= from a query string. Anything unknown falls back to Trajectory. */
 export function parseTab(search: string): Tab {
   const value = new URLSearchParams(search).get("tab");
@@ -25,6 +28,8 @@ export function tabUrl(search: string, tab: Tab): string {
 export function Shell({
   api,
   usingSample,
+  hasRecording = true,
+  activeTab = null,
   recordingName,
   selectedId = null,
   onSelectRecording,
@@ -32,7 +37,12 @@ export function Shell({
   children,
 }: {
   api: Api;
+  /** True only when the mock sample dataset is what the screen shows. */
   usingSample: boolean;
+  /** Preview, Clean and Export show only when a recording is selected. */
+  hasRecording?: boolean;
+  /** Forces the active tab, for example Load while the Load screen is up. */
+  activeTab?: Tab | null;
   /** Filename of the selected recording. null: none loaded. undefined: the server has no recordings API, so use meta. */
   recordingName?: string | null;
   selectedId?: string | null;
@@ -40,7 +50,8 @@ export function Shell({
   onPickFile?: (file: File) => void;
   children: (tab: Tab) => ReactNode;
 }) {
-  const [tab, setTab] = useState<Tab>(() => parseTab(window.location.search));
+  const [urlTab, setTab] = useState<Tab>(() => parseTab(window.location.search));
+  const tab = activeTab ?? urlTab;
   const [meta, setMeta] = useState<Meta | null>(null);
   const [metaFailed, setMetaFailed] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -74,7 +85,7 @@ export function Shell({
           {STR.brand}
         </div>
         <nav className="tabs" role="tablist" aria-label={STR.tabsLabel}>
-          {TABS.map((t) => (
+          {TABS.filter((t) => hasRecording || !RECORDING_TABS.includes(t)).map((t) => (
             <button
               key={t}
               id={`tab-${t}`}
@@ -125,3 +136,4 @@ export function Shell({
     </>
   );
 }
+

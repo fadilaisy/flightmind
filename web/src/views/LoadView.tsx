@@ -30,6 +30,8 @@ interface Props {
   /** A file picked somewhere else (the header panel). The view uploads it at once. */
   start?: StartUpload | null;
   onReady: (id: string) => void;
+  /** The scan finished: the analyst picks a stream next. */
+  onScanned: (recording: Recording) => void;
   /** "Try another file" was pressed. */
   onReset: () => void;
 }
@@ -43,7 +45,7 @@ type Phase =
 const nf = (n: number) => n.toLocaleString("en-US");
 
 /** The Load screen (Figma frame 1) and what follows a file: upload, processing, failure. */
-export function LoadView({ api, follow = null, start = null, onReady, onReset }: Props) {
+export function LoadView({ api, follow = null, start = null, onReady, onScanned, onReset }: Props) {
   const [phase, setPhase] = useState<Phase>(() =>
     start || follow ? { name: "working", filename: start?.file.name ?? "", size: start?.file.size ?? 0, sent: 0, recording: null } : { name: "choose" },
   );
@@ -65,8 +67,8 @@ export function LoadView({ api, follow = null, start = null, onReady, onReset }:
       });
       if (!live()) return;
       if (result.kind === "ready") onReady(id);
+      else if (result.kind === "scanned") onScanned(result.recording);
       else if (result.kind === "failed") setPhase({ name: "failed", message: result.error });
-      else if (result.kind === "choose") setPhase({ name: "failed", message: result.message });
     } catch (e) {
       if (live()) setPhase({ name: "failed", message: describe(e) });
     }
@@ -242,3 +244,4 @@ function Working({ phase }: { phase: Extract<Phase, { name: "working" }> }) {
     </div>
   );
 }
+

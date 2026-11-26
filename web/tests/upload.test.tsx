@@ -79,27 +79,32 @@ describe("part upload", () => {
 });
 
 describe("polling", () => {
-  it("polls every 2 s, calls process once for a single supported stream, and stops at ready", async () => {
-    const seq = [rec({ status: "scanning" }), rec({ status: "scanned", streams: [stream("s1", true), stream("s2", false)] }), rec({ status: "decoding" }), rec({ status: "ready" })];
+  it("polls every 2 s and stops at scanned without processing", async () => {
+    const seq = [rec({ status: "scanning" }), rec({ status: "scanned", streams: [stream("s1", true), stream("s2", false)] })];
     let i = 0;
-    const processRecording = vi.fn(async () => rec({ status: "queued" }));
+    const processRecording = vi.fn();
     const api = { getRecording: async () => seq[Math.min(i++, seq.length - 1)], processRecording } as unknown as Api;
     const sleeps: number[] = [];
-    const seen: string[] = [];
-    const out = await followRecording(api, "r0123456789", { onUpdate: (r) => seen.push(r.status), sleep: async (ms) => void sleeps.push(ms) });
+    const out = await followRecording(api, "r0123456789", { onUpdate: () => {}, sleep: async (ms) => void sleeps.push(ms) });
+    expect(out.kind).toBe("scanned");
+    expect(sleeps).toEqual([POLL_MS]);
+    expect(POLL_MS).toBe(2000);
+    expect(processRecording).not.toHaveBeenCalled();
+  });
+
+  it("polls until ready when the recording is already being processed", async () => {
+    const seq = [rec({ status: "decoding" }), rec({ status: "filtering" }), rec({ status: "ready" })];
+    let i = 0;
+    const api = { getRecording: async () => seq[Math.min(i++, seq.length - 1)] } as unknown as Api;
+    const out = await followRecording(api, "r0123456789", { onUpdate: () => {}, sleep: noDelay });
     expect(out.kind).toBe("ready");
-    expect(sleeps.every((ms) => ms === POLL_MS && ms === 2000)).toBe(true);
-    expect(sleeps).toHaveLength(3);
-    expect(processRecording).toHaveBeenCalledTimes(1);
-    expect(processRecording).toHaveBeenCalledWith("r0123456789", "s1");
-    expect(seen).toContain("ready");
   });
 
-  it("does not process when two streams are supported or none is", () => {
-    expect(nextAction(rec({ status: "scanned", streams: [stream("a", true), stream("b", true)] })).kind).toBe("choose");
-    expect(nextAction(rec({ status: "scanned", streams: [stream("b", false)] })).kind).toBe("choose");
+  it("never starts processing on its own, whatever the streams are", () => {
+    expect(nextAction(rec({ status: "scanned", streams: [stream("a", true)] })).kind).toBe("scanned");
+    expect(nextAction(rec({ status: "scanned", streams: [stream("a", true), stream("b", true)] })).kind).toBe("scanned");
+    expect(nextAction(rec({ status: "scanned", streams: [stream("b", false)] })).kind).toBe("scanned");
   });
-
   it("returns the error text of a failed recording as written", async () => {
     const api = { getRecording: async () => rec({ status: "failed", error: "No CAT021 records found in bad.pcap" }) } as unknown as Api;
     const out = await followRecording(api, "r0123456789", { onUpdate: () => {}, sleep: noDelay });
@@ -124,7 +129,7 @@ function mount(node: React.ReactNode) {
 
 describe("LoadView", () => {
   it("shows the drop zone with Choose file and the accepted types", () => {
-    const { host, done } = mount(<LoadView api={{} as Api} onReady={() => {}} onReset={() => {}} />);
+    const { host, done } = mount(<LoadView api={{} as Api} onScanned={() => {}} onReady={() => {}} onReset={() => {}} />);
     expect(host.textContent).toContain("Choose file");
     expect(host.textContent).toContain("up to 2 GB");
     expect(host.querySelector("input[type=file]")?.getAttribute("accept")).toBe(".pcap,.pcapng,.atx,.ast,.bin");
@@ -132,7 +137,7 @@ describe("LoadView", () => {
   });
 
   it("asks for a recording date on a raw file, defaulting to its modified date", async () => {
-    const { host, done } = mount(<LoadView api={{} as Api} onReady={() => {}} onReset={() => {}} start={{ file: file("a.ast", 5) }} />);
+    const { host, done } = mount(<LoadView api={{} as Api} onScanned={() => {}} onReady={() => {}} onReset={() => {}} start={{ file: file("a.ast", 5) }} />);
     await flush();
     expect(host.textContent).toContain("Recording date");
     expect((host.querySelector("input[type=date]") as HTMLInputElement).value).toBe("2026-10-03");
@@ -142,7 +147,7 @@ describe("LoadView", () => {
   it("shows a failed recording's error and Try another file, which calls onReset", async () => {
     const api = { getRecording: async () => rec({ status: "failed", error: "No CAT021 records found in bad.pcap" }) } as unknown as Api;
     const onReset = vi.fn();
-    const { host, done } = mount(<LoadView api={api} follow="r0123456789" onReady={() => {}} onReset={onReset} />);
+    const { host, done } = mount(<LoadView api={api} follow="r0123456789" onScanned={() => {}} onReady={() => {}} onReset={onReset} />);
     await flush();
     expect(host.querySelector(".statebox.error")?.textContent).toContain("No CAT021 records found in bad.pcap");
     const btn = [...host.querySelectorAll("button")].find((b) => b.textContent === "Try another file")!;
@@ -155,16 +160,16 @@ describe("LoadView", () => {
   it("says the file is larger than 2 GB for a 413 and names the types for a 415", async () => {
     const big = file("a.pcap", 1);
     Object.defineProperty(big, "size", { value: 3 * 1024 ** 3 });
-    const a = mount(<LoadView api={{} as Api} start={{ file: big }} onReady={() => {}} onReset={() => {}} />);
+    const a = mount(<LoadView api={{} as Api} start={{ file: big }} onScanned={() => {}} onReady={() => {}} onReset={() => {}} />);
     await flush();
     expect(a.host.querySelector(".statebox.error")?.textContent).toContain("This file is larger than 2 GB.");
     a.done();
-    const b = mount(<LoadView api={{} as Api} start={{ file: file("notes.txt", 1) }} onReady={() => {}} onReset={() => {}} />);
+    const b = mount(<LoadView api={{} as Api} start={{ file: file("notes.txt", 1) }} onScanned={() => {}} onReady={() => {}} onReset={() => {}} />);
     await flush();
     expect(b.host.querySelector(".statebox.error")?.textContent).toContain("FlightMind reads .pcap, .pcapng, .atx, .ast and .bin files.");
     b.done();
     const server = { createRecording: async () => Promise.reject(new ApiError(413, "u", "x")) } as unknown as Api;
-    const c = mount(<LoadView api={server} start={{ file: file("a.pcap", 1) }} onReady={() => {}} onReset={() => {}} />);
+    const c = mount(<LoadView api={server} start={{ file: file("a.pcap", 1) }} onScanned={() => {}} onReady={() => {}} onReset={() => {}} />);
     await flush();
     expect(c.host.querySelector(".statebox.error")?.textContent).toContain("This file is larger than 2 GB.");
     c.done();
@@ -180,7 +185,7 @@ describe("LoadView", () => {
     } as unknown as Api;
     const onReady = vi.fn();
     vi.useFakeTimers();
-    const { host, done } = mount(<LoadView api={api} start={{ file: file("a.pcap", 3) }} onReady={onReady} onReset={() => {}} />);
+    const { host, done } = mount(<LoadView api={api} start={{ file: file("a.pcap", 3) }} onScanned={() => {}} onReady={onReady} onReset={() => {}} />);
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
     expect(host.textContent).toContain("1,200 of 5,000 records");
     expect(host.querySelector("li.now")?.textContent).toContain("Decoding");

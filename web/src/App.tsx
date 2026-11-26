@@ -7,7 +7,12 @@ import { StateBox } from "./components/StateBox";
 import { getStore, useStore } from "./state/store";
 import { STR } from "./strings";
 import { EventsView } from "./views/EventsView";
+import { CleanView } from "./views/CleanView";
+import { ExportView } from "./views/ExportView";
 import { LoadView, type StartUpload } from "./views/LoadView";
+import { PreviewView } from "./views/PreviewView";
+import { StreamsView } from "./views/StreamsView";
+import { isProcessing, rawStreamId } from "./domain/upload";
 import { RecordsView } from "./views/RecordsView";
 import { Shell } from "./views/Shell";
 import { TrajectoryView } from "./views/TrajectoryView";
@@ -19,7 +24,12 @@ type Gate =
   | { kind: "checking" }
   | { kind: "load"; follow: string | null }
   | { kind: "ready"; recording: Recording | null }
+  /** Scanned or being processed: the Load, Preview and Clean tabs work, the data tabs wait. */
+  | { kind: "pending"; recording: Recording }
   | { kind: "error"; message: string };
+
+/** Tabs that show the mock's sample dataset. The others show the recording itself. */
+const SAMPLE_TABS = ["events", "trajectory", "records"];
 
 export function App() {
   // VITE_API_BASE set: real or SCRUM-33 mock API. Otherwise the sample fixture.
@@ -32,6 +42,8 @@ export function App() {
   const eventId = useStore((s) => s.eventId);
   const eventStates = useStore((s) => s.eventStates);
   const recordingId = useUrlParam("recording");
+  const streamParam = useUrlParam("stream");
+  const tabParam = useUrlParam("tab");
 
   // The analyst asked to load a file (header panel or "Try another file"), so the Load screen stays up.
   const [loadMode, setLoadMode] = useState<{ start: StartUpload | null; key: number } | null>(null);
@@ -49,7 +61,15 @@ export function App() {
     if (recordingId) {
       api
         .getRecording(recordingId)
-        .then((r) => set(r.status === "ready" ? { kind: "ready", recording: r } : { kind: "load", follow: recordingId }))
+        .then((r) =>
+          set(
+            r.status === "ready"
+              ? { kind: "ready", recording: r }
+              : r.status === "scanned" || isProcessing(r.status)
+                ? { kind: "pending", recording: r }
+                : { kind: "load", follow: recordingId },
+          ),
+        )
         .catch(() => set({ kind: "load", follow: recordingId }));
     } else {
       api
@@ -106,6 +126,96 @@ export function App() {
     navigate({ recording: null }, "replace");
   }
 
+  const refreshGate = () => setGateAttempt((n) => n + 1);
+
+  function loadView(follow: string | null) {
+    return (
+      <LoadView
+        key={`${loadMode?.key ?? 0}:${follow ?? ""}`}
+        api={api}
+        follow={follow}
+        start={loadMode?.start ?? null}
+        onReady={(id) => {
+          setLoadMode(null);
+          navigate({ recording: id, tab: "events" });
+          refreshGate();
+        }}
+        onScanned={(r) => {
+          setLoadMode(null);
+          const raw = rawStreamId(r);
+          navigate({ recording: r.id, tab: raw ? "preview" : "load", stream: raw });
+          refreshGate();
+        }}
+        onReset={() => {
+          setLoadMode((m) => ({ start: null, key: (m?.key ?? 0) + 1 }));
+          navigate({ recording: null }, "replace");
+        }}
+      />
+    );
+  }
+
+  function anotherFile() {
+    setLoadMode((m) => ({ start: null, key: (m?.key ?? 0) + 1 }));
+    navigate({ recording: null, stream: null, tab: "load" }, "replace");
+  }
+
+  function notice(text: string, label: string, tab: string) {
+    return (
+      <div className="wrap">
+        <StateBox kind="empty" title={text}>
+          <button type="button" className="fbtn" onClick={() => navigate({ tab })}>
+            {label}
+          </button>
+        </StateBox>
+      </div>
+    );
+  }
+
+  /** The Load, Preview, Clean and Export tabs of a selected recording. Null when the tab is not one of them. */
+  function recordingTab(tab: string, rec: Recording | null) {
+    if (tab !== "load" && tab !== "preview" && tab !== "clean" && tab !== "export") return null;
+    if (!rec) return tab === "load" ? loadView(null) : notice(STR.noStreamChosen, STR.goToLoad, "load");
+    const streamId = streamParam ?? rawStreamId(rec) ?? rec.streams.find((s) => s.supported)?.id ?? null;
+    if (tab === "load") {
+      return (
+        <StreamsView
+          recording={rec}
+          onUse={(id) => navigate({ tab: "preview", stream: id })}
+          onAnotherFile={anotherFile}
+        />
+      );
+    }
+    if (tab === "preview") {
+      if (!streamId) return notice(STR.noStreamChosen, STR.goToLoad, "load");
+      return (
+        <PreviewView
+          key={`${rec.id}:${streamId}`}
+          api={api}
+          recording={rec}
+          streamId={streamId}
+          onContinue={() => navigate({ tab: "clean", stream: streamId })}
+          onAnotherFile={anotherFile}
+        />
+      );
+    }
+    if (tab === "clean") {
+      return (
+        <CleanView
+          key={rec.id}
+          api={api}
+          recording={rec}
+          streamId={streamId}
+          onReady={() => {
+            navigate({ tab: "events" });
+            refreshGate();
+          }}
+          onReviewEvents={() => navigate({ tab: "events" })}
+        />
+      );
+    }
+    return <ExportView api={api} recording={rec} />;
+  }
+
   function body(tab: string) {
     if (gate.kind === "checking") {
       return (
@@ -123,24 +233,10 @@ export function App() {
         </div>
       );
     }
-    if (gate.kind === "load") {
-      return (
-        <LoadView
-          key={`${loadMode?.key ?? 0}:${gate.follow ?? ""}`}
-          api={api}
-          follow={gate.follow}
-          start={loadMode?.start ?? null}
-          onReady={(id) => {
-            setLoadMode(null);
-            navigate({ recording: id, tab: "events" });
-          }}
-          onReset={() => {
-            setLoadMode((m) => ({ start: null, key: (m?.key ?? 0) + 1 }));
-            navigate({ recording: null }, "replace");
-          }}
-        />
-      );
-    }
+    if (gate.kind === "load") return loadView(gate.follow);
+    const own = recordingTab(tab, gate.recording);
+    if (own) return own;
+    if (gate.kind === "pending") return notice(STR.applyFirst, STR.goToClean, "clean");
     if (error) {
       return (
         <div className="wrap">
@@ -165,12 +261,14 @@ export function App() {
   }
 
   const recordingName =
-    gate.kind === "ready" ? (gate.recording ? gate.recording.filename : undefined) : null;
+    gate.kind === "ready" ? (gate.recording ? gate.recording.filename : undefined) : gate.kind === "pending" ? gate.recording.filename : null;
 
   return (
     <Shell
       api={api}
-      usingSample={usingSample}
+      usingSample={usingSample && gate.kind === "ready" && SAMPLE_TABS.includes(tabParam ?? "trajectory")}
+      hasRecording={recordingId !== null}
+      activeTab={gate.kind === "load" ? "load" : null}
       recordingName={recordingName}
       selectedId={recordingId}
       onSelectRecording={chooseRecording}
@@ -180,3 +278,4 @@ export function App() {
     </Shell>
   );
 }
+

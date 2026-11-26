@@ -16,7 +16,7 @@ Tick a box only when the check passes. After each ticked task, add a line to `KI
   - Check: `scripts/kiro-stats` prints `commits_unclassified=0`.
   - Reqs: R5
 
-- [ ] 3. Session logs
+- [x] 3. Session logs
   - Files: `scripts/kiro-sessions-export`, `docs/kiro/sessions/cli/`, `docs/kiro/sessions/prompts/`
   - Check: second run changes no file; grep for `Pongo`, `@gmail`, `sk-`, `AKIA`, `ghp_`, `BEGIN` finds nothing.
   - Reqs: R6

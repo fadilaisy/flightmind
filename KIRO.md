@@ -41,6 +41,7 @@ The spec/task column takes a spec and task (`ingest/2.3`) or a Jira key plus `(c
 2026-11-26 | Fadil | kiro-proof/0 | Wrote the kiro-proof spec for SCRUM-70 (requirements in EARS style, design, 6 tasks) so our Kiro usage can be checked from the repo | nothing
 2026-11-26 | Fadil | kiro-proof/1 | Wrote .githooks/commit-msg (refuses a commit without a valid Kiro: trailer; merge, fixup and squash pass), scripts/install-hooks, the commit-trailer IDE hook and .gitattributes so the scripts keep LF; checked that a commit without a trailer, and one with 'Kiro: spec bad', are refused | nothing
 2026-11-26 | Fadil | kiro-proof/2 | Rewrote scripts/kiro-stats to read the Kiro: trailer of every non-merge commit, accept 'missing' as the 'was' value of a correction, and print commits_unclassified and the share of each type; added four correction lines for the commits that never had a trailer (all none); result is 0 unclassified of 120 non-merge commits | nothing
+2026-11-26 | Fadil | kiro-proof/3 | Wrote scripts/kiro-sessions-export (Python, standard library only) and exported the 9 Kiro CLI sessions of this repo and the main checkout to docs/kiro/sessions/cli/ with an index, plus the 8 prompt files they read to docs/kiro/sessions/prompts/; home and temp paths, secrets and emails are redacted; a second run on a frozen copy of the sessions gave identical files; grep for Pongo, @gmail, sk-, AKIA, ghp_ and BEGIN finds only the prompt file K-kiro-proof.md quoting those words as instructions | nothing
 
 ## Week of 2026-11-16
 

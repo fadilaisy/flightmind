@@ -1,0 +1,330 @@
+#!/usr/bin/env python3
+"""Export Kiro CLI v2 sessions for this repository as redacted markdown (SCRUM-70).
+
+Reads ~/.kiro/sessions/cli/*.json (metadata) and the matching *.jsonl (messages), keeps the
+sessions whose working folder is this repo or one given with --also-cwd, and writes
+
+    docs/kiro/sessions/cli/<YYYY-MM-DD>-<first 8 chars of id>.md   one log per session
+    docs/kiro/sessions/cli/README.md                                index table
+    docs/kiro/sessions/prompts/<name>.md                            prompt files the sessions read
+
+Standard library only. The same input gives the same files.
+
+    python scripts/kiro-sessions-export [--also-cwd PATH]... [--sessions-dir DIR]
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+OUT_DIR = ROOT / "docs" / "kiro" / "sessions" / "cli"
+PROMPTS_DIR = ROOT / "docs" / "kiro" / "sessions" / "prompts"
+PROMPTS_REL = "docs/kiro/sessions/prompts"
+
+MAX_FILE_BYTES = 1_000_000
+MAX_TOOL_LINES_WHEN_CUT = 2000
+TOOL_INPUT_MAX = 200
+ERROR_MAX = 300
+
+# ---------------------------------------------------------------- redaction
+
+SECRET_PATTERNS = [
+    re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----", re.S),
+    re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----[A-Za-z0-9+/=\s]*"),
+    re.compile(r"sk-[A-Za-z0-9_-]{16,}"),
+    re.compile(r"AKIA[0-9A-Z]{16}"),
+    re.compile(r"ghp_[A-Za-z0-9]{20,}"),
+    re.compile(r"xox[bp]-[A-Za-z0-9-]+"),
+]
+ENV_SECRET = re.compile(
+    r"\b(ANTHROPIC_API_KEY|[A-Z0-9_]*_TOKEN|[A-Z0-9_]*_SECRET)(\s*=\s*)(\"[^\"]*\"|'[^']*'|[^\s\"'`]+)"
+)
+EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
+TEMP_SCRATCHPAD = re.compile(
+    r"(?:[A-Za-z]:[\\/]+|[\\/][A-Za-z](?=[\\/]))?(?:Users[\\/]+[^\\/\s\"'`]+[\\/]+)?"
+    r"AppData[\\/]+Local[\\/]+Temp[\\/]+claude[\\/]+[^\\/\s\"'`]+[\\/]+[^\\/\s\"'`]+[\\/]+scratchpad",
+    re.I,
+)
+ONEDRIVE_ORG = re.compile(r"OneDrive - [^\\/\"'`\n]+?(?=[\\/])", re.I)
+PROMPT_PATH = re.compile(
+    r"(?:[A-Za-z]:)?[\\/][^\s\"'`<>|*?]*?[\\/]prompts[\\/]([A-Za-z0-9._-]+\.md)"
+)
+
+
+def _home_pattern() -> re.Pattern[str]:
+    names = [p for p in Path.home().parts[1:] if p]
+    body = r"[\\/]+".join(re.escape(n) for n in names)
+    return re.compile(r"(?:[A-Za-z]:|[\\/][A-Za-z](?=[\\/]))?[\\/]+" + body + r"(?![A-Za-z0-9_])", re.I)
+
+
+HOME = _home_pattern()
+
+
+def redact(text: str) -> str:
+    for pat in SECRET_PATTERNS:
+        text = pat.sub("<redacted>", text)
+    text = ENV_SECRET.sub(lambda m: f"{m.group(1)}{m.group(2)}<redacted>", text)
+    text = TEMP_SCRATCHPAD.sub("<temp>", text)
+    text = HOME.sub("~", text)
+    text = ONEDRIVE_ORG.sub("OneDrive", text)
+    text = EMAIL.sub("<redacted>", text)
+    return text
+
+
+class Exporter:
+    def __init__(self) -> None:
+        self.copied: dict[str, bool] = {}
+
+    def copy_prompt(self, src: Path, name: str) -> bool:
+        if name in self.copied:
+            return self.copied[name]
+        ok = False
+        try:
+            if src.is_file():
+                body = redact(src.read_text(encoding="utf-8", errors="replace"))
+                PROMPTS_DIR.mkdir(parents=True, exist_ok=True)
+                with open(PROMPTS_DIR / name, "w", encoding="utf-8", newline="\n") as fh:
+                    fh.write(body)
+                ok = True
+        except OSError:
+            ok = False
+        self.copied[name] = ok
+        return ok
+
+    def clean(self, text: str) -> str:
+        """Point prompt-file paths at the committed copy, then redact."""
+
+        def swap(m: re.Match[str]) -> str:
+            if self.copy_prompt(Path(m.group(0)), m.group(1)):
+                return f"{PROMPTS_REL}/{m.group(1)}"
+            return m.group(0)
+
+        return redact(PROMPT_PATH.sub(swap, text))
+
+    def clean_value(self, value):
+        if isinstance(value, str):
+            return self.clean(value)
+        if isinstance(value, list):
+            return [self.clean_value(v) for v in value]
+        if isinstance(value, dict):
+            return {k: self.clean_value(v) for k, v in value.items()}
+        return value
+
+
+# ---------------------------------------------------------------- helpers
+
+def norm_path(p: str) -> str:
+    p = p.strip()
+    if p.startswith("\\\\?\\"):
+        p = p[4:]
+    return p.replace("\\", "/").rstrip("/").lower()
+
+
+def fenced(text: str, lang: str = "") -> str:
+    longest = max((len(m) for m in re.findall(r"`+", text)), default=0)
+    mark = "`" * max(3, longest + 1)
+    return f"{mark}{lang}\n{text}\n{mark}\n"
+
+
+def quote(text: str) -> str:
+    return "\n".join(("> " + line).rstrip() for line in text.split("\n")) + "\n"
+
+
+def utc(ts: str) -> str:
+    m = re.match(r"(\d{4}-\d\d-\d\d)T(\d\d:\d\d:\d\d)", ts)
+    return f"{m.group(1)} {m.group(2)} UTC" if m else ts
+
+
+def one_line(text: str, limit: int) -> str:
+    flat = re.sub(r"\s+", " ", text).strip()
+    return flat if len(flat) <= limit else flat[: limit - 3] + "..."
+
+
+def result_text(content) -> str:
+    parts = []
+    for item in content or []:
+        data = item.get("data")
+        if item.get("kind") == "text" and isinstance(data, str):
+            parts.append(data)
+        elif item.get("kind") == "json":
+            parts.append(json.dumps(data, ensure_ascii=False))
+    return "\n".join(parts)
+
+
+def read_messages(path: Path) -> list[dict]:
+    out = []
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    out.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue  # a line still being written
+    except OSError:
+        pass
+    return out
+
+
+# ---------------------------------------------------------------- one session
+
+def render(ex: Exporter, meta: dict, messages: list[dict], cap: bool) -> tuple[str, dict]:
+    prompts = 0
+    tool_calls = 0
+    first_prompt = ""
+    body: list[str] = []
+    tool_block: list[str] = []
+    tool_names: dict[str, str] = {}
+    tool_lines = 0
+    omitted = 0
+
+    def flush_tools() -> None:
+        if tool_block:
+            body.append(fenced("\n".join(tool_block), "text"))
+            tool_block.clear()
+
+    def add_tool_line(line: str) -> None:
+        nonlocal tool_lines, omitted
+        if cap and tool_lines >= MAX_TOOL_LINES_WHEN_CUT:
+            omitted += 1
+            return
+        tool_lines += 1
+        tool_block.append(line)
+
+    for msg in messages:
+        kind = msg.get("kind")
+        data = msg.get("data") or {}
+        content = data.get("content") or []
+        if kind == "Prompt":
+            texts = [c.get("data") for c in content if c.get("kind") == "text" and isinstance(c.get("data"), str)]
+            text = ex.clean("\n".join(texts))
+            if not text.strip():
+                continue
+            flush_tools()
+            prompts += 1
+            if not first_prompt:
+                first_prompt = text
+            body.append(f"## Prompt {prompts}\n\n{fenced(text)}")
+        elif kind == "AssistantMessage":
+            for c in content:
+                ck = c.get("kind")
+                if ck == "text":
+                    text = c.get("data")
+                    if isinstance(text, str) and text.strip():
+                        flush_tools()
+                        body.append("### Assistant\n\n" + quote(ex.clean(text.strip())))
+                elif ck == "toolUse":
+                    d = c.get("data") or {}
+                    tool_calls += 1
+                    name = str(d.get("name", "?"))
+                    tool_names[d.get("toolUseId", "")] = name
+                    inp = json.dumps(ex.clean_value(d.get("input")), ensure_ascii=False)
+                    add_tool_line(f"tool {name}: {one_line(inp, TOOL_INPUT_MAX)}")
+        elif kind == "ToolResults":
+            for c in content:
+                if c.get("kind") != "toolResult":
+                    continue
+                d = c.get("data") or {}
+                if d.get("status") == "error":
+                    name = tool_names.get(d.get("toolUseId", ""), "?")
+                    text = ex.clean(result_text(d.get("content")))
+                    add_tool_line(f"tool {name} error: {one_line(text, ERROR_MAX)}")
+    flush_tools()
+
+    sid = meta.get("session_id", "")
+    head = [
+        f"# Kiro CLI session {sid[:8]}",
+        "",
+        f"- Session id: `{sid}`",
+        f"- Created: {utc(str(meta.get('created_at', '')))}",
+        f"- Updated: {utc(str(meta.get('updated_at', '')))}",
+        f"- Prompts: {prompts}",
+        f"- Tool calls: {tool_calls}",
+        f"- Working folder: `{ex.clean(str(meta.get('cwd', '')))}`",
+        "",
+        "Exported by `scripts/kiro-sessions-export`. Thinking blocks and tool results are left out, "
+        "except errors. Home folders, temp folders, secrets and email addresses are redacted.",
+        "",
+    ]
+    text = "\n".join(head) + "\n" + "\n".join(body)
+    if omitted:
+        text += (
+            f"\nTool-call lines after the first {MAX_TOOL_LINES_WHEN_CUT} were cut to keep this file "
+            f"under 1 MB ({omitted} lines left out).\n"
+        )
+    info = {"prompts": prompts, "tool_calls": tool_calls, "first_prompt": first_prompt}
+    return text, info
+
+
+def export(sessions_dir: Path, cwds: set[str]) -> int:
+    ex = Exporter()
+    rows = []
+    for meta_path in sorted(sessions_dir.glob("*.json")):
+        try:
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if norm_path(str(meta.get("cwd", ""))) not in cwds:
+            continue
+        sid = str(meta.get("session_id") or meta_path.stem)
+        messages = read_messages(meta_path.with_suffix(".jsonl"))
+        text, info = render(ex, meta, messages, cap=False)
+        if len(text.encode("utf-8")) > MAX_FILE_BYTES:
+            text, info = render(ex, meta, messages, cap=True)
+        text = redact(text)
+        created = str(meta.get("created_at", ""))
+        name = f"{created[:10]}-{sid[:8]}.md"
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
+        with open(OUT_DIR / name, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text)
+        rows.append((created, sid, name, info))
+
+    rows.sort(key=lambda r: (r[0], r[1]))
+    lines = [
+        "# Kiro CLI session logs",
+        "",
+        "One file per Kiro CLI session run in this repository, written by `scripts/kiro-sessions-export`.",
+        "Each log has every prompt and assistant text in full, one line per tool call, and tool errors.",
+        "Home folders, temp folders, secrets and email addresses are redacted. Prompt files that a",
+        "session read are copied to `docs/kiro/sessions/prompts/`.",
+        "",
+        "Refresh: `python scripts/kiro-sessions-export --also-cwd <other clone of this repo>`",
+        "",
+        "| Date | Session | First prompt | Prompts | Tool calls | Log |",
+        "| --- | --- | --- | ---: | ---: | --- |",
+    ]
+    for created, sid, name, info in rows:
+        first = one_line(info["first_prompt"], 110).replace("|", "\\|")
+        lines.append(
+            f"| {created[:10]} | `{sid[:8]}` | {first} | {info['prompts']} | {info['tool_calls']} | [{name}]({name}) |"
+        )
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    with open(OUT_DIR / "README.md", "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(redact("\n".join(lines)) + "\n")
+    print(f"{len(rows)} sessions written to {OUT_DIR.relative_to(ROOT).as_posix()}")
+    return 0
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--also-cwd", action="append", default=[], metavar="PATH",
+                    help="another working folder whose sessions to keep (repeatable)")
+    ap.add_argument("--sessions-dir", default=str(Path.home() / ".kiro" / "sessions" / "cli"),
+                    help="where Kiro CLI keeps its sessions (default ~/.kiro/sessions/cli)")
+    args = ap.parse_args()
+    sessions_dir = Path(args.sessions_dir)
+    if not sessions_dir.is_dir():
+        print(f"no sessions folder at {sessions_dir}", file=sys.stderr)
+        return 1
+    cwds = {norm_path(str(ROOT))} | {norm_path(p) for p in args.also_cwd}
+    return export(sessions_dir, cwds)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -13,6 +13,7 @@ import { getStore, useStore } from "../state/store";
 import { useTrack } from "../state/useTrack";
 import { STR } from "../strings";
 import { MapView } from "./MapView";
+import { ThreeDView } from "./ThreeDView";
 import { navigate, useUrlParam } from "./nav";
 
 interface Props {
@@ -72,6 +73,9 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
       );
     }
     if (track.track.points.length === 0) return <StateBox kind="empty" title={STR.noTrack} />;
+    if (view === "3d") {
+      return <ThreeDView points={track.track.points} event={selected} scrubTs={scrubTs} onOpenRecord={openRecord} />;
+    }
     return <MapView points={track.track.points} event={selected} scrubTs={scrubTs} onOpenRecord={openRecord} />;
   }
 
@@ -92,7 +96,9 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
             <button className={view === "map" ? "on" : undefined} onClick={() => navigate({ view: "map" })}>
               {STR.viewMap}
             </button>
-            <button disabled title={STR.notBuilt}>{STR.view3d}</button>
+            <button className={view === "3d" ? "on" : undefined} onClick={() => navigate({ view: "3d" })}>
+              {STR.view3d}
+            </button>
             <button
               className={showCharts ? "on" : undefined}
               aria-pressed={showCharts}

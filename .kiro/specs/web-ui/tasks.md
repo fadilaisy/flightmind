@@ -1,4 +1,4 @@
-﻿# Tasks: web-ui (SCRUM-39)
+# Tasks: web-ui (SCRUM-39)
 
 Do not implement until the spec is approved. Tick a box only when the check passes. After each ticked task, add a line to `KIRO.md`.
 Paths are under `web/` unless noted.
@@ -59,7 +59,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: drag and arrow keys move the cursor on map and charts; Shift moves ten points; the marker sits on the nearest point at or before the time.
   - Reqs: R4.4, R4.5, R4.6
 
-- [ ] 12. 3D tab
+- [x] 12. 3D tab
   - Files: `src/views/ThreeDView.tsx`
   - Check: line and points in three styles; marker follows the scrubber; exaggeration factor shown; a 5,000-point track scrubs without lag.
   - Reqs: R5, R8.3

@@ -81,11 +81,19 @@ Checked in Kiro on 2026-11-25 (task 7 of the spec, clip in `docs/kiro/scrum-34/`
   and with the API stopped it returned the unreachable message. The server stayed up.
 
 The calls above were driven through `kiro-cli` by Claude Code, not typed into the IDE chat
-panel by a person. That check and the Kiro Crew one below are task 9 of the spec.
+panel by a person. Task 9 of the spec redid them by hand.
 
-Still not checked: whether Kiro Crew reads `.kiro/settings/mcp.json`. Until it is, assume it
-does not, and add the server by hand in Customize, Connections, MCP Servers with an absolute
-path to `run.py`.
+Checked again on 2026-11-26 (task 9, clip `docs/kiro/scrum-34/2026-11-26_role3_mcp-get_track-ide.mp4`):
+
+- Zahran typed the three asks into the Kiro IDE chat panel. `8A0F21` returned 60 points,
+  callsign GIA123, `raw_ref` `rec01:0` to `rec01:2`. `ZZZZZZ` returned the unknown-aircraft
+  message. With the API stopped it returned the unreachable message. Claude Code started and
+  stopped the mock API and recorded the screen.
+- Kiro Crew (0.13.1) does **not** read `.kiro/settings/mcp.json`. Customize, MCP Servers lists
+  13 servers (Crew's own and the ones in the user-level `~/.kiro/settings/mcp.json`) and
+  `flightmind` is not one of them (`docs/kiro/scrum-34/2026-11-26_role3_crew-mcp-servers.png`).
+  To use it in Crew, add it by hand in Customize, MCP Servers, Add Custom, with an absolute
+  path to `run.py`.
 
 Notes:
 

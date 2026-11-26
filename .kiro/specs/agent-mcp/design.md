@@ -176,5 +176,5 @@ A manual end-to-end check, run once and noted in `KIRO.md`'s log: start the mock
 ## Open items
 
 1. The `from` parameter name and SDK alias support is settled by the first spike task (see `server.py`).
-2. The two Kiro assumptions in "Registration" are verified in the last task. Whether Kiro Crew reads `.kiro/settings/mcp.json` is checked there and the answer goes in the README.
+2. The two Kiro assumptions in "Registration" are verified in the last task. Whether Kiro Crew reads `.kiro/settings/mcp.json` is checked there and the answer goes in the README. Checked on 2026-11-26 (task 9): Kiro Crew 0.13.1 does not, so Crew users add the server by hand.
 3. Root `README.md` disclosure line needs a Role 1 issue.

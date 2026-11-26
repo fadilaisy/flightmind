@@ -73,6 +73,13 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
     setCited(rawRef);
   }
 
+  /** Moves the scrubber to the first point at or after ts (or the last point). */
+  function goTo(points: { ts: string }[], ts: string) {
+    const t = Date.parse(ts);
+    const p = points.find((x) => Date.parse(x.ts) >= t) ?? points[points.length - 1];
+    if (p) store.setScrubTs(p.ts);
+  }
+
   /** Opens the Records tab at the first record the event cites. */
   function showRawPoints() {
     if (selected?.raw_refs[0]) store.setRawRef(selected.raw_refs[0]);
@@ -135,13 +142,12 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
             {STR.showRawPoints}
           </button>
         </div>        {mainBox()}
-        {showCharts && (
-          <div className="chartbox">
-            {selected && track.status === "ready" && track.track.points.length > 0 ? (
-              <Charts points={track.track.points} event={selected} scrubTs={scrubTs} />
-            ) : null}
-          </div>
-        )}
+        {showCharts &&
+          (selected && track.status === "ready" && track.track.points.length > 0 ? (
+            <Charts points={track.track.points} event={selected} scrubTs={scrubTs} onGoTo={(ts) => goTo(track.track.points, ts)} />
+          ) : (
+            <div className="chartbox" aria-label={STR.chartsLabel} />
+          ))}
         {selected && track.status === "ready" ? (
           <Scrubber points={track.track.points} event={selected} />
         ) : (

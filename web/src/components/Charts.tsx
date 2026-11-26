@@ -1,9 +1,13 @@
 import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FlightEvent, Track } from "../api/types";
 import { derive } from "../domain/derive";
+import { altitudeDatum } from "../domain/itemMeta";
+import { AMBER_COLOR, windowColor } from "../domain/mapColors";
+import { clockZ, signedInt, thousands } from "../domain/pointText";
 import { STR } from "../strings";
+import { snapIndex } from "./Scrubber";
 
 type TrackPoint = Track["points"][number];
 
@@ -11,152 +15,258 @@ interface Props {
   points: TrackPoint[];
   event: FlightEvent;
   scrubTs: string | null;
+  /** Called with the track time to jump to; the page moves the scrubber. */
+  onGoTo: (ts: string) => void;
 }
 
-interface Panel {
-  key: string;
-  title: string;
-  unit: string;
-  color: string;
-  values: (number | null)[];
+// Row geometry from Figma frame 5, in px inside the card.
+const ALT_TOP = 11;
+const ALT_H = 112;
+const LANE_H = 49;
+const SPEED_TOP = ALT_TOP + ALT_H;
+const RATE_TOP = SPEED_TOP + LANE_H;
+const AXIS_W = 56;
+const PAD_R = 24;
+const LINE = "#0aa3bf";
+
+const sec = (iso: string) => Date.parse(iso) / 1000;
+
+function axisLabel(v: number): string {
+  if (v === 0) return "0";
+  return v % 1000 === 0 ? `${v / 1000}k` : String(Math.round(v));
 }
 
-const PANEL_H = 62;
-const BAND = "rgba(242, 177, 60, 0.22)";
-
-function utcClock(sec: number): string {
-  return new Date(sec * 1000).toISOString().slice(11, 19);
+function finite(values: (number | null)[]): number[] {
+  return values.filter((v): v is number => v !== null && Number.isFinite(v));
 }
 
 /** Altitude, ground speed and vertical rate over one shared time axis (seconds since epoch, UTC). */
-export function Charts({ points, event, scrubTs }: Props) {
-  const rows = useRef<HTMLDivElement>(null);
-  const plots = useRef<uPlot[]>([]);
-  const live = useRef({ scrubTs, event });
-  live.current = { scrubTs, event };
+export function Charts({ points, event, scrubTs, onGoTo }: Props) {
+  const host = useRef<HTMLDivElement>(null);
+  const altEl = useRef<HTMLDivElement>(null);
+  const speedEl = useRef<HTMLDivElement>(null);
+  const rateEl = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(768);
+  const [zoomed, setZoomed] = useState(false);
 
-  const x = useMemo(() => points.map((p) => Date.parse(p.ts) / 1000), [points]);
-  const panels = useMemo<Panel[]>(() => {
-    const d = derive(points);
-    return [
-      { key: "alt", title: STR.chartAltitude, unit: "ft", color: "#0aa2c0", values: points.map((p) => p.alt_ft ?? null) },
-      { key: "gs", title: STR.chartSpeed, unit: "kt", color: "#0077b6", values: d.speedKt },
-      { key: "vr", title: STR.chartVerticalRate, unit: "ft/min", color: "#5b6b85", values: d.verticalRateFpm },
-    ];
-  }, [points]);
+  const x = useMemo(() => points.map((p) => sec(p.ts)), [points]);
+  const d = useMemo(() => derive(points), [points]);
+  const ws = sec(event.start_ts);
+  const we = sec(event.end_ts);
+  const full: [number, number] = [x[0], x[x.length - 1] > x[0] ? x[x.length - 1] : x[0] + 1];
+  const pad = Math.max(5, (we - ws) * 0.5);
+  const [v0, v1]: [number, number] = zoomed ? [Math.max(full[0], ws - pad), Math.min(full[1], we + pad)] : full;
+  const color = windowColor(event.type);
+
+  const live = useRef({ scrubTs, v0, v1 });
+  live.current = { scrubTs, v0, v1 };
 
   useEffect(() => {
-    const host = rows.current;
-    if (!host || x.length === 0) return;
-    const width = Math.max(200, host.clientWidth);
-    const made = panels.map((panel, i) => {
-      const last = i === panels.length - 1;
-      const el = document.createElement("div");
-      el.className = "chartrow";
-      const title = document.createElement("div");
-      title.className = "charttitle";
-      title.textContent = `${panel.title} (${panel.unit})`;
-      el.appendChild(title);
-      host.appendChild(el);
-      const u = new uPlot(
-        {
-          width,
-          height: PANEL_H + (last ? 26 : 0),
-          legend: { show: false },
-          padding: [6, 18, 0, 0],
-          cursor: { drag: { x: false, y: false }, sync: { key: "flightmind" } },
-          scales: { x: { time: false, range: () => [x[0], x[x.length - 1] > x[0] ? x[x.length - 1] : x[0] + 1] } },
-          axes: [
-            {
-              show: last,
-              size: 26,
-              space: 80,
-              font: "11px JetBrains Mono, monospace",
-              stroke: "#5b6b85",
-              grid: { stroke: "#edf1f6", width: 1 },
-              values: (_u, splits) => splits.map(utcClock),
-            },
-            {
-              size: 56,
-              space: 18,
-              font: "11px JetBrains Mono, monospace",
-              stroke: "#5b6b85",
-              grid: { stroke: "#edf1f6", width: 1 },
-              ticks: { show: false },
-              gap: 4,
-              values: (_u, splits) => splits.map((v) => Math.round(v).toLocaleString("en-US")),
+    const el = host.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setWidth(Math.max(300, el.clientWidth)));
+    ro.observe(el);
+    setWidth(Math.max(300, el.clientWidth));
+    return () => ro.disconnect();
+  }, []);
+
+  const plots = useRef<uPlot[]>([]);
+  useEffect(() => {
+    if (!altEl.current || !speedEl.current || !rateEl.current || x.length === 0) return;
+    const altVals = points.map((p) => p.alt_ft ?? null);
+    const inWin = x.map((t) => t >= ws && t <= we);
+    const altWin = altVals.map((v, i) => (inWin[i] ? v : null));
+    const altMax = Math.max(1000, ...finite(altVals));
+    const altTop = Math.ceil(altMax / 1000) * 1000;
+    const speedMax = Math.max(50, ...finite(d.speedKt)) * 1.15;
+    const rateAbs = Math.max(500, ...finite(d.verticalRateFpm).map(Math.abs)) * 1.2;
+
+    const common = (height: number, showAxis: boolean): uPlot.Options => ({
+      width,
+      height,
+      legend: { show: false },
+      cursor: { show: false },
+      select: { show: false, left: 0, top: 0, width: 0, height: 0 },
+      padding: [showAxis ? 18 : 4, PAD_R, showAxis ? 8 : 4, showAxis ? 0 : AXIS_W],
+      scales: { x: { time: false, range: () => [live.current.v0, live.current.v1] } },
+      series: [],
+    });
+    const band = (fill: string) => (self: uPlot): void => {
+        const a = self.valToPos(ws, "x", true);
+        const b = self.valToPos(we, "x", true);
+        const { left, width: w } = self.bbox;
+        const l = Math.max(left, Math.min(a, b));
+        const r = Math.min(left + w, Math.max(a, b));
+        if (r <= l) return;
+        self.ctx.save();
+        self.ctx.fillStyle = fill;
+        self.ctx.fillRect(l, 0, r - l, self.height * devicePixelRatio);
+        self.ctx.restore();
+    };
+
+    const alt = new uPlot(
+      {
+        ...common(ALT_H, true),
+        scales: {
+          x: { time: false, range: () => [live.current.v0, live.current.v1] },
+          y: { range: () => [0, altTop] },
+        },
+        axes: [
+          { show: false },
+          {
+            size: AXIS_W,
+            space: 34,
+            font: "12px Inter, sans-serif",
+            stroke: "#525252",
+            grid: { stroke: "#edf2f7", width: 1 },
+            ticks: { show: false },
+            border: { show: false },
+            gap: 8,
+            incrs: [1000, 2000, 3000, 5000, 10000],
+            values: (_u, splits) => splits.map(axisLabel),
+          },
+        ],
+        series: [
+          {},
+          { stroke: LINE, width: 1.5, spanGaps: false, points: { show: false } },
+          { stroke: color, width: 2, spanGaps: false, points: { show: false } },
+        ],
+        hooks: {
+          drawClear: [band("#fdf6e6")],
+          draw: [
+            (self) => {
+              const ts = live.current.scrubTs;
+              if (!ts) return;
+              const i = snapIndex(points, ts);
+              const v = altVals[i];
+              if (v === null || v === undefined) return;
+              const px = self.valToPos(sec(points[i].ts), "x", true);
+              const py = self.valToPos(v, "y", true);
+              const { left, width: w } = self.bbox;
+              if (px < left || px > left + w) return;
+              self.ctx.save();
+              self.ctx.fillStyle = "#14213b";
+              self.ctx.strokeStyle = "#ffffff";
+              self.ctx.lineWidth = 1.5 * devicePixelRatio;
+              self.ctx.beginPath();
+              self.ctx.arc(px, py, 4 * devicePixelRatio, 0, Math.PI * 2);
+              self.ctx.fill();
+              self.ctx.stroke();
+              self.ctx.restore();
             },
           ],
-          series: [{}, { stroke: panel.color, width: 1.5, spanGaps: false, points: { show: false } }],
-          hooks: {
-            drawClear: [
-              (self) => {
-                const { start_ts, end_ts } = live.current.event;
-                const a = self.valToPos(Date.parse(start_ts) / 1000, "x", true);
-                const b = self.valToPos(Date.parse(end_ts) / 1000, "x", true);
-                const { left, top, width: w, height } = self.bbox;
-                const l = Math.max(left, Math.min(a, b));
-                const r = Math.min(left + w, Math.max(a, b));
-                if (r <= l) return;
-                self.ctx.save();
-                self.ctx.fillStyle = BAND;
-                self.ctx.fillRect(l, top, r - l, height);
-                if (i === 0) {
-                  self.ctx.fillStyle = "#8a5600";
-                  self.ctx.font = `${11 * devicePixelRatio}px Inter, sans-serif`;
-                  self.ctx.textBaseline = "top";
-                  self.ctx.fillText(
-                    `${STR.flaggedWindowLower} ${start_ts.slice(11, 19)} to ${end_ts.slice(11, 19)} UTC`,
-                    l + 4 * devicePixelRatio,
-                    top + 2 * devicePixelRatio,
-                  );
-                }
-                self.ctx.restore();
-              },
-            ],
-            draw: [
-              (self) => {
-                const ts = live.current.scrubTs;
-                if (!ts) return;
-                const px = self.valToPos(Date.parse(ts) / 1000, "x", true);
-                const { left, top, width: w, height } = self.bbox;
-                if (px < left || px > left + w) return;
-                self.ctx.save();
-                self.ctx.strokeStyle = "#14213a";
-                self.ctx.lineWidth = 1.5 * devicePixelRatio;
-                self.ctx.beginPath();
-                self.ctx.moveTo(px, top);
-                self.ctx.lineTo(px, top + height);
-                self.ctx.stroke();
-                self.ctx.restore();
-              },
-            ],
-          },
         },
-        [x, panel.values] as uPlot.AlignedData,
-        el,
-      );
-      return { u, el };
-    });
-    plots.current = made.map((m) => m.u);
-    const ro = new ResizeObserver(() => {
-      const w = Math.max(200, host.clientWidth);
-      made.forEach(({ u }) => u.setSize({ width: w, height: u.height }));
-    });
-    ro.observe(host);
+      },
+      [x, altVals, altWin] as uPlot.AlignedData,
+      altEl.current,
+    );
+
+    const speed = new uPlot(
+      {
+        ...common(LANE_H, false),
+        scales: { x: { time: false, range: () => [live.current.v0, live.current.v1] }, y: { range: () => [0, speedMax] } },
+        axes: [{ show: false }, { show: false }],
+        series: [{}, { stroke: LINE, width: 1.5, spanGaps: false, points: { show: false } }],
+        hooks: { drawClear: [band("#fcf2db")] },
+      },
+      [x, d.speedKt] as uPlot.AlignedData,
+      speedEl.current,
+    );
+
+    const rate = new uPlot(
+      {
+        ...common(LANE_H, false),
+        scales: { x: { time: false, range: () => [live.current.v0, live.current.v1] }, y: { range: () => [-rateAbs, rateAbs] } },
+        axes: [{ show: false }, { show: false }],
+        series: [{}, { stroke: LINE, width: 1.5, spanGaps: false, points: { show: false } }],
+        hooks: {
+          drawClear: [band("#fcf2db")],
+          draw: [
+            (self) => {
+              // Zero line and its label.
+              const y = self.valToPos(0, "y", true);
+              const { left, width: w } = self.bbox;
+              self.ctx.save();
+              self.ctx.strokeStyle = "#edf2f7";
+              self.ctx.lineWidth = devicePixelRatio;
+              self.ctx.beginPath();
+              self.ctx.moveTo(left, y);
+              self.ctx.lineTo(left + w, y);
+              self.ctx.stroke();
+              self.ctx.fillStyle = "#8a99ad";
+              self.ctx.font = `${10 * devicePixelRatio}px Inter, sans-serif`;
+              self.ctx.textBaseline = "middle";
+              self.ctx.fillText("0", 40 * devicePixelRatio, y);
+              self.ctx.restore();
+            },
+          ],
+        },
+      },
+      [x, d.verticalRateFpm] as uPlot.AlignedData,
+      rateEl.current,
+    );
+
+    plots.current = [alt, speed, rate];
     return () => {
-      ro.disconnect();
-      made.forEach(({ u, el }) => {
-        u.destroy();
-        el.remove();
-      });
       plots.current = [];
+      alt.destroy();
+      speed.destroy();
+      rate.destroy();
     };
-  }, [x, panels, event]);
+  }, [x, points, d, event, width, v0, v1, color, ws, we]);
 
   useEffect(() => {
     plots.current.forEach((u) => u.redraw(false));
   }, [scrubTs]);
 
-  return <div ref={rows} className="chartrows" aria-label={STR.chartsLabel} />;
+  const plotW = width - AXIS_W - PAD_R;
+  const xAt = (t: number) => AXIS_W + ((t - v0) / (v1 - v0)) * plotW;
+  const idx = snapIndex(points, scrubTs);
+  const cursorX = scrubTs ? xAt(sec(points[idx].ts)) : null;
+  const cursorShown = cursorX !== null && cursorX >= AXIS_W && cursorX <= AXIS_W + plotW;
+  const speedNow = d.speedKt[idx];
+  const rateNow = d.verticalRateFpm[idx];
+  // Keep the label clear of the two buttons at the top right.
+  const flagLeft = Math.max(210, Math.min(xAt(Math.max(ws, v0)) - 4, width - 15 - 300 - 215));
+  const start = event.start_ts.slice(11, 19);
+  const end = event.end_ts.slice(11, 19);
+
+  return (
+    <div className="chartbox" aria-label={STR.chartsLabel}>
+      <div className="chartnav">
+        <button type="button" className="go" onClick={() => onGoTo(event.start_ts)}>
+          {STR.goTo} {clockZ(event.start_ts)}
+        </button>
+        <button type="button" className="zoom" aria-pressed={zoomed} onClick={() => setZoomed((z) => !z)}>
+          {zoomed ? STR.showFullTrack : STR.zoomToWindow}
+        </button>
+      </div>
+      <div className="chartclip" ref={host}>
+        <div className="chartrows">
+          <div className="chartrow" style={{ top: ALT_TOP, height: ALT_H }} ref={altEl} />
+          <div className="chartrow" style={{ top: SPEED_TOP, height: LANE_H }} ref={speedEl} />
+          <div className="chartrow" style={{ top: RATE_TOP, height: LANE_H }} ref={rateEl} />
+          <span className="charttitle">
+            {STR.chartAltitudeLabel} ({altitudeDatum()}), ft
+          </span>
+          <span className="chartflag" style={{ left: flagLeft, color: color === AMBER_COLOR ? AMBER_COLOR : color }}>
+            {STR.flaggedWindowCap} {start}–{end}Z
+          </span>
+          <span className="laneLabel" style={{ top: SPEED_TOP + 2 }}>{STR.chartSpeedLabel}</span>
+          <span className="laneLabel" style={{ top: RATE_TOP + 2 }}>{STR.chartRateLabel}</span>
+          {cursorShown && (
+            <>
+              <div className="chartcursor" style={{ left: cursorX }} />
+              <span className="chartval" style={{ left: cursorX, top: SPEED_TOP + 2 }}>
+                {speedNow === null || speedNow === undefined ? "\u2014" : `${thousands(speedNow)} kt`}
+              </span>
+              <span className="chartval" style={{ left: cursorX, top: RATE_TOP + 2 }}>
+                {rateNow === null || rateNow === undefined ? "\u2014" : `${signedInt(rateNow)} ft/min`}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }

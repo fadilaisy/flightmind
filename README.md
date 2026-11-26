@@ -111,7 +111,7 @@ never committed.
 
 | Purpose | Model | Provider | Key (env var) |
 |---------|-------|----------|---------------|
-| LLM (event stories, cited agent answers) | `gemini-3-8-flash` | Coarena, an OpenAI-compatible gateway in front of Google Gemini 3.8 Flash ([model list](https://coarena.ai/api/v1/models)) | `COARENA_API_KEY` |
+| LLM (event stories, cited agent answers) | `claude-haiku-5-5` (Claude Haiku 5.5), set by `FLIGHTMIND_LLM_MODEL` | Anthropic Claude API, through the official `anthropic` Python SDK ([docs](https://platform.claude.com/docs)) | `ANTHROPIC_API_KEY` |
 | Embeddings (similar-event search) | `gemini-embedding-001`, requested at `output_dimensionality=1024` | Google Gemini API ([docs](https://ai.google.dev/gemini-api/docs/embeddings)) | `GEMINI_API_KEY` |
 
 The 1024 setting applies to the embedding model and matches `event_embeddings.embedding`

@@ -47,6 +47,8 @@ path is a file from the web build, and anything else is 404, so `/docs` and `/op
 private. **The public demo
 uses sample data.**
 
+Since 2026-11-26 the public site answers `/api/ask` with the cited agent of SCRUM-36: the Vercel project has `ANTHROPIC_API_KEY` as a sensitive Production variable, set by Zahran in the dashboard. Remove that variable and redeploy to go back to the canned answers.
+
 Public URL: **https://flightmind.vercel.app** (Vercel project `flightmind` in Zahran's account,
 Hobby plan). Deployed and claimed on 2026-11-26 from the branch `role3/scrum-38-api-deploy`.
 

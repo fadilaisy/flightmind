@@ -176,7 +176,17 @@ Implements requirements 7 to 17 in `requirements.md` and Part 2 of `design.md`. 
   - Done when the three rows are written here, all `ok`, all under 30 seconds.
   - _Requirements: 17.1, 17.2, 17.3, 17.6, 13.1_
 
-- [ ] 23. Repeat the proof on the public site
+- [x] 23. Repeat the proof on the public site
+  - **Result (2026-11-26):** Done by hand outside Kiro. Zahran added `ANTHROPIC_API_KEY` to the Vercel project `flightmind` himself (Production only, stored as a sensitive variable; nobody else saw the value). A production deployment of `main` at 20e1789 was built on Vercel from Git after a preview of the same commit had been checked, and `infra/smoke.py` passed 6 of 6 against https://flightmind.vercel.app.
+
+    | Question on the public site | Time | Status | Tool calls | Citations |
+    | --- | --- | --- | --- | --- |
+    | (a) squawk 7700 | 6.9 s | ok | search_events | event squawk_7700 SIA9 |
+    | (b) go-around at WIII | 7.1 s | ok | search_events, get_track x2 | events go_around GIA123 and CTV88, rec01:107, rec01:141 |
+    | (c) LNI456 hold | 3.9 s | ok | search_events, query_tracks | event holding LNI456, rec01:3 |
+    | "What is the weather in Paris today?" | 1.8 s | not_enough_evidence | none | none |
+
+    Checks: the key string and the variable name are not in the web bundle (`/assets/index-*.js`) or in `/api/meta` and `/api/events`. Guard: the sixth question within a minute from one address got HTTP 429, and so did the next five; a 501-character question got HTTP 422. Token counts for these runs are in the Vercel runtime logs (kept one hour on the Hobby plan) and were not copied here; the local run in task 22 has them. Zahran confirmed on 2026-11-26 that the Claude Console has a spend limit set and auto-reload off; only he can see that setting.
   - Zahran sets `ANTHROPIC_API_KEY` as a server-side environment variable on the Vercel project (not `NEXT_PUBLIC_` or any variable the web bundle reads). Redeploy, then ask the same three questions on https://flightmind.vercel.app and record time, status and citations here. Check that the key is not in the web bundle and that a sixth question in a minute gets 429.
   - Confirm in the Claude Console that a spend limit is set and auto-reload is off. Write the result here without the key or the limit's account details.
   - Done when the three rows are written here and the guard check is noted.

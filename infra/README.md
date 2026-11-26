@@ -46,7 +46,26 @@ every other request goes to one Vercel Function (`infra/vercel_entry.py`) that a
 and returns 404 for anything else, so `/docs` and `/openapi.json` stay private. **The public demo
 uses sample data.**
 
-Public URL: not deployed yet.
+Public URL: not final yet. On 2026-11-26 the branch was deployed as a temporary Vercel deployment
+(`https://brisk-zenith-i0v5z3t.tmp.now`), which is deleted about one hour after the deploy unless
+Zahran claims it. The final URL goes here after the claim.
+
+Checks on 2026-11-26 against the temporary URL:
+
+- From an outside network: `/` rendered the page with the mock's 4 events, and `/api/meta`,
+  `/api/events/<id>`, `/api/raw/rec01%3A68` and `/api/tracks/8A1C07` returned the expected JSON.
+  So the `/.` workaround also works on Vercel.
+- From Zahran's own network every path returned `403 This request was blocked` with the header
+  `x-vercel-mitigated: deny`, in `curl`, `infra/smoke.py` and a browser, while `vercel.com` loaded
+  normally. That is Vercel's firewall refusing this network, not the app. `infra/smoke.py` has
+  therefore not passed against the public URL yet. Check again after the claim, from more than
+  one network, because a judge on a refused network would see the same 403.
+
+CLI note: `npx vercel@latest deploy --temporary` failed on Windows with
+`Cannot find module '@vercel/python/package.json'`. It worked after `npm install vercel @vercel/python`
+in an empty folder outside the repo, running that folder's `node_modules/.bin/vercel` from the repo
+root with `NODE_PATH` set to that `node_modules`. The build writes `uv.lock` (committed) and a
+root `.python-version` (not committed: delete it after a local build).
 
 Why not Railway: on 2026-11-26 Railway refused to create a project because the account trial had
 expired and a plan had to be selected, Render refused a free service without a card on file

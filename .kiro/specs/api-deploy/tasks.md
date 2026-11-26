@@ -105,6 +105,7 @@ Tasks 1 to 10 are phase 1 and are built now (task 9, the Railway deploy, is supe
   - Zahran opens the claim link so the project moves into his Vercel account. Later deploys use `npx vercel@latest login` and `npx vercel@latest deploy --prod`. Try the rollback once and write down the command that worked.
   - Record the public URL, the date and the smoke-check result in `infra/README.md`.
   - Done when the smoke check exits 0 against the public URL, the claim is done, and the URL, date and rollback command are in `infra/README.md`.
+  - **Result (2026-11-26):** Partly done, by hand outside Kiro. `vercel deploy --temporary` succeeded on the third try: the CLI first could not find `@vercel/python` (fixed by installing `vercel` and `@vercel/python` in a folder outside the repo and setting `NODE_PATH`), then the bundle traced `services/intel/.pytest_cache`, which `.vercelignore` excludes (fixed by adding `**/.pytest_cache/**` to `excludeFiles` in `vercel.json`). The temporary URL served the page and the API correctly from an outside network. From Zahran's network Vercel's firewall answered 403 on every path (`x-vercel-mitigated: deny`), so `infra/smoke.py` has not passed against the public URL. Still open: Zahran claims the deployment, the smoke check from a network that is not refused, the browser check, the rollback, and the final URL in `infra/README.md`.
   - _Requirements: 1.1, 1.3, 1.5, 6.1, 6.3, 6.5, 8.1, 8.3, 8.4, 8.5_
 
 - [x] 20. Update the docs for Vercel

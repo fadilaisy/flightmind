@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "infra/vercel_entry.py": {
-      "excludeFiles": "{web/**,public/**,docs/**,fixtures/**,contracts/**,scripts/**,.kiro/**,.github/**,services/pipeline/**,services/intel/tests/**,services/intel/mcp_server/**,services/intel/.venv/**,**/node_modules/**,**/__pycache__/**}"
+      "excludeFiles": "{web/**,public/**,docs/**,fixtures/**,contracts/**,scripts/**,.kiro/**,.github/**,services/pipeline/**,services/intel/tests/**,services/intel/mcp_server/**,services/intel/.venv/**,**/node_modules/**,**/__pycache__/**,**/.pytest_cache/**}"
     }
   }
 }

@@ -44,7 +44,9 @@ Phase 1: one container on Railway serves the built web UI and the **mock API**
 (synthetic data, no database) on one origin. Paths that start with `/api/` go to the API;
 every other path is the static web build. **The public demo uses sample data.**
 
-Public URL: _to be filled in task 9_ (with the date the smoke check passed).
+Public URL: not deployed yet. On 2026-11-26 Railway refused to create the project because the
+account's trial has expired; a plan has to be selected first. The URL and the date of the first
+passing smoke check go here.
 
 There is no `railway.json` or `railway.toml`: Railway's Config as Code stops being read on
 2026-12-01. Railway builds the root `Dockerfile` as it finds it, so the settings below live in
@@ -97,3 +99,7 @@ when the base is empty, so it has no way to say "same origin". The Dockerfile bu
 page. This is a workaround for a gap in `web/` (Role 1). The page cannot tell it is on the mock, so
 its "Sample data" label does not show; that is why the README and Devpost text say the public demo
 uses sample data. Remove the workaround when Role 1 adds a same-origin base.
+
+Checked on 2026-11-26 in a Chromium 156 browser against the local image: the page called
+`/api/meta`, `/api/events`, `/api/events/<id>` and `/api/raw/<raw_ref>` on its own origin, all 200,
+and reloading on `/?tab=records` and `/?tab=events` worked.

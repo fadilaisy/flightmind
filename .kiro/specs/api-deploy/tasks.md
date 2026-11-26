@@ -56,11 +56,12 @@ Tasks 1 to 9 are phase 1 and are built now. Tasks 10 to 16 are phase 2: they are
   - **Result (2026-11-26):** `docker run -d --name flightmind-web-check -p 8080:8080 -e PORT=8080 flightmind-web`: `infra/smoke.py http://localhost:8080` passed all six checks, exit 0. `/docs`, `/openapi.json`, `/redoc` gave 404; `/api/x` gave `{"detail":"Not Found"}` 404; `/nope` and `/apiary` gave 404; the container user id is 10001; with no `PORT` it logged `Uvicorn running on http://0.0.0.0:8000` and `/api/meta` answered 200. Container removed afterwards.
   - _Requirements: 1.4, 1.6, 2.6, 2.7, 3.6, 5.5_
 
-- [ ] 8. Check the UI in a browser against the local image
+- [x] 8. Check the UI in a browser against the local image
   - Open `http://localhost:8080` in a browser. Confirm the event list loads, an event opens, its track draws, a `raw_ref` opens, and the network tab shows requests to `/api/...` with no in-browser fixture in use. Reload on every view the UI can reach and confirm none returns 404 (open question 1 in design.md).
   - If the `/.` base fails in the browser, stop and tell the user before changing anything, because the fix is in `web/` (Role 1). If a view needs a path fallback, add it to `serve.py` with a test and update requirement 2.
   - Record in `infra/README.md` that the workaround was checked, with the browser name and date.
   - Done when the browser check passes and the note is written.
+  - **Result (2026-11-26):** Checked by hand outside Kiro in a Chromium 156 browser against the local image on port 8080. The event list loaded with the mock's 4 events, the first event opened, record `rec01:68` opened, and the network log showed `/api/meta`, `/api/events`, `/api/events/<id>` and `/api/raw/rec01%3A68` on the same origin, all 200, with no console error. Reloading on `/?tab=records` and `/?tab=events` returned 200: the tabs are query parameters, so no path fallback is needed. Not checked: the track drawing, because the map and charts are still empty boxes in the UI.
   - _Requirements: 1.5, 4.1, 4.3_
 
 - [ ] 9. Deploy to Railway and run the smoke check on the public URL
@@ -70,6 +71,7 @@ Tasks 1 to 9 are phase 1 and are built now. Tasks 10 to 16 are phase 2: they are
   - Try the rollback once and write down the command that worked.
   - Record the public URL, the date and the smoke-check result in `infra/README.md`. Tell the user the URL so it can go in the Devpost "Try it out" field. Nothing goes in the private test-credentials field.
   - Done when the smoke check exits 0 against the public URL and the URL, date and rollback command are in `infra/README.md`.
+  - **Result (2026-11-26):** Not done. Creating the Railway project was refused: "Your trial has expired. Please select a plan to continue using Railway." Zahran has to pick a plan on the Railway account first (Open item 3). The branch is pushed and the image is checked locally, so the deploy can run as soon as the plan is set.
   - _Requirements: 1.1, 1.3, 1.5, 6.1, 6.2, 6.3, 6.5, 8.1, 8.2, 8.4_
 
 - [ ] 10. Hand-offs and log (phase 1)

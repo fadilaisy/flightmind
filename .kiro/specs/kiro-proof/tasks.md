@@ -26,7 +26,7 @@ Tick a box only when the check passes. After each ticked task, add a line to `KI
   - Check: tests cover `spec web-ui/3`, `spec agent-mcp/10-21`, a `missing` correction and task counting.
   - Reqs: R7
 
-- [ ] 5. Built with Kiro page
+- [x] 5. Built with Kiro page
   - Files: `web/src/views/KiroView.tsx`, `web/src/strings.ts`, `web/src/views/Shell.tsx`, `web/src/App.tsx`, `web/tests/kiro.test.tsx`
   - Check: `npm test` and `npm run build` in `web/` pass; `?tab=kiro` renders without a recording.
   - Reqs: R8, R9

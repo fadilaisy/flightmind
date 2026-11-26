@@ -6,6 +6,7 @@ import { StateBox } from "./components/StateBox";
 import { getStore, useStore } from "./state/store";
 import { STR } from "./strings";
 import { EventsView } from "./views/EventsView";
+import { KiroView } from "./views/KiroView";
 import { RecordsView } from "./views/RecordsView";
 import { Shell } from "./views/Shell";
 import { TrajectoryView } from "./views/TrajectoryView";
@@ -43,6 +44,8 @@ export function App() {
   useEffect(load, [load]);
 
   function body(tab: string) {
+    // The Built with Kiro page reads only its generated JSON, so it needs neither events nor the API.
+    if (tab === "kiro") return <KiroView />;
     if (error) {
       return (
         <div className="wrap">

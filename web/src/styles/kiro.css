@@ -1,0 +1,60 @@
+/* "Built with Kiro" page (?tab=kiro). Tokens only; no new colours. */
+.kiro { display: flex; flex-direction: column; gap: 16px; max-width: 1180px; }
+.kiro h1 { color: var(--text-primary); }
+.kiro .intro { margin: 0 0 4px; font-size: 14px; color: var(--text-secondary); }
+.kiro a { color: var(--action-primary); text-decoration: none; }
+.kiro a:hover { text-decoration: underline; }
+.kiro .sha { font-family: var(--font-data); font-size: 12px; }
+
+.kcard { border-color: var(--line-ui); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: 12px; }
+.kcard h2 { margin: 0; font-size: 15px; line-height: 22px; color: var(--text-primary); }
+.khint { margin: 0; font-size: 12px; line-height: 16px; color: var(--text-muted); }
+
+.kbar { display: flex; height: 12px; border-radius: var(--radius-pill); overflow: hidden; background: var(--grid); }
+.kbar i { display: block; min-width: 2px; }
+.kseg-spec { background: var(--green); }
+.kseg-vibe { background: var(--event-amber); }
+.kseg-hook { background: var(--primary); }
+.kseg-none { background: var(--faint); }
+.kseg-missing { background: var(--red); }
+
+.kcounts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.kcounts li { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border-radius: var(--radius-md); background: var(--bg-raised); }
+.kcounts .linklike {
+  align-self: flex-start; border: 0; background: none; padding: 0; text-align: left;
+  font-size: 24px; line-height: 32px; font-weight: 600; color: var(--text-primary);
+}
+.kcounts .linklike:hover { color: var(--action-primary); text-decoration: underline; }
+.kcounts .note { font-size: 12px; line-height: 16px; color: var(--text-muted); }
+.kmeta { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; line-height: 16px; color: var(--text-secondary); }
+
+.kspecs { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+.kspec { gap: 8px; }
+.kspec h3 { margin: 0; font-size: 14px; line-height: 20px; color: var(--text-primary); }
+.kspec .name { font-family: var(--font-data); font-size: 11px; color: var(--text-muted); }
+.kspec .tasks { font-size: 20px; line-height: 28px; font-weight: 600; }
+.kspec .links { display: flex; gap: 12px; font-size: 12px; line-height: 16px; }
+.klinkbtn { border: 0; background: none; padding: 0; text-align: left; font-size: 12px; line-height: 16px; color: var(--action-primary); }
+.klinkbtn:hover { text-decoration: underline; }
+.kspec ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.kspec li { display: flex; gap: 8px; align-items: baseline; font-size: 12px; line-height: 16px; }
+.kspec li .date { color: var(--text-muted); white-space: nowrap; }
+
+.kfilter { display: flex; align-items: center; gap: 12px; }
+.kday h3 { margin: 12px 0 4px; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--text-muted); }
+.kday ul { margin: 0; padding: 0; list-style: none; }
+.kday li { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--border-subtle); font-size: 13px; line-height: 18px; }
+.kday li .subject { flex: 1; min-width: 0; color: var(--text-primary); }
+.kday li .corr { font-size: 12px; white-space: nowrap; }
+.kbadge { min-width: 52px; justify-content: center; }
+.b-hook { background: var(--primary-soft); color: var(--primary); }
+.b-missing { background: var(--red-soft); color: var(--red); }
+
+.kfoot { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.kfoot h3 { margin: 0 0 6px; }
+.kfoot ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 12px; line-height: 16px; }
+.kfoot .when { color: var(--text-muted); }
+
+@media (max-width: 760px) {
+  .kcounts { grid-template-columns: repeat(2, 1fr); }
+}

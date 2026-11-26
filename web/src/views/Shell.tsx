@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import type { Api } from "../api/client";
 import type { Meta } from "../api/types";
 import { STR, TAB_LABEL } from "../strings";
+import mark from "../assets/figma/mark.svg";
+import optical from "../assets/figma/optical.svg";
+import { navigate } from "./nav";
 
 export type Tab = keyof typeof TAB_LABEL;
 export const TABS = Object.keys(TAB_LABEL) as Tab[];
@@ -44,8 +47,7 @@ export function Shell({
   const open = useCallback(
     (next: Tab) => {
       if (next === tab) return;
-      window.history.pushState(null, "", tabUrl(window.location.search, next));
-      setTab(next);
+      navigate({ tab: next });
     },
     [tab],
   );
@@ -56,13 +58,9 @@ export function Shell({
     <>
       <header className="appbar">
         <div className="logo">
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M2 14 L10 4 L18 14" />
-            <circle cx="10" cy="4" r="2" />
-          </svg>
+          <img src={mark} alt="" />
           {STR.brand}
         </div>
-        {meta && <span className="file">{recording ?? STR.noRecording}</span>}
         <nav className="tabs" role="tablist" aria-label={STR.tabsLabel}>
           {TABS.map((t) => (
             <button
@@ -79,23 +77,20 @@ export function Shell({
           ))}
         </nav>
         <div className="spacer" />
-        <span className="muted" style={{ fontSize: 12.5 }}>
-          {[
-            meta && (meta.mode === "live" ? STR.modeLive : STR.modeReplay),
-            usingSample && STR.sampleData,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-          {meta && (
-            <>
-              {" · "}
-              <span title={meta.sim_time}>
-                {STR.simTime} {meta.sim_time.slice(11, 19)} UTC
-              </span>
-            </>
-          )}
-        </span>
+        {meta && (
+          <div className="status">
+            <span className="mode" title={`${STR.simTime} ${meta.sim_time.slice(11, 19)} UTC`}>
+              <img src={optical} alt="" />
+              {meta.mode === "live" ? STR.modeLive : STR.modeReplay}
+            </span>
+            <span>{recording ?? STR.noRecording}</span>
+            {usingSample && <span className="muted">{STR.sampleLabel}</span>}
+          </div>
+        )}
         {metaFailed && <span role="alert">{STR.metaUnavailable}</span>}
+        <button type="button" className="fbtn" disabled title={STR.loadRecordingTitle}>
+          {STR.loadRecording}
+        </button>
       </header>
       <div id="tabpanel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
         {children(tab)}

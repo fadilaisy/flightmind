@@ -117,6 +117,42 @@ never committed.
 The 1024 setting applies to the embedding model and matches `event_embeddings.embedding`
 (`vector(1024)`). Embeddings are L2-normalized before storage.
 
+## Web UI (`web/`)
+
+React single-page app with three tabs (Events, Trajectory, Records). Types come from `contracts/types.ts`.
+
+Libraries that do real work in the web app:
+
+| Library | Used for |
+| --- | --- |
+| [MapLibre GL JS](https://maplibre.org/) | Map view. Basemap tiles are OpenStreetMap raster tiles (`tile.openstreetmap.org`); the map shows "WGS-84 · basemap © OpenStreetMap contributors". |
+| [three.js](https://threejs.org/) | 3D trajectory view (WebGL, orbit controls, fat lines). |
+| [uPlot](https://github.com/leeoniya/uPlot) | Altitude, ground speed and vertical-rate charts. |
+| [React](https://react.dev/) 19 | UI. |
+| [Vite](https://vitejs.dev/) 7 and Vitest | Dev server, build and tests. |
+| [Inter](https://rsms.me/inter/) and [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (via `@fontsource`) | Text and data fonts. |
+
+Run it (Node 20 or newer):
+
+```
+cd web
+npm install
+npm run dev        # http://127.0.0.1:5173, local mock API (sample data from web/tests/fixtures/mini.json)
+npm run build      # type-check and production build
+npm test           # unit and smoke tests
+```
+
+To run against the SCRUM-33 mock API (4 events, 270 points, compression report) or any API that follows
+`contracts/openapi.yaml`, set `VITE_API_BASE` to its base URL, without a trailing slash:
+
+```
+# bash
+VITE_API_BASE=https://flightmind-roan.vercel.app npm run dev
+# PowerShell
+$env:VITE_API_BASE="https://flightmind-roan.vercel.app"; npm run dev
+```
+
+With `VITE_API_BASE` empty, the app uses the local mock and labels the numbers "sample data".
 ## Setup
 
 _To be written once `infra/` exists._

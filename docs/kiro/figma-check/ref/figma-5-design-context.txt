@@ -1,0 +1,800 @@
+const assetPathPrefix = "./assets"; // downloaded; names: mark=9dbb1, optical=0be12, dot=91d3f, dot1=c4c00, icon-play=658f0, icon-check=c3186, vector=a4453 ... (map, chart and track SVGs are placeholders for live data, not downloaded)
+const imgMark = `${assetPathPrefix}/9dbb1.svg`;
+const imgOptical = `${assetPathPrefix}/0be12.svg`;
+const imgDot = `${assetPathPrefix}/91d3f.svg`;
+const imgDot1 = `${assetPathPrefix}/c4c00.svg`;
+const imgMapReplaceWithMapLibreOsmTiles = `${assetPathPrefix}/4ef91.svg`;
+const imgVector = `${assetPathPrefix}/a4453.svg`;
+const imgVector1 = `${assetPathPrefix}/de4c9.svg`;
+const imgProfileChart = `${assetPathPrefix}/e3b55.svg`;
+const imgVector2 = `${assetPathPrefix}/f44f6.svg`;
+const imgVector3 = `${assetPathPrefix}/16551.svg`;
+const imgVector4 = `${assetPathPrefix}/c05be.svg`;
+const imgIconPlay = `${assetPathPrefix}/658f0.svg`;
+const imgTrack = `${assetPathPrefix}/2d1d0.svg`;
+const imgIconCheck = `${assetPathPrefix}/c3186.svg`;
+
+export default function Component5TrajectoryMapDefault() {
+  return (
+    <div className="bg-[var(--bg\/canvas,#f3f3f3)] content-stretch flex flex-col items-start relative size-full" data-node-id="58:1847" data-name="5 · Trajectory — Map (default)">
+      <div className="bg-[var(--bg\/surface,white)] border-[var(--border\/subtle,#ade8f4)] border-b border-solid content-stretch flex gap-[24px] h-[56px] items-center px-[24px] relative shrink-0 w-[1440px]" data-node-id="58:1848" data-name="App bar">
+        <div className="content-stretch flex gap-[6px] items-center relative shrink-0" data-node-id="I58:1848;5:41" data-name="Logo">
+          <div className="relative shrink-0 size-[24px]" data-node-id="I58:1848;5:41;5:35" data-name="mark">
+            <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgMark} />
+          </div>
+          <p className="[word-break:break-word] font-['Inter:Semi_Bold'] font-semibold leading-[22px] not-italic relative shrink-0 text-[15px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="I58:1848;5:41;5:39">
+            FlightMind
+          </p>
+        </div>
+        <div className="content-stretch cursor-pointer flex gap-[4px] h-full items-end overflow-clip relative shrink-0" data-node-id="I58:1848;5:50" data-name="tabs">
+          <a className="content-stretch flex flex-col gap-[16px] items-center pt-[18px] px-[12px] relative shrink-0" data-node-id="I58:1848;5:51" data-name="tab/Clean">
+            <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[color:var(--text\/secondary,#383838)] text-left whitespace-nowrap" data-node-id="I58:1848;5:51;5:6">
+              Clean
+            </p>
+            <div className="h-[2px] relative shrink-0 w-full" data-node-id="I58:1848;5:51;5:7" data-name="underline" />
+          </a>
+          <a className="content-stretch flex flex-col gap-[16px] items-center pt-[18px] px-[12px] relative shrink-0" data-node-id="I58:1848;5:54" data-name="tab/Events">
+            <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[color:var(--text\/secondary,#383838)] text-left whitespace-nowrap" data-node-id="I58:1848;5:54;5:6">
+              Events
+            </p>
+            <div className="h-[2px] relative shrink-0 w-full" data-node-id="I58:1848;5:54;5:7" data-name="underline" />
+          </a>
+          <a className="content-stretch flex flex-col gap-[16px] items-center pt-[18px] px-[12px] relative shrink-0" data-node-id="I58:1848;5:57" data-name="tab/Trajectory">
+            <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[color:var(--text\/primary,#03045e)] text-left whitespace-nowrap" data-node-id="I58:1848;5:57;5:3">
+              Trajectory
+            </p>
+            <div className="bg-[var(--track\/cyan,#00b4d8)] h-[2px] relative shrink-0 w-full" data-node-id="I58:1848;5:57;5:4" data-name="underline" />
+          </a>
+          <a className="content-stretch flex flex-col gap-[16px] items-center pt-[18px] px-[12px] relative shrink-0" data-node-id="I58:1848;5:60" data-name="tab/Export">
+            <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[color:var(--text\/secondary,#383838)] text-left whitespace-nowrap" data-node-id="I58:1848;5:60;5:6">
+              Export
+            </p>
+            <div className="h-[2px] relative shrink-0 w-full" data-node-id="I58:1848;5:60;5:7" data-name="underline" />
+          </a>
+        </div>
+        <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="I58:1848;5:63" data-name="spacer" />
+        <div className="content-stretch flex gap-[12px] items-center overflow-clip relative shrink-0" data-node-id="I58:1848;78:2867" data-name="status">
+          <div className="content-stretch flex gap-[6px] items-center overflow-clip relative shrink-0" data-node-id="I58:1848;5:64" data-name="mode">
+            <div className="relative shrink-0 size-[6px]" data-node-id="I58:1848;78:2862" data-name="optical">
+              <div className="absolute inset-[0_0_-8.33%_0]">
+                <img alt="" className="block max-w-none size-full" src={imgOptical} />
+              </div>
+            </div>
+            <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="I58:1848;5:66">
+              Replay
+            </p>
+          </div>
+          <div className="content-stretch flex gap-[8px] items-center overflow-clip relative rounded-[var(--radius\/md,8px)] shrink-0" data-node-id="I58:1848;5:47" data-name="recording">
+            <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="I58:1848;5:48">
+              wiii-2026-10-03.ast
+            </p>
+          </div>
+        </div>
+        <a className="bg-[var(--bg\/raised,#e4f8ff)] border border-[var(--border\/strong,#0077b6)] border-solid content-stretch cursor-pointer flex items-center px-[10px] py-[4px] relative rounded-[var(--radius\/md,8px)] shrink-0" data-node-id="I58:1848;5:67" data-name="Button">
+          <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,#03045e)] text-left whitespace-nowrap" data-node-id="I58:1848;5:67;3:38">
+            Load recording
+          </p>
+        </a>
+      </div>
+      <div className="content-stretch flex flex-[1_0_0] items-start min-h-px overflow-clip relative w-full" data-node-id="58:1849" data-name="body">
+        <div className="bg-[var(--bg\/surface,white)] border-[var(--border\/subtle,#ade8f4)] border-r border-solid content-stretch flex flex-col h-full items-start overflow-clip relative shrink-0 w-[320px]" data-node-id="58:1850" data-name="events-sidebar">
+          <div className="border-[var(--border\/subtle,#ade8f4)] border-b border-solid content-stretch flex flex-col gap-[12px] items-start overflow-clip p-[16px] relative shrink-0 w-full" data-node-id="58:1851" data-name="header">
+            <div className="[word-break:break-word] content-stretch flex gap-[8px] items-baseline not-italic overflow-clip relative shrink-0 whitespace-nowrap" data-node-id="58:1852" data-name="title">
+              <p className="font-['Inter:Semi_Bold'] font-semibold leading-[22px] relative shrink-0 text-[15px] text-[color:var(--text\/primary,#03045e)]" data-node-id="58:1853">
+                Events
+              </p>
+              <p className="font-['Inter:Regular'] font-normal leading-[16px] relative shrink-0 text-[12px] text-[color:var(--text\/muted,#525252)]" data-node-id="58:1854">
+                7 flagged · 1 confirmed · 1 dismissed
+              </p>
+            </div>
+            <div className="[word-break:break-word] bg-white border border-[#d9e0ed] border-solid content-stretch flex flex-col font-['Inter:Regular'] font-normal gap-[4px] items-start leading-[normal] not-italic overflow-clip px-[8px] py-[6px] relative rounded-[6px] shrink-0 w-full whitespace-nowrap" data-node-id="78:3253" data-name="search">
+              <p className="relative shrink-0 text-[#8a99ad] text-[12px]" data-node-id="78:3254">
+                Search callsign or ICAO24
+              </p>
+              <p className="relative shrink-0 text-[#5c6b85] text-[11px]" data-node-id="78:3255">
+                Time 06:00–18:00Z · Airport WIII · Status all
+              </p>
+            </div>
+            <div className="content-stretch flex gap-[6px] items-start overflow-clip relative shrink-0" data-node-id="58:1855" data-name="filters">
+              <div className="bg-[var(--bg\/overlay,white)] border border-[var(--border\/strong,#0077b6)] border-solid content-stretch flex items-start overflow-clip px-[8px] py-[3px] relative rounded-[var(--radius\/pill,999px)] shrink-0" data-node-id="58:1856" data-name="filter">
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="58:1857">
+                  All 7
+                </p>
+              </div>
+              <div className="border border-[var(--border\/subtle,#ade8f4)] border-solid content-stretch flex items-start overflow-clip px-[8px] py-[3px] relative rounded-[var(--radius\/pill,999px)] shrink-0" data-node-id="58:1858" data-name="filter">
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:1859">
+                  Go-around 3
+                </p>
+              </div>
+              <div className="border border-[var(--border\/subtle,#ade8f4)] border-solid content-stretch flex items-start overflow-clip px-[8px] py-[3px] relative rounded-[var(--radius\/pill,999px)] shrink-0" data-node-id="58:1860" data-name="filter">
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:1861">
+                  Holding 2
+                </p>
+              </div>
+              <div className="border border-[var(--border\/subtle,#ade8f4)] border-solid content-stretch flex items-start overflow-clip px-[8px] py-[3px] relative rounded-[var(--radius\/pill,999px)] shrink-0" data-node-id="58:1862" data-name="filter">
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:1863">
+                  Squawk 2
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-h-px overflow-clip relative w-full" data-node-id="58:1864" data-name="event-list">
+            <div className="border-[var(--border\/subtle,#ade8f4)] border-b border-solid content-stretch flex flex-col gap-[6px] items-start px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="58:1865" data-name="Event row">
+              <div className="content-stretch flex items-center overflow-clip relative shrink-0 w-full" data-node-id="I58:1865;5:10" data-name="top">
+                <div className="bg-[var(--event\/amber-bg,#33270f)] content-stretch flex gap-[6px] items-center px-[8px] py-[2px] relative rounded-[var(--radius\/sm,4px)] shrink-0" data-node-id="I58:1865;5:11" data-name="badge">
+                  <div className="relative shrink-0 size-[6px]" data-node-id="I58:1865;5:11;3:19" data-name="dot">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgDot} />
+                  </div>
+                  <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[16px] not-italic relative shrink-0 text-[11px] text-[color:var(--event\/amber,#f2b13c)] whitespace-nowrap" data-node-id="I58:1865;5:11;3:20">
+                    Holding
+                  </p>
+                </div>
+                <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="I58:1865;5:14" data-name="spacer" />
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="I58:1865;5:15">
+                  09:18:44Z
+                </p>
+              </div>
+              <div className="[word-break:break-word] content-stretch flex gap-[8px] items-baseline overflow-clip relative shrink-0 whitespace-nowrap" data-node-id="I58:1865;5:16" data-name="who">
+                <p className="font-['Inter:Medium'] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[color:var(--text\/primary,#03045e)]" data-node-id="I58:1865;5:17">
+                  LNI760
+                </p>
+                <p className="font-['JetBrains_Mono:Regular'] font-normal leading-[16px] relative shrink-0 text-[11px] text-[color:var(--text\/muted,#525252)]" data-node-id="I58:1865;5:18">
+                  8A0377
+                </p>
+                <p className="font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)]" data-node-id="I58:1865;5:19">
+                  · WIII
+                </p>
+              </div>
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/muted,#525252)] whitespace-nowrap" data-node-id="I58:1865;5:20">
+                To review · 2 laps, 7 min 40 s
+              </p>
+            </div>
+            <div className="border-[var(--border\/subtle,#ade8f4)] border-b border-solid content-stretch flex flex-col gap-[6px] items-start px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="58:1866" data-name="Event row">
+              <div className="content-stretch flex items-center overflow-clip relative shrink-0 w-full" data-node-id="I58:1866;5:10" data-name="top">
+                <div className="bg-[var(--event\/amber-bg,#33270f)] content-stretch flex gap-[6px] items-center px-[8px] py-[2px] relative rounded-[var(--radius\/sm,4px)] shrink-0" data-node-id="I58:1866;5:11" data-name="badge">
+                  <div className="relative shrink-0 size-[6px]" data-node-id="I58:1866;5:11;3:16" data-name="dot">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgDot} />
+                  </div>
+                  <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[16px] not-italic relative shrink-0 text-[11px] text-[color:var(--event\/amber,#f2b13c)] whitespace-nowrap" data-node-id="I58:1866;5:11;3:17">
+                    Go-around
+                  </p>
+                </div>
+                <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="I58:1866;5:14" data-name="spacer" />
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="I58:1866;5:15">
+                  11:26:05Z
+                </p>
+              </div>
+              <div className="[word-break:break-word] content-stretch flex gap-[8px] items-baseline overflow-clip relative shrink-0 whitespace-nowrap" data-node-id="I58:1866;5:16" data-name="who">
+                <p className="font-['Inter:Medium'] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[color:var(--text\/primary,#03045e)]" data-node-id="I58:1866;5:17">
+                  CTV1043
+                </p>
+                <p className="font-['JetBrains_Mono:Regular'] font-normal leading-[16px] relative shrink-0 text-[11px] text-[color:var(--text\/muted,#525252)]" data-node-id="I58:1866;5:18">
+                  8A01C9
+                </p>
+                <p className="font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)]" data-node-id="I58:1866;5:19">
+                  · WIII
+                </p>
+              </div>
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/muted,#525252)] whitespace-nowrap" data-node-id="I58:1866;5:20">
+                To review · 31 supporting records
+              </p>
+            </div>
+            <div className="border-[var(--border\/subtle,#ade8f4)] border-b border-solid content-stretch flex flex-col gap-[6px] items-start px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="58:1867" data-name="Event row">
+              <div className="content-stretch flex items-center overflow-clip relative shrink-0 w-full" data-node-id="I58:1867;5:10" data-name="top">
+                <div className="bg-[var(--alert\/red-bg,#3a1616)] content-stretch flex gap-[6px] items-center px-[8px] py-[2px] relative rounded-[var(--radius\/sm,4px)] shrink-0" data-node-id="I58:1867;5:11" data-name="badge">
+                  <div className="relative shrink-0 size-[6px]" data-node-id="I58:1867;5:11;3:25" data-name="dot">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgDot1} />
+                  </div>
+                  <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[16px] not-italic relative shrink-0 text-[11px] text-[color:var(--alert\/red,#f0524f)] whitespace-nowrap" data-node-id="I58:1867;5:11;3:26">
+                    Squawk 7600
+                  </p>
+                </div>
+                <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="I58:1867;5:14" data-name="spacer" />
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="I58:1867;5:15">
+                  12:09:13Z
+                </p>
+              </div>
+              <div className="[word-break:break-word] content-stretch flex gap-[8px] items-baseline overflow-clip relative shrink-0 whitespace-nowrap" data-node-id="I58:1867;5:16" data-name="who">
+                <p className="font-['Inter:Medium'] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[color:var(--text\/primary,#03045e)]" data-node-id="I58:1867;5:17">
+                  SJV096
+                </p>
+                <p className="font-['JetBrains_Mono:Regular'] font-normal leading-[16px] relative shrink-0 text-[11px] text-[color:var(--text\/muted,#525252)]" data-node-id="I58:1867;5:18">
+                  8A0612
+                </p>
+                <p className="font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)]" data-node-id="I58:1867;5:19">
+                  · WIHH
+                </p>
+              </div>
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/muted,#525252)] whitespace-nowrap" data-node-id="I58:1867;5:20">
+                To review · squawk held 6 min 02 s
+              </p>
+            </div>
+            <a className="bg-[var(--bg\/hover,#caf0f8)] border-[var(--track\/cyan,#00b4d8)] border-l-2 border-solid content-stretch cursor-pointer flex flex-col gap-[6px] items-start px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="58:1868" data-name="Event row">
+              <div className="content-stretch flex items-center overflow-clip relative shrink-0 w-full" data-node-id="I58:1868;5:22" data-name="top">
+                <div className="bg-[var(--event\/amber-bg,#33270f)] content-stretch flex gap-[6px] items-center px-[8px] py-[2px] relative rounded-[var(--radius\/sm,4px)] shrink-0" data-node-id="I58:1868;5:23" data-name="badge">
+                  <div className="relative shrink-0 size-[6px]" data-node-id="I58:1868;5:23;3:16" data-name="dot">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgDot} />
+                  </div>
+                  <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[16px] not-italic relative shrink-0 text-[11px] text-[color:var(--event\/amber,#f2b13c)] text-left whitespace-nowrap" data-node-id="I58:1868;5:23;3:17">
+                    Go-around
+                  </p>
+                </div>
+                <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="I58:1868;5:26" data-name="spacer" />
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] text-left whitespace-nowrap" data-node-id="I58:1868;5:27">
+                  14:02:31Z
+                </p>
+              </div>
+              <div className="[word-break:break-word] content-stretch flex gap-[8px] items-baseline overflow-clip relative shrink-0 text-left whitespace-nowrap" data-node-id="I58:1868;5:28" data-name="who">
+                <p className="font-['Inter:Medium'] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[color:var(--text\/primary,#03045e)]" data-node-id="I58:1868;5:29">
+                  GIA412
+                </p>
+                <p className="font-['JetBrains_Mono:Regular'] font-normal leading-[16px] relative shrink-0 text-[11px] text-[color:var(--text\/muted,#525252)]" data-node-id="I58:1868;5:30">
+                  8A0213
+                </p>
+                <p className="font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)]" data-node-id="I58:1868;5:31">
+                  · WIII
+                </p>
+              </div>
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/muted,#525252)] text-left whitespace-nowrap" data-node-id="I58:1868;5:32">
+                Confirmed by you · 38 supporting records
+              </p>
+            </a>
+            <div className="border-[var(--border\/subtle,#ade8f4)] border-b border-solid content-stretch flex flex-col gap-[6px] items-start px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="58:1869" data-name="Event row">
+              <div className="content-stretch flex items-center overflow-clip relative shrink-0 w-full" data-node-id="I58:1869;5:10" data-name="top">
+                <div className="bg-[var(--alert\/red-bg,#3a1616)] content-stretch flex gap-[6px] items-center px-[8px] py-[2px] relative rounded-[var(--radius\/sm,4px)] shrink-0" data-node-id="I58:1869;5:11" data-name="badge">
+                  <div className="relative shrink-0 size-[6px]" data-node-id="I58:1869;5:11;3:22" data-name="dot">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgDot1} />
+                  </div>
+                  <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[16px] not-italic relative shrink-0 text-[11px] text-[color:var(--alert\/red,#f0524f)] whitespace-nowrap" data-node-id="I58:1869;5:11;3:23">
+                    Squawk 7700
+                  </p>
+                </div>
+                <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="I58:1869;5:14" data-name="spacer" />
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="I58:1869;5:15">
+                  15:47:09Z
+                </p>
+              </div>
+              <div className="[word-break:break-word] content-stretch flex gap-[8px] items-baseline overflow-clip relative shrink-0 whitespace-nowrap" data-node-id="I58:1869;5:16" data-name="who">
+                <p className="font-['Inter:Medium'] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[color:var(--text\/primary,#03045e)]" data-node-id="I58:1869;5:17">
+                  AWQ8291
+                </p>
+                <p className="font-['JetBrains_Mono:Regular'] font-normal leading-[16px] relative shrink-0 text-[11px] text-[color:var(--text\/muted,#525252)]" data-node-id="I58:1869;5:18">
+                  8A04F1
+                </p>
+                <p className="font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)]" data-node-id="I58:1869;5:19">
+                  · WIII
+                </p>
+              </div>
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/muted,#525252)] whitespace-nowrap" data-node-id="I58:1869;5:20">
+                To review · squawk held 4 min 12 s
+              </p>
+            </div>
+            <div className="border-[var(--border\/subtle,#ade8f4)] border-b border-solid content-stretch flex flex-col gap-[6px] items-start px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="58:1870" data-name="Event row">
+              <div className="content-stretch flex items-center overflow-clip relative shrink-0 w-full" data-node-id="I58:1870;5:10" data-name="top">
+                <div className="bg-[var(--event\/amber-bg,#33270f)] content-stretch flex gap-[6px] items-center px-[8px] py-[2px] relative rounded-[var(--radius\/sm,4px)] shrink-0" data-node-id="I58:1870;5:11" data-name="badge">
+                  <div className="relative shrink-0 size-[6px]" data-node-id="I58:1870;5:11;3:19" data-name="dot">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgDot} />
+                  </div>
+                  <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[16px] not-italic relative shrink-0 text-[11px] text-[color:var(--event\/amber,#f2b13c)] whitespace-nowrap" data-node-id="I58:1870;5:11;3:20">
+                    Holding
+                  </p>
+                </div>
+                <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="I58:1870;5:14" data-name="spacer" />
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="I58:1870;5:15">
+                  16:31:52Z
+                </p>
+              </div>
+              <div className="[word-break:break-word] content-stretch flex gap-[8px] items-baseline overflow-clip relative shrink-0 whitespace-nowrap" data-node-id="I58:1870;5:16" data-name="who">
+                <p className="font-['Inter:Medium'] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[color:var(--text\/primary,#03045e)]" data-node-id="I58:1870;5:17">
+                  BTK6551
+                </p>
+                <p className="font-['JetBrains_Mono:Regular'] font-normal leading-[16px] relative shrink-0 text-[11px] text-[color:var(--text\/muted,#525252)]" data-node-id="I58:1870;5:18">
+                  8A05A2
+                </p>
+                <p className="font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)]" data-node-id="I58:1870;5:19">
+                  · WIII
+                </p>
+              </div>
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/muted,#525252)] whitespace-nowrap" data-node-id="I58:1870;5:20">
+                Dismissed by you · 1 lap, 4 min 05 s
+              </p>
+            </div>
+            <div className="border-[var(--border\/subtle,#ade8f4)] border-b border-solid content-stretch flex flex-col gap-[6px] items-start px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="58:1871" data-name="Event row">
+              <div className="content-stretch flex items-center overflow-clip relative shrink-0 w-full" data-node-id="I58:1871;5:10" data-name="top">
+                <div className="bg-[var(--event\/amber-bg,#33270f)] content-stretch flex gap-[6px] items-center px-[8px] py-[2px] relative rounded-[var(--radius\/sm,4px)] shrink-0" data-node-id="I58:1871;5:11" data-name="badge">
+                  <div className="relative shrink-0 size-[6px]" data-node-id="I58:1871;5:11;3:16" data-name="dot">
+                    <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgDot} />
+                  </div>
+                  <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[16px] not-italic relative shrink-0 text-[11px] text-[color:var(--event\/amber,#f2b13c)] whitespace-nowrap" data-node-id="I58:1871;5:11;3:17">
+                    Go-around
+                  </p>
+                </div>
+                <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="I58:1871;5:14" data-name="spacer" />
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="I58:1871;5:15">
+                  17:12:40Z
+                </p>
+              </div>
+              <div className="[word-break:break-word] content-stretch flex gap-[8px] items-baseline overflow-clip relative shrink-0 whitespace-nowrap" data-node-id="I58:1871;5:16" data-name="who">
+                <p className="font-['Inter:Medium'] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[color:var(--text\/primary,#03045e)]" data-node-id="I58:1871;5:17">
+                  QZ7521
+                </p>
+                <p className="font-['JetBrains_Mono:Regular'] font-normal leading-[16px] relative shrink-0 text-[11px] text-[color:var(--text\/muted,#525252)]" data-node-id="I58:1871;5:18">
+                  8A02DE
+                </p>
+                <p className="font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)]" data-node-id="I58:1871;5:19">
+                  · WIII
+                </p>
+              </div>
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/muted,#525252)] whitespace-nowrap" data-node-id="I58:1871;5:20">
+                To review · 27 supporting records
+              </p>
+            </div>
+          </div>
+          <div className="border-[var(--border\/subtle,#ade8f4)] border-solid border-t content-stretch flex items-start overflow-clip px-[16px] py-[12px] relative shrink-0 w-full" data-node-id="58:1872" data-name="disclaimer">
+            <p className="[word-break:break-word] flex-[1_0_0] font-['Inter:Regular'] font-normal leading-[16px] min-w-px not-italic relative text-[12px] text-[color:var(--text\/muted,#525252)]" data-node-id="58:1873">
+              Detections are candidates for human review, not confirmed incidents.
+            </p>
+          </div>
+        </div>
+        <div className="content-stretch flex flex-[1_0_0] flex-col gap-[12px] h-full items-start min-w-px overflow-clip p-[16px] relative" data-node-id="58:1874" data-name="center">
+          <div className="content-stretch flex gap-[12px] items-center overflow-clip relative shrink-0 w-full" data-node-id="58:1875" data-name="track-header">
+            <p className="[word-break:break-word] font-['Inter:Semi_Bold'] font-semibold leading-[28px] not-italic relative shrink-0 text-[20px] text-[color:var(--text\/primary,#03045e)] tracking-[-0.1px] whitespace-nowrap" data-node-id="58:1876">
+              GIA412
+            </p>
+            <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[20px] not-italic relative shrink-0 text-[14px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:1877">
+              8A0213 · approach to WIII · 13:40–14:20Z
+            </p>
+            <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="58:1878" data-name="spacer" />
+            <div className="bg-[var(--bg\/raised,#e4f8ff)] border border-[var(--border\/subtle,#ade8f4)] border-solid content-stretch flex gap-[2px] items-start overflow-clip p-[2px] relative rounded-[var(--radius\/md,8px)] shrink-0" data-node-id="58:1879" data-name="view-toggle">
+              <div className="bg-[var(--bg\/surface,white)] border border-[var(--border\/strong,#0077b6)] border-solid content-stretch flex items-start overflow-clip px-[10px] py-[4px] relative rounded-[var(--radius\/sm,4px)] shrink-0" data-node-id="58:1880" data-name="seg">
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,black)] whitespace-nowrap" data-node-id="58:1881">
+                  Map
+                </p>
+              </div>
+              <a className="content-stretch cursor-pointer flex items-start overflow-clip px-[10px] py-[4px] relative rounded-[var(--radius\/sm,4px)] shrink-0" data-node-id="58:1882" data-name="seg">
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,black)] text-left whitespace-nowrap" data-node-id="58:1883">
+                  3D
+                </p>
+              </a>
+              <div className="content-stretch flex items-start overflow-clip px-[10px] py-[4px] relative rounded-[var(--radius\/sm,4px)] shrink-0" data-node-id="58:1884" data-name="seg">
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,black)] whitespace-nowrap" data-node-id="58:1885">
+                  Profile
+                </p>
+              </div>
+            </div>
+            <div className="bg-[var(--bg\/raised,#e4f8ff)] border border-[var(--border\/strong,#0077b6)] border-solid content-stretch flex items-center px-[10px] py-[4px] relative rounded-[var(--radius\/md,8px)] shrink-0" data-node-id="58:1886" data-name="Button">
+              <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="I58:1886;3:38">
+                Show raw points
+              </p>
+            </div>
+          </div>
+          <div className="bg-[var(--bg\/surface,white)] border border-[var(--border\/subtle,#ade8f4)] border-solid h-[456px] overflow-clip relative rounded-[var(--radius\/lg,12px)] shrink-0 w-full" data-node-id="58:1887" data-name="map-viewport">
+            <div className="absolute h-[556px] left-[-1px] top-[-1px] w-[768px]" data-node-id="58:2200" data-name="map (replace with MapLibre + OSM tiles)">
+              <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgMapReplaceWithMapLibreOsmTiles} />
+            </div>
+            <div className="absolute bg-[var(--bg\/overlay,white)] border border-[var(--border\/strong,#0077b6)] border-solid content-stretch flex flex-col gap-[6px] items-start left-[429px] overflow-clip px-[12px] py-[10px] rounded-[var(--radius\/md,8px)] shadow-[0px_8px_8px_0px_rgba(0,0,0,0.08)] top-[319px]" data-node-id="58:2019" data-name="point-tooltip">
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[20px] not-italic relative shrink-0 text-[14px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="58:2020">
+                14:02:31.4Z
+              </p>
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:2021">
+                −6.1203, 106.6518 · 1,250 ft · ↑ 1,900 fpm
+              </p>
+              <div className="bg-[var(--cite\/bg,#e4f8ff)] border border-[var(--cite\/border,#90e0ef)] border-solid content-stretch flex gap-[4px] items-center px-[6px] py-[2px] relative rounded-[var(--radius\/sm,4px)] shrink-0" data-node-id="58:2022" data-name="Citation chip">
+                <div className="h-[16px] relative shrink-0 w-[10px]" data-node-id="I58:2022;78:2863" data-name="optical">
+                  <p className="[word-break:break-word] absolute font-['JetBrains_Mono:Regular'] font-normal leading-[16px] left-0 text-[11px] text-[color:var(--cite\/text,#023e8a)] top-[-0.5px] whitespace-nowrap" data-node-id="I58:2022;3:3">
+                    ⌗
+                  </p>
+                </div>
+                <p className="[word-break:break-word] font-['JetBrains_Mono:Regular'] font-normal leading-[16px] relative shrink-0 text-[11px] text-[color:var(--cite\/text,#023e8a)] whitespace-nowrap" data-node-id="I58:2022;3:4">
+                  rec 0412:1183
+                </p>
+              </div>
+            </div>
+            <div className="absolute bg-[var(--bg\/canvas,#f3f3f3)] content-stretch flex gap-[16px] items-center left-[15px] opacity-92 overflow-clip px-[12px] py-[8px] rounded-[var(--radius\/md,8px)] top-[407px]" data-node-id="58:2023" data-name="legend">
+              <div className="content-stretch flex gap-[6px] items-center overflow-clip relative shrink-0" data-node-id="58:2024" data-name="item">
+                <div className="h-[3px] relative shrink-0 w-[14px]" data-node-id="78:3215" data-name="optical">
+                  <div className="absolute bg-[var(--track\/cyan,#00b4d8)] h-[3px] left-0 rounded-[1px] top-[0.5px] w-[14px]" data-node-id="58:2025" data-name="Rectangle" />
+                </div>
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:2026">
+                  Kept point
+                </p>
+              </div>
+              <div className="content-stretch flex gap-[6px] items-center overflow-clip relative shrink-0" data-node-id="58:2027" data-name="item">
+                <div className="h-[3px] relative shrink-0 w-[14px]" data-node-id="78:3216" data-name="optical">
+                  <div className="absolute bg-[var(--event\/amber,#f2b13c)] h-[3px] left-0 rounded-[1px] top-[0.5px] w-[14px]" data-node-id="58:2028" data-name="Rectangle" />
+                </div>
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:2029">
+                  Event window · full resolution
+                </p>
+              </div>
+              <div className="content-stretch flex gap-[6px] items-center overflow-clip relative shrink-0" data-node-id="58:2030" data-name="item">
+                <div className="h-[3px] relative shrink-0 w-[14px]" data-node-id="78:3217" data-name="optical">
+                  <div className="absolute bg-[var(--track\/cyan-dim,#0077b6)] h-[3px] left-0 rounded-[1px] top-[0.5px] w-[14px]" data-node-id="58:2031" data-name="Rectangle" />
+                </div>
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:2032">
+                  Ground track
+                </p>
+              </div>
+            </div>
+            <p className="[word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[16px] left-[734px] not-italic text-[11px] text-[color:var(--text\/primary,#03045e)] top-[57px] whitespace-nowrap" data-node-id="58:2296">
+              N
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[567px] not-italic text-[12px] text-[color:var(--text\/secondary,#383838)] top-[433px] whitespace-nowrap" data-node-id="58:2297">
+              0
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[643px] not-italic text-[12px] text-[color:var(--text\/secondary,#383838)] top-[433px] whitespace-nowrap" data-node-id="58:2298">
+              2 km
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[715px] not-italic text-[12px] text-[color:var(--text\/secondary,#383838)] top-[433px] whitespace-nowrap" data-node-id="58:2299">
+              4 km
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[199px] not-italic text-[12px] text-[color:var(--text\/primary,#03045e)] top-[299px] whitespace-nowrap" data-node-id="58:2300">
+              25R
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[559px] not-italic text-[12px] text-[color:var(--text\/primary,#03045e)] top-[209px] whitespace-nowrap" data-node-id="58:2301">
+              07L
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[299px] not-italic text-[12px] text-[color:var(--text\/secondary,#383838)] top-[174px] whitespace-nowrap" data-node-id="58:2302">
+              WIII · Soekarno–Hatta
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[39px] not-italic text-[12px] text-[color:var(--text\/muted,#525252)] top-[29px] whitespace-nowrap" data-node-id="58:2303">
+              Java Sea
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[149px] not-italic text-[12px] text-[color:var(--event\/amber,#f2b13c)] top-[329px] whitespace-nowrap" data-node-id="58:2304">
+              Flagged window · climb-out
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[454px] not-italic text-[12px] text-[color:var(--alert\/red,#f0524f)] top-[231px] whitespace-nowrap" data-node-id="58:2305">
+              6 s coverage gap
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[467px] not-italic text-[12px] text-[color:var(--text\/muted,#525252)] top-[15px] whitespace-nowrap" data-node-id="58:2306">
+              Scroll to zoom · drag to pan · click a point to cite it
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[15px] not-italic text-[12px] text-[color:var(--text\/muted,#525252)] top-[15px] whitespace-nowrap" data-node-id="58:2307">
+              WGS-84 · basemap © OpenStreetMap contributors
+            </p>
+            <div className="absolute inset-[calc(93.42%+0.87px)_calc(4.69%-0.91px)_calc(6.58%-0.87px)_calc(74.48%+0.49px)]" data-node-id="82:2077" data-name="Vector">
+              <div className="absolute inset-[-1px_0]">
+                <img alt="" className="block max-w-none size-full" src={imgVector} />
+              </div>
+            </div>
+            <div className="absolute inset-[calc(92.11%+0.84px)_calc(4.69%-0.91px)_calc(5.26%-0.89px)_calc(74.48%+0.49px)]" data-node-id="82:2078" data-name="Vector">
+              <div className="absolute inset-[0_-0.63%]">
+                <img alt="" className="block max-w-none size-full" src={imgVector1} />
+              </div>
+            </div>
+          </div>
+          <div className="bg-[var(--bg\/surface,white)] border border-[var(--border\/subtle,#ade8f4)] border-solid h-[224px] relative rounded-[var(--radius\/lg,12px)] shrink-0 w-full" data-node-id="58:2034" data-name="altitude-profile">
+            <div className="absolute h-[112px] left-[-1px] top-[11px] w-[768px]" data-node-id="58:2035" data-name="profile-chart">
+              <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgProfileChart} />
+            </div>
+            <p className="[word-break:break-word] absolute font-['Inter:Medium'] font-medium leading-[16px] left-[15px] not-italic text-[11px] text-[color:var(--text\/muted,#525252)] top-[5px] whitespace-nowrap" data-node-id="58:2044">
+              Geometric height (WGS-84), ft
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[31px] not-italic text-[12px] text-[color:var(--text\/muted,#525252)] top-[99px] whitespace-nowrap" data-node-id="58:2045">
+              0
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[31px] not-italic text-[12px] text-[color:var(--text\/muted,#525252)] top-[63px] whitespace-nowrap" data-node-id="58:2046">
+              3k
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[31px] not-italic text-[12px] text-[color:var(--text\/muted,#525252)] top-[27px] whitespace-nowrap" data-node-id="58:2047">
+              6k
+            </p>
+            <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[16px] left-[199px] not-italic text-[12px] text-[color:var(--event\/amber,#f2b13c)] top-[5px] whitespace-nowrap" data-node-id="58:2048">
+              Flagged window 13:58:10–14:06:52Z
+            </p>
+            <div className="absolute h-[100px] left-[-1px] overflow-clip top-[123px] w-[768px]" data-node-id="82:2079" data-name="synced-lanes">
+              <div className="absolute h-0 left-[56px] top-[46px] w-[688px]" data-node-id="82:2080" data-name="Vector">
+                <div className="absolute inset-[-0.5px_0]">
+                  <img alt="" className="block max-w-none size-full" src={imgVector2} />
+                </div>
+              </div>
+              <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[normal] left-[16px] not-italic text-[#5c6b85] text-[11px] top-[2px] whitespace-nowrap" data-node-id="82:2081">
+                Ground speed (I021/160), kt
+              </p>
+              <div className="absolute bg-[#fcf2db] h-[42px] left-[203px] top-[4px] w-[387px]" data-node-id="82:2082" data-name="Rectangle" />
+              <div className="absolute h-[14.4px] left-[56px] top-[16.9px] w-[688px]" data-node-id="82:2083" data-name="Vector">
+                <div className="absolute inset-[-5.21%_0]">
+                  <img alt="" className="block max-w-none size-full" src={imgVector3} />
+                </div>
+              </div>
+              <p className="[word-break:break-word] absolute font-['JetBrains_Mono:Regular'] font-normal leading-[normal] left-[332px] text-[#14213b] text-[11px] top-[2px] whitespace-nowrap" data-node-id="82:2084">
+                148 kt
+              </p>
+              <div className="absolute h-0 left-[56px] top-[96px] w-[688px]" data-node-id="82:2085" data-name="Vector">
+                <div className="absolute inset-[-0.5px_0]">
+                  <img alt="" className="block max-w-none size-full" src={imgVector2} />
+                </div>
+              </div>
+              <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[normal] left-[16px] not-italic text-[#5c6b85] text-[11px] top-[52px] whitespace-nowrap" data-node-id="82:2086">
+                Vertical rate (baro, I021/155), fpm
+              </p>
+              <div className="absolute bg-[#fcf2db] h-[42px] left-[203px] top-[54px] w-[387px]" data-node-id="82:2087" data-name="Rectangle" />
+              <div className="absolute h-[20.8px] left-[56px] top-[65.6px] w-[688px]" data-node-id="82:2088" data-name="Vector">
+                <div className="absolute inset-[-3.62%_0_-3.61%_0]">
+                  <img alt="" className="block max-w-none size-full" src={imgVector4} />
+                </div>
+              </div>
+              <p className="[word-break:break-word] absolute font-['JetBrains_Mono:Regular'] font-normal leading-[normal] left-[332px] text-[#14213b] text-[11px] top-[52px] whitespace-nowrap" data-node-id="82:2089">
+                +1,900 fpm
+              </p>
+              <div className="absolute h-0 left-[56px] top-[76px] w-[688px]" data-node-id="82:2090" data-name="Vector">
+                <div className="absolute inset-[-0.5px_0]">
+                  <img alt="" className="block max-w-none size-full" src={imgVector2} />
+                </div>
+              </div>
+              <p className="[word-break:break-word] absolute font-['Inter:Regular'] font-normal leading-[normal] left-[40px] not-italic text-[#8a99ad] text-[10px] top-[70px] whitespace-nowrap" data-node-id="82:2091">
+                0
+              </p>
+            </div>
+            <div className="absolute bg-[#14213b] h-[206px] left-[325px] top-[15px] w-px" data-node-id="82:2092" data-name="shared-cursor" />
+            <div className="absolute content-stretch flex gap-[6px] items-center left-[467px] overflow-clip top-[-5px]" data-node-id="82:2093" data-name="time-nav">
+              <div className="bg-white border border-[#dbe3ed] border-solid content-stretch flex items-start overflow-clip px-[8px] py-[3px] relative rounded-[5px] shrink-0" data-node-id="82:2094" data-name="Frame">
+                <p className="[word-break:break-word] font-['JetBrains_Mono:Regular'] font-normal leading-[normal] relative shrink-0 text-[#14213b] text-[11px] whitespace-nowrap" data-node-id="82:2095">
+                  Go to 14:02:31.4Z
+                </p>
+              </div>
+              <div className="bg-white border border-[#dbe3ed] border-solid content-stretch flex items-start overflow-clip px-[10px] py-[5px] relative rounded-[6px] shrink-0" data-node-id="82:2096" data-name="Frame">
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[normal] not-italic relative shrink-0 text-[#14213b] text-[12px] whitespace-nowrap" data-node-id="82:2097">
+                  Zoom to flagged window
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-[var(--bg\/surface,white)] border border-[var(--border\/subtle,#ade8f4)] border-solid content-stretch flex gap-[16px] h-[48px] items-center px-[16px] relative rounded-[var(--radius\/md,8px)] shrink-0 w-full" data-node-id="58:2049" data-name="Time scrubber">
+            <div className="bg-[var(--bg\/raised,#e4f8ff)] content-stretch flex items-center justify-center overflow-clip relative rounded-[var(--radius\/pill,999px)] shrink-0 size-[28px]" data-node-id="I58:2049;5:70" data-name="play">
+              <div className="relative shrink-0 size-[12px]" data-node-id="I58:2049;5:71" data-name="icon/play">
+                <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconPlay} />
+              </div>
+            </div>
+            <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[20px] not-italic relative shrink-0 text-[14px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="I58:2049;5:73">
+              14:02:31Z
+            </p>
+            <div className="flex-[1_0_0] h-[24px] min-w-px relative" data-node-id="I58:2049;5:74" data-name="track">
+              <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgTrack} />
+            </div>
+            <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/muted,#525252)] whitespace-nowrap" data-node-id="I58:2049;5:82">
+              06:00Z → 18:00Z
+            </p>
+            <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="I58:2049;5:83">
+              ×8
+            </p>
+          </div>
+        </div>
+        <div className="border-[var(--border\/subtle,#ade8f4)] border-l border-solid content-stretch flex flex-col gap-[16px] h-full items-start overflow-clip p-[16px] relative shrink-0 w-[320px]" data-node-id="58:2050" data-name="inspector">
+          <div className="bg-[var(--bg\/surface,white)] border border-[var(--border\/subtle,#ade8f4)] border-solid content-stretch flex flex-col gap-[14px] items-start p-[20px] relative rounded-[var(--radius\/lg,12px)] shrink-0 w-full" data-node-id="58:2051" data-name="Compression card">
+            <div className="content-stretch flex items-center overflow-clip relative shrink-0 w-full" data-node-id="I58:2051;5:85" data-name="head">
+              <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[16px] not-italic relative shrink-0 text-[11px] text-[color:var(--text\/muted,#525252)] whitespace-nowrap" data-node-id="I58:2051;5:86">
+                Reduction
+              </p>
+              <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="I58:2051;5:87" data-name="spacer" />
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/muted,#525252)] whitespace-nowrap" data-node-id="I58:2051;5:88">
+                measured
+              </p>
+            </div>
+            <div className="[word-break:break-word] content-stretch flex gap-[10px] items-baseline not-italic overflow-clip relative shrink-0 whitespace-nowrap" data-node-id="I58:2051;5:89" data-name="ratio">
+              <p className="font-['Inter:Semi_Bold'] font-semibold leading-[40px] relative shrink-0 text-[32px] text-[color:var(--text\/primary,#03045e)] tracking-[-0.32px]" data-node-id="I58:2051;5:90">
+                7.6×
+              </p>
+              <p className="font-['Inter:Regular'] font-normal leading-[16px] relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)]" data-node-id="I58:2051;5:91">
+                312.0 MB → 41.2 MB
+              </p>
+            </div>
+            <div className="content-stretch flex flex-col gap-[6px] items-start overflow-clip relative shrink-0 w-full" data-node-id="I58:2051;5:92" data-name="bars">
+              <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I58:2051;5:93" data-name="Raw">
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/muted,#525252)] w-[48px]" data-node-id="I58:2051;5:94">
+                  Raw
+                </p>
+                <div className="bg-[var(--border\/strong,#0077b6)] h-[8px] relative rounded-[2px] shrink-0 w-[230px]" data-node-id="I58:2051;5:95" data-name="Rectangle" />
+              </div>
+              <div className="content-stretch flex gap-[8px] items-center overflow-clip relative shrink-0 w-full" data-node-id="I58:2051;5:96" data-name="Stored">
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/muted,#525252)] w-[48px]" data-node-id="I58:2051;5:97">
+                  Stored
+                </p>
+                <div className="bg-[var(--track\/cyan,#00b4d8)] h-[8px] relative rounded-[2px] shrink-0 w-[30px]" data-node-id="I58:2051;5:98" data-name="Rectangle" />
+              </div>
+            </div>
+            <div className="content-stretch flex flex-col gap-[6px] items-start overflow-clip relative shrink-0 w-full" data-node-id="I58:2051;5:99" data-name="errors">
+              <div className="content-stretch flex items-start overflow-clip relative shrink-0 w-full" data-node-id="I58:2051;5:100" data-name="Max position error">
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="I58:2051;5:101">
+                  Max position error
+                </p>
+                <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="I58:2051;5:102" data-name="spacer" />
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="I58:2051;5:103">
+                  25 m
+                </p>
+              </div>
+              <div className="content-stretch flex items-start overflow-clip relative shrink-0 w-full" data-node-id="I58:2051;5:104" data-name="Mean position error">
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="I58:2051;5:105">
+                  Mean position error
+                </p>
+                <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="I58:2051;5:106" data-name="spacer" />
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="I58:2051;5:107">
+                  6.1 m
+                </p>
+              </div>
+              <div className="content-stretch flex items-start overflow-clip relative shrink-0 w-full" data-node-id="I58:2051;5:108" data-name="Max altitude error">
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="I58:2051;5:109">
+                  Max altitude error
+                </p>
+                <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="I58:2051;5:110" data-name="spacer" />
+                <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="I58:2051;5:111">
+                  50 ft
+                </p>
+              </div>
+            </div>
+            <div className="bg-[var(--ok\/green-bg,#0f2e20)] content-stretch flex gap-[8px] items-center overflow-clip px-[10px] py-[6px] relative rounded-[var(--radius\/sm,4px)] shrink-0 w-full" data-node-id="I58:2051;5:112" data-name="events-kept">
+              <div className="relative shrink-0 size-[14px]" data-node-id="I58:2051;78:3218" data-name="optical">
+                <div className="absolute left-0 size-[14px] top-[-0.5px]" data-node-id="I58:2051;5:113" data-name="icon/check">
+                  <img alt="" className="absolute block inset-0 max-w-none size-full" src={imgIconCheck} />
+                </div>
+              </div>
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--ok\/green,#4cc38a)] whitespace-nowrap" data-node-id="I58:2051;5:115">
+                7 of 7 flagged windows preserved
+              </p>
+            </div>
+            <a className="content-stretch cursor-pointer flex items-center px-[10px] py-[4px] relative rounded-[var(--radius\/md,8px)] shrink-0" data-node-id="I58:2051;5:116" data-name="Button">
+              <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,#03045e)] text-left whitespace-nowrap" data-node-id="I58:2051;5:116;3:42">
+                Change cleaning and error bound
+              </p>
+            </a>
+          </div>
+          <div className="bg-[var(--bg\/surface,white)] border border-[var(--border\/subtle,#ade8f4)] border-solid content-stretch flex flex-col gap-[8px] items-start overflow-clip px-[20px] py-[16px] relative rounded-[var(--radius\/lg,12px)] shrink-0 w-full" data-node-id="58:2052" data-name="selected-point">
+            <div className="content-stretch flex items-start overflow-clip relative shrink-0 w-full" data-node-id="58:2053" data-name="head">
+              <p className="[word-break:break-word] font-['Inter:Medium'] font-medium leading-[16px] not-italic relative shrink-0 text-[11px] text-[color:var(--text\/muted,#525252)] whitespace-nowrap" data-node-id="58:2054">
+                Selected point
+              </p>
+              <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="58:2055" data-name="spacer" />
+              <p className="[word-break:break-word] font-['JetBrains_Mono:Regular'] font-normal leading-[16px] relative shrink-0 text-[11px] text-[color:var(--text\/muted,#525252)] whitespace-nowrap" data-node-id="58:2056">
+                I021
+              </p>
+            </div>
+            <div className="content-stretch flex items-start overflow-clip relative shrink-0 w-full" data-node-id="58:2057" data-name="kv">
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:2058">
+                Time of applicability
+              </p>
+              <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="58:2059" data-name="spacer" />
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="58:2060">
+                14:02:31.4Z
+              </p>
+            </div>
+            <div className="content-stretch flex items-start overflow-clip relative shrink-0 w-full" data-node-id="58:2061" data-name="kv">
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:2062">
+                Latitude
+              </p>
+              <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="58:2063" data-name="spacer" />
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="58:2064">
+                −6.1203
+              </p>
+            </div>
+            <div className="content-stretch flex items-start overflow-clip relative shrink-0 w-full" data-node-id="58:2065" data-name="kv">
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:2066">
+                Longitude
+              </p>
+              <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="58:2067" data-name="spacer" />
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="58:2068">
+                106.6518
+              </p>
+            </div>
+            <div className="content-stretch flex items-start overflow-clip relative shrink-0 w-full" data-node-id="58:2069" data-name="kv">
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:2070">
+                Geometric height (WGS-84)
+              </p>
+              <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="58:2071" data-name="spacer" />
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="58:2072">
+                1,250 ft
+              </p>
+            </div>
+            <div className="content-stretch flex items-start overflow-clip relative shrink-0 w-full" data-node-id="58:2073" data-name="kv">
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:2074">
+                Pressure alt. (std, not QNH)
+              </p>
+              <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="58:2075" data-name="spacer" />
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="58:2076">
+                1,175 ft
+              </p>
+            </div>
+            <div className="content-stretch flex items-start overflow-clip relative shrink-0 w-full" data-node-id="58:2077" data-name="kv">
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:2078">
+                Ground speed
+              </p>
+              <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="58:2079" data-name="spacer" />
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="58:2080">
+                148 kt
+              </p>
+            </div>
+            <div className="content-stretch flex items-start overflow-clip relative shrink-0 w-full" data-node-id="58:2081" data-name="kv">
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:2082">
+                Vertical rate (baro)
+              </p>
+              <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="58:2083" data-name="spacer" />
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="58:2084">
+                +1,900 fpm
+              </p>
+            </div>
+            <div className="content-stretch flex items-start overflow-clip relative shrink-0 w-full" data-node-id="58:2085" data-name="kv">
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:2086">
+                Mode 3/A
+              </p>
+              <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="58:2087" data-name="spacer" />
+              <p className="[word-break:break-word] font-['JetBrains_Mono:Regular'] font-normal leading-[16px] relative shrink-0 text-[11px] text-[color:var(--text\/primary,#03045e)] whitespace-nowrap" data-node-id="58:2088">
+                2741
+              </p>
+            </div>
+            <div className="content-stretch flex items-center overflow-clip pt-[6px] relative shrink-0 w-full" data-node-id="58:2089" data-name="source">
+              <p className="[word-break:break-word] font-['Inter:Regular'] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[color:var(--text\/secondary,#383838)] whitespace-nowrap" data-node-id="58:2090">
+                Source record
+              </p>
+              <div className="flex-[1_0_0] h-px min-w-px relative" data-node-id="58:2091" data-name="spacer" />
+              <div className="bg-[var(--cite\/bg,#e4f8ff)] border border-[var(--cite\/border,#90e0ef)] border-solid content-stretch flex gap-[4px] items-center px-[6px] py-[2px] relative rounded-[var(--radius\/sm,4px)] shrink-0" data-node-id="58:2092" data-name="Citation chip">
+                <div className="h-[16px] relative shrink-0 w-[10px]" data-node-id="I58:2092;78:2863" data-name="optical">
+                  <p className="[word-break:break-word] absolute font-['JetBrains_Mono:Regular'] font-normal leading-[16px] left-0 text-[11px] text-[color:var(--cite\/text,#023e8a)] top-[-0.5px] whitespace-nowrap" data-node-id="I58:2092;3:3">
+                    ⌗
+                  </p>
+                </div>
+                <p className="[word-break:break-word] font-['JetBrains_Mono:Regular'] font-normal leading-[16px] relative shrink-0 text-[11px] text-[color:var(--cite\/text,#023e8a)] whitespace-nowrap" data-node-id="I58:2092;3:4">
+                  rec 0412:1183
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+----
+
+SUPER CRITICAL: The generated React+Tailwind code MUST be converted to match the target project's technology stack and styling system.
+1. Analyze the target codebase to identify: technology stack, styling approach, component patterns, and design tokens
+2. Convert React syntax to the target framework/library
+3. Transform all Tailwind classes to the target styling system while preserving exact visual design
+4. Follow the project's existing patterns and conventions
+DO NOT install any Tailwind as a dependency unless the user instructs you to do so.
+
+
+----
+
+Node ids have been added to the code as data attributes, e.g. `data-node-id="1:2"`.
+
+----
+
+These styles are contained in the design: Heading/H2: Font(family: "Inter", style: Semi Bold, size: 15, weight: 600, lineHeight: 22, letterSpacing: 0), Body/Strong: Font(family: "Inter", style: Medium, size: 14, weight: 500, lineHeight: 20, letterSpacing: 0), Body/Small: Font(family: "Inter", style: Regular, size: 12, weight: 400, lineHeight: 16, letterSpacing: 0), Data/Small: Font(family: "JetBrains Mono", style: Regular, size: 11, weight: 400, lineHeight: 16, letterSpacing: 0), Heading/H1: Font(family: "Inter", style: Semi Bold, size: 20, weight: 600, lineHeight: 28, letterSpacing: -0.5), Body/Regular: Font(family: "Inter", style: Regular, size: 14, weight: 400, lineHeight: 20, letterSpacing: 0), Number/Large: Font(family: "Inter", style: Semi Bold, size: 32, weight: 600, lineHeight: 40, letterSpacing: -1).
+
+----
+
+Component descriptions: The following components have usage descriptions or documentation links defined in Figma. These descriptions provide important context about the intended usage, best practices, and any constraints for each component. Follow these guidelines when implementing or using these components.
+
+## App bar
+**Node ID:** 5:40
+
+Global header. Tabs map to routes /, /events, /compression, /ask.
+
+## Event row
+**Node ID:** 5:33
+
+Event list item. Click → scrubber jumps to start\_ts and Event panel opens. Data: GET /api/events.
+
+## Event badge
+**Node ID:** 3:30
+
+Amber = routine-but-notable (go-around, holding). Red only for emergency squawks. Always labelled as a candidate, never a confirmed incident.
+
+## Citation chip
+**Node ID:** 3:14
+
+Every factual claim ends in one. Click opens the Raw record viewer (Kind=Record → GET /api/raw/{raw\_ref}) or the Event panel (Kind=Event).
+
+## Time scrubber
+**Node ID:** 5:69
+
+Shared replay clock. Ticks = detected events (amber routine, red emergency squawk). Drag or click a tick.
+
+## Compression card
+**Node ID:** 5:84
+
+Data: GET /api/compression/{recording\_id} (SCRUM-60). 'Events kept' must be 100%; show error bounds honestly.
+
+----
+
+The generated code contains image and SVG URL constants, e.g. const image = `${assetPathPrefix}/<asset file name>`, where assetPathPrefix is declared once at the top of the code and every asset URL interpolates it. These URLs are temporary download sources and expire after 7 days. Download each asset into the project with curl -L, then replace its URL in the generated code with a reference to the downloaded asset. Never use the temporary URLs as runtime image sources.

@@ -1,0 +1,15 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "07L/25R", "source": "OurAirports runways.csv, WIII, threshold coordinates" },
+      "geometry": { "type": "LineString", "coordinates": [[106.639, -6.12106], [106.668999, -6.10899]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "07R/25L", "source": "OurAirports runways.csv, WIII, threshold coordinates" },
+      "geometry": { "type": "LineString", "coordinates": [[106.643997, -6.1426], [106.674004, -6.13032]] }
+    }
+  ]
+}

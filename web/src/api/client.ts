@@ -1,4 +1,4 @@
-import type { AskResponse, EventDetail, FlightEvent, Meta, RawRecord, Track } from "./types";
+import type { AskResponse, CompressionReport, EventDetail, FlightEvent, Meta, RawRecord, Track } from "./types";
 
 export interface Api {
   meta(): Promise<Meta>;
@@ -7,6 +7,7 @@ export interface Api {
   track(icao24: string): Promise<Track>;
   raw(rawRef: string): Promise<RawRecord>;
   ask(question: string): Promise<AskResponse>;
+  compression(recordingId: string): Promise<CompressionReport>;
 }
 
 export class ApiError extends Error {
@@ -42,6 +43,16 @@ export function httpApi(baseUrl: string): Api {
       });
       if (!res.ok) throw new ApiError(res.status, url, `Request failed: ${res.status} ${url}`);
       return (await res.json()) as AskResponse;
+    },
+    compression: async (recordingId) => {
+      try {
+        return await get<CompressionReport>(`/api/compression/${encodeURIComponent(recordingId)}`);
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) {
+          throw new ApiError(404, e.url, `No compression report for this recording`);
+        }
+        throw e;
+      }
     },
     raw: async (rawRef) => {
       try {

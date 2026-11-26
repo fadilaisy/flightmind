@@ -35,6 +35,15 @@
     }
   },
   "raw": {
+    "rec01:4": {
+      "raw_ref": "rec01:4",
+      "recording_file_id": "rec01",
+      "record_index": 4,
+      "sac": 9,
+      "sic": 1,
+      "decoded": { "I021/071": "08:00:40.00Z", "I021/130": { "lat": -6.14, "lon": 106.66 } },
+      "hex": "0018130000D12F019E0C"
+    },
     "rec01:3": {
       "raw_ref": "rec01:3",
       "recording_file_id": "rec01",

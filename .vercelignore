@@ -1,0 +1,14 @@
+# Patterns follow .gitignore rules: a bare name matches at any depth. Root folders are
+# anchored with "/" so that web/tests/fixtures (needed by the web build) is not dropped.
+/.git
+/.claude
+/.kiro
+/data
+/docs
+/fixtures
+/services/pipeline
+/web/dist
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.env*

@@ -31,13 +31,31 @@ Notes for the UI:
   Speed is set with `MOCK_STREAM_DELAY` seconds between items (default 0.05).
 - `/api/ask` answers by keyword (7700 / go-around / hold) and otherwise returns
   `not_enough_evidence`. The real agent is SCRUM-36.
+- `/api/compression/{recording_id}` returns a `CompressionReport`. Counts and byte sizes are
+  computed from the synthetic records (kept = event points plus each track's first and last
+  point), `/api/tracks` still returns every point, and `max_position_error_m` is an invented
+  constant. The mock measures both sizes in synthetic record bytes, while the real report
+  compares the recording file size with the Postgres row size, so the real ratio will
+  differ. Do not quote the mock ratio (for example in the video). A recording with no data
+  (`raw_bytes` 0) returns 404 with `Recording '<id>' has no data yet.`, the same status as an
+  unknown id, so the UI needs only one "no report" state.
 
 ## MCP server (SCRUM-34)
 
-`mcp_server/` is a stdio MCP server with one tool, `get_track(icao24, from?, to?)`. It calls
-`GET /api/tracks/{icao24}` and returns the body unchanged, so every point keeps its `raw_ref`.
-It is a thin HTTP client: it never reads the database, so the mock API can be replaced by the
-real API with no change here.
+`mcp_server/` is a stdio MCP server with four tools: `query_tracks`, `search_events`,
+`get_track` and `get_raw` (the same tools the cited agent uses, see "Cited agent (SCRUM-36)").
+`get_track(icao24, from?, to?, max_points?)` calls
+`GET /api/tracks/{icao24}` and, without `max_points`, returns the body unchanged, so every point
+keeps its `raw_ref`. With `max_points` (2 to 200) it thins the track and keeps the first, last
+and event points. `search_events(type?, airport?, since?)` lists events,
+`query_tracks(callsign?, icao24?, from?, to?)` summarises aircraft that have at least one event
+(at most 20 per call; the result then has `truncated: true` and `candidates_total`, so narrow by
+callsign or icao24). Each summary has `min_alt_raw_ref` and `max_alt_raw_ref`, the first record
+where the lowest and highest altitude occur, so a claim about an altitude extreme can cite the
+record that shows it,
+and `get_raw(raw_ref)` returns one raw record. Descriptions and schemas live in
+`agent/tools.py`. The server is a thin HTTP client: it never reads the database, so the mock API
+can be replaced by the real API with no change here.
 
 Set the API address with `FLIGHTMIND_API_BASE` (default `http://localhost:8000`).
 
@@ -70,10 +88,30 @@ six calls against the mock API, all as expected. Known aircraft returns 60 point
 `raw_ref` each, `from` narrows it to 30, an unknown aircraft, a missing `icao24` and a stopped
 API each return a tool error, and the server answered correctly after the API came back.
 
-Not yet verified in Kiro (task 7 of the spec): that workspace servers start in the workspace
-root, and whether Kiro Crew reads `.kiro/settings/mcp.json` at all. Until it is checked, assume
-Kiro Crew does not, and add the server by hand in Customize, Connections, MCP Servers with an
-absolute path to `run.py`.
+Checked in Kiro on 2026-11-25 (task 7 of the spec, clip in `docs/kiro/scrum-34/`):
+
+- The Kiro IDE skips the workspace `.kiro/settings/mcp.json` while the folder is in Restricted
+  Mode. Click "Restricted Mode" in the status bar, choose Trust, then run Developer: Reload
+  Window. `flightmind` then shows as Connected (1 tool) under MCP Servers.
+- The relative path in `args` works, so Kiro starts workspace servers in the workspace root.
+- Through Kiro's chat CLI (`kiro-cli chat` from the repo root, which reads the same file):
+  `8A0F21` returned 60 points with `raw_ref`, `ZZZZZZ` returned the unknown-aircraft message,
+  and with the API stopped it returned the unreachable message. The server stayed up.
+
+The calls above were driven through `kiro-cli` by Claude Code, not typed into the IDE chat
+panel by a person. Task 9 of the spec redid them by hand.
+
+Checked again on 2026-11-26 (task 9, clip `docs/kiro/scrum-34/2026-11-26_role3_mcp-get_track-ide.mp4`):
+
+- Zahran typed the three asks into the Kiro IDE chat panel. `8A0F21` returned 60 points,
+  callsign GIA123, `raw_ref` `rec01:0` to `rec01:2`. `ZZZZZZ` returned the unknown-aircraft
+  message. With the API stopped it returned the unreachable message. Claude Code started and
+  stopped the mock API and recorded the screen.
+- Kiro Crew (0.13.1) does **not** read `.kiro/settings/mcp.json`. Customize, MCP Servers lists
+  13 servers (Crew's own and the ones in the user-level `~/.kiro/settings/mcp.json`) and
+  `flightmind` is not one of them (`docs/kiro/scrum-34/2026-11-26_role3_crew-mcp-servers.png`).
+  To use it in Crew, add it by hand in Customize, MCP Servers, Add Custom, with an absolute
+  path to `run.py`.
 
 Notes:
 
@@ -83,5 +121,99 @@ Notes:
 
 ### Third-party libraries (for the README disclosure list)
 
-- `mcp` (official Model Context Protocol Python SDK): serves the MCP tool over stdio.
+- `mcp` (official Model Context Protocol Python SDK): serves the MCP tools over stdio.
 - `httpx`: HTTP client that calls the FlightMind API.
+- `anthropic` (official Claude Python SDK, `>=2.14,<3`): calls the Claude API for the cited agent.
+
+## Cited agent (SCRUM-36)
+
+`POST /api/ask` has two modes. **Without a key** it answers by keyword from canned text, as
+before. **With `ANTHROPIC_API_KEY` set** it runs a Claude agent (`agent/`): the model calls four
+read-only tools (`query_tracks`, `search_events`, `get_track`, `get_raw`) over the API, then
+returns claims that each cite a record (`cat021_record`) or an event. Nothing else is read.
+
+**How it is switched on.** Only `ANTHROPIC_API_KEY` itself turns it on, and only when it is
+non-empty. `ANTHROPIC_AUTH_TOKEN` is ignored on purpose, and the key is passed to the SDK
+explicitly. Set `FLIGHTMIND_ASK=canned` to force canned answers even with a key. Set the key in
+your own shell, never in a file in the repo.
+
+| Variable | Meaning |
+| --- | --- |
+| `ANTHROPIC_API_KEY` | Turns the agent on. Server-side only; never in the web bundle. |
+| `FLIGHTMIND_LLM_MODEL` | Model id. Default `claude-haiku-5-5`. |
+| `FLIGHTMIND_ASK` | `canned` forces the keyword answers. |
+| `FLIGHTMIND_ASK_PER_MINUTE` | Questions per client per minute. Default 5. |
+| `FLIGHTMIND_ASK_PER_DAY` | Questions per process per day. Default 300. |
+| `FLIGHTMIND_API_BASE` | API the MCP server calls. Default `http://localhost:8000`. |
+
+**Evidence rule.** The server, not the model, enforces citations. A citation must name an event
+id or `raw_ref` that a tool returned in this run, with the matching kind. Invalid citations are
+dropped, a claim left with no citation is dropped, and when nothing is left the answer is
+`not_enough_evidence`. The answer text and its citations come from the same validated claims.
+
+**Limits.** A question is at most 500 characters (422 otherwise). At most 6 model calls and 25 s
+per question, 20 s per model call, `max_tokens` 4096. The agent's `get_track` returns at most 60
+points by default (up to 200 on request) and reports how many the full track has.
+`query_tracks` searches at most 20 aircraft per call, with 5 track requests in flight, and only
+aircraft that have at least one detected event, because the API has
+no list of aircraft; an aircraft without events can be missing from its result. A Claude API
+failure (bad key, rate limit, timeout, connection) gives `not_enough_evidence` and logs only the
+error class.
+
+**Guard.** The sixth question from one client in a minute gets 429, and a process stops after the
+daily limit. This is request throttling, not a spend cap: on a serverless host each instance
+counts on its own. The real cap is a spend limit in the Claude Console with auto-reload off.
+Token usage per call and a summary per question are logged on `flightmind.agent`.
+
+**Run it locally** (PowerShell, from `services/intel`):
+
+```powershell
+$env:ANTHROPIC_API_KEY = "<your key>"      # typed in your shell only
+.\.venv\Scripts\python.exe -m uvicorn mock_api.app:app --port 8000
+```
+
+The three demo questions (in a second shell):
+
+```powershell
+$q = '{"question":"Any emergency squawk 7700?"}'
+Invoke-RestMethod -Method Post -Uri http://localhost:8000/api/ask -ContentType 'application/json' -Body $q
+# then:
+#   Which aircraft went around at WIII, and at what altitude did the go-around start?
+#   How long did LNI456 hold, and at what altitude?
+```
+
+Each answer should come back with `status` `ok` and citations that open through
+`GET /api/raw/{raw_ref}` or `GET /api/events/{id}`, in under 30 seconds. The proof runs are
+tasks 22 to 24 of `.kiro/specs/agent-mcp/tasks.md`.
+
+Tests use a fake client and never call Claude: `python -m pytest -q`. The root `Dockerfile` copies
+`services/intel/agent/` next to `mock_api/`; `tests/test_dockerfile.py` fails if an imported
+package is not copied.
+
+
+## Public entry point (SCRUM-38)
+
+`serve.py` serves the built web UI and the API on one origin: paths that start with `/api/` go to
+the API app, every other path is the static web build. It does not change the API app, so the real
+API replaces the mock with no code change. `/docs`, `/redoc` and `/openapi.json` are not exposed.
+On Vercel the CDN serves the web build, so `infra/vercel_entry.py` builds the app with `web_dist=""`
+(API only); the Docker image uses `FLIGHTMIND_WEB_DIST` instead.
+
+| Variable | Meaning |
+| --- | --- |
+| `FLIGHTMIND_API_APP` | `module:attribute` of the API app. Default `mock_api.app:app`. A value that cannot be imported stops the server at start, with the value in the message. |
+| `FLIGHTMIND_WEB_DIST` | Folder with the built web UI (must hold `index.html`). Unset or empty means API only, and every non-API path answers 404. |
+
+Run it locally from `services/intel`:
+
+```powershell
+$env:FLIGHTMIND_WEB_DIST = "<path to web/dist>"   # optional
+.\.venv\Scripts\python.exe -m uvicorn serve:app --port 8000
+```
+
+Runtime dependencies for the image are in `requirements-serve.txt` (`fastapi`, `uvicorn`).
+Tests: `tests/test_serve.py`. Deploy steps: see "Deploy (SCRUM-38)" in `infra/README.md`.
+
+### Third-party services (for the README disclosure list)
+
+- Vercel (Hobby plan): hosts the public demo. The web build is served from its CDN and `serve.py` runs as one Vercel Function through `infra/vercel_entry.py`. The root `README.md` is owned by Role 1, so the line there is requested by issue.

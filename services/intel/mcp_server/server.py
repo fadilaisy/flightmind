@@ -1,10 +1,14 @@
-"""FlightMind MCP server (SCRUM-34): one tool, get_track.
+"""FlightMind MCP server (SCRUM-34, extended in SCRUM-36): four tools over the HTTP API.
+
+Tools: query_tracks, search_events, get_track and get_raw. Descriptions and schemas come from
+agent/tools.py, so the agent and this server cannot drift apart.
 
 Built on the low-level mcp Server (mcp>=1.2,<2), not FastMCP. FastMCP cannot take a
 parameter named `from` at call time (`from` is a Python keyword); the low-level Server
-passes the arguments dict through, so the tool keeps the contract's names `from` and `to`.
-A TrackError raised in the handler comes back to the client as isError with its message.
-stdout carries the protocol: log to stderr only.
+passes the arguments dict through, so the tools keep the contract's names `from` and `to`.
+A failed tool raises, and the client gets isError with the message.
+get_track without max_points returns the API body unchanged (the thinning default of 60 is
+for the agent only). stdout carries the protocol: log to stderr only.
 """
 import logging
 import sys
@@ -15,7 +19,8 @@ import mcp.types as types
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
 
-from mcp_server.client import fetch_track
+from agent.api_client import ApiClient
+from agent.tools import TOOL_SPECS, mcp_schema, run_tool
 
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
@@ -24,38 +29,23 @@ server: Server = Server("flightmind")
 # None in production. Tests set it to an in-process transport.
 _transport: httpx.AsyncBaseTransport | None = None
 
-DESCRIPTION = (
-    "Get the 4D track (time, latitude, longitude, altitude in feet) of one aircraft from the "
-    "FlightMind API. icao24 is the 6-character hex Mode S address, for example 8A0F21. "
-    "from and to are optional ISO 8601 date-times, for example 2026-11-12T08:00:00Z. "
-    "Every point has a raw_ref (<recording_file_id>:<record_index>); cite it for any claim "
-    "made from that point."
-)
-
-INPUT_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "icao24": {"type": "string", "description": "6-character hex aircraft address, e.g. 8A0F21"},
-        "from": {"type": "string", "description": "Optional ISO 8601 start time"},
-        "to": {"type": "string", "description": "Optional ISO 8601 end time"},
-    },
-    "required": ["icao24"],
-}
-
 
 @server.list_tools()
 async def list_tools() -> list[types.Tool]:
-    return [types.Tool(name="get_track", description=DESCRIPTION, inputSchema=INPUT_SCHEMA)]
+    return [
+        types.Tool(name=spec.name, description=spec.description, inputSchema=mcp_schema(spec))
+        for spec in TOOL_SPECS
+    ]
 
 
 @server.call_tool()
 async def call_tool(name: str, arguments: dict[str, Any] | None) -> dict[str, Any]:
-    if name != "get_track":
-        raise ValueError(f"Unknown tool '{name}'. This server only has get_track.")
-    args = arguments or {}
-    return await fetch_track(
-        args.get("icao24", ""), args.get("from"), args.get("to"), transport=_transport
-    )
+    api = ApiClient(transport=_transport)
+    result = await run_tool(api, name, arguments or {}, for_agent=False)
+    if result.is_error:
+        data = result.data
+        raise ValueError(data.get("error", "Tool failed.") if isinstance(data, dict) else "Tool failed.")
+    return result.data
 
 
 async def run_stdio() -> None:

@@ -23,6 +23,9 @@ interface Props {
 const ALT_TOP = 11;
 const ALT_H = 112;
 const LANE_H = 49;
+// Each lane has its own strip for the row label; the plot sits below it.
+const LABEL_H = 16;
+const PLOT_H = LANE_H - LABEL_H;
 const SPEED_TOP = ALT_TOP + ALT_H;
 const RATE_TOP = SPEED_TOP + LANE_H;
 const AXIS_W = 56;
@@ -163,7 +166,7 @@ export function Charts({ points, event, scrubTs, onGoTo }: Props) {
 
     const speed = new uPlot(
       {
-        ...common(LANE_H, false),
+        ...common(PLOT_H, false),
         scales: { x: { time: false, range: () => [live.current.v0, live.current.v1] }, y: { range: () => [0, speedMax] } },
         axes: [{ show: false }, { show: false }],
         series: [{}, { stroke: LINE, width: 1.5, spanGaps: false, points: { show: false } }],
@@ -175,7 +178,7 @@ export function Charts({ points, event, scrubTs, onGoTo }: Props) {
 
     const rate = new uPlot(
       {
-        ...common(LANE_H, false),
+        ...common(PLOT_H, false),
         scales: { x: { time: false, range: () => [live.current.v0, live.current.v1] }, y: { range: () => [-rateAbs, rateAbs] } },
         axes: [{ show: false }, { show: false }],
         series: [{}, { stroke: LINE, width: 1.5, spanGaps: false, points: { show: false } }],
@@ -244,23 +247,23 @@ export function Charts({ points, event, scrubTs, onGoTo }: Props) {
       <div className="chartclip" ref={host}>
         <div className="chartrows">
           <div className="chartrow" style={{ top: ALT_TOP, height: ALT_H }} ref={altEl} />
-          <div className="chartrow" style={{ top: SPEED_TOP, height: LANE_H }} ref={speedEl} />
-          <div className="chartrow" style={{ top: RATE_TOP, height: LANE_H }} ref={rateEl} />
+          <div className="chartrow" style={{ top: SPEED_TOP + LABEL_H, height: PLOT_H }} ref={speedEl} />
+          <div className="chartrow" style={{ top: RATE_TOP + LABEL_H, height: PLOT_H }} ref={rateEl} />
           <span className="charttitle">
             {STR.chartAltitudeLabel} ({altitudeDatum()}), ft
           </span>
           <span className="chartflag" style={{ left: flagLeft, color: color === AMBER_COLOR ? AMBER_COLOR : color }}>
             {STR.flaggedWindowCap} {start}–{end}Z
           </span>
-          <span className="laneLabel" style={{ top: SPEED_TOP + 2 }}>{STR.chartSpeedLabel}</span>
-          <span className="laneLabel" style={{ top: RATE_TOP + 2 }}>{STR.chartRateLabel}</span>
+          <span className="laneLabel" style={{ top: SPEED_TOP + 1 }}>{STR.chartSpeedLabel}</span>
+          <span className="laneLabel" style={{ top: RATE_TOP + 1 }}>{STR.chartRateLabel}</span>
           {cursorShown && (
             <>
               <div className="chartcursor" style={{ left: cursorX }} />
-              <span className="chartval" style={{ left: cursorX, top: SPEED_TOP + 2 }}>
+              <span className="chartval" style={{ left: cursorX, top: SPEED_TOP + LABEL_H }}>
                 {speedNow === null || speedNow === undefined ? "\u2014" : `${thousands(speedNow)} kt`}
               </span>
-              <span className="chartval" style={{ left: cursorX, top: RATE_TOP + 2 }}>
+              <span className="chartval" style={{ left: cursorX, top: RATE_TOP + LABEL_H }}>
                 {rateNow === null || rateNow === undefined ? "\u2014" : `${signedInt(rateNow)} ft/min`}
               </span>
             </>

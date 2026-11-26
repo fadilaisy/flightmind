@@ -128,7 +128,7 @@ This makes the registration independent of the current folder except for finding
 ```
 
 - The documented fields for Kiro workspace MCP config are `command`, `args`, `env`, `disabled` and `autoApprove` ([Kiro MCP configuration](https://kiro.dev/docs/mcp/configuration/); I could not confirm a `cwd` field). So the design does not use `cwd`. It uses a path relative to the workspace root and `run.py` fixes `sys.path` itself.
-- Two assumptions that must be checked on a real Kiro IDE before the task is closed: (a) workspace servers start with the workspace root as the working directory; (b) `python` on the teammate's PATH has `mcp` and `httpx` installed. If (a) is false, the fallback is `"args": ["${workspaceFolder}/services/intel/mcp_server/run.py"]` if Kiro expands that variable, otherwise a documented one-time user-level config. On macOS and Linux `python` may be `python3`; the README says to create a `python` alias or edit the file locally, and does not commit a machine-specific change.
+- Two assumptions that must be checked on a real Kiro IDE before the task is closed: (a) workspace servers start with the workspace root as the working directory; (b) `python` on the teammate's PATH has `mcp` and `httpx` installed. If (a) is false, the fallback is `"args": ["${workspaceFolder}/services/intel/mcp_server/run.py"]` if Kiro expands that variable, otherwise a documented one-time user-level config. On macOS and Linux `python` may be `python3`; the README says to create a `python` alias or edit the file locally, and does not commit a machine-specific change. Checked on 2026-11-25 (task 7): both (a) and (b) hold on the Kiro IDE on Windows, once the folder is trusted; in Restricted Mode Kiro does not load the workspace MCP config at all. macOS and Linux were not checked, so `python` versus `python3` is still a risk there.
 - `autoApprove: ["get_track"]` is safe because the tool is read-only. Remove it if you want a prompt per call.
 - The file holds no secret and no absolute path.
 
@@ -176,5 +176,5 @@ A manual end-to-end check, run once and noted in `KIRO.md`'s log: start the mock
 ## Open items
 
 1. The `from` parameter name and SDK alias support is settled by the first spike task (see `server.py`).
-2. The two Kiro assumptions in "Registration" are verified in the last task. Whether Kiro Crew reads `.kiro/settings/mcp.json` is checked there and the answer goes in the README.
+2. The two Kiro assumptions in "Registration" are verified in the last task. Whether Kiro Crew reads `.kiro/settings/mcp.json` is checked there and the answer goes in the README. Checked on 2026-11-26 (task 9): Kiro Crew 0.13.1 does not, so Crew users add the server by hand.
 3. Root `README.md` disclosure line needs a Role 1 issue.

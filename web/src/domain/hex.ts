@@ -28,3 +28,21 @@ export function toHexRows(hex: string): HexResult {
   }
   return { ok: true, rows };
 }
+
+/** Byte range of one decoded item inside the record bytes. `end` is exclusive. */
+export interface ItemRange {
+  path: string;
+  start: number;
+  end: number;
+}
+
+/** The item whose range holds this byte, or undefined (also when there are no ranges). */
+export function rangeAt(ranges: ItemRange[], byteIndex: number): ItemRange | undefined {
+  return ranges.find((r) => byteIndex >= r.start && byteIndex < r.end);
+}
+
+/** Number of bytes in a hex string, or 0 when it is not valid hex. */
+export function byteCount(hex: string): number {
+  const clean = hex.replace(/\s+/g, "");
+  return clean.length % 2 === 0 && /^[0-9a-fA-F]*$/.test(clean) ? clean.length / 2 : 0;
+}

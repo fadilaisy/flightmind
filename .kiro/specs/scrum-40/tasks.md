@@ -10,19 +10,20 @@
   - Check: `ask(question)` returns `AskResponse`; mock returns `not_enough_evidence` for an unknown question.
   - Reqs: R5
 
-- [ ] 3. Event feed
+- [x] 3. Event feed
   - Files: `web/src/components/EventFeed.tsx`
   - Check: lists events with the three states; clicking a state changes it and it survives a reload; build passes.
   - Reqs: R1, R2
 
-- [ ] 4. Citation chip and raw record viewer
+- [x] 4. Citation chip and raw record viewer
   - Files: `web/src/components/CitationChip.tsx`, `RawRecordViewer.tsx`
   - Check: viewer shows raw_ref, sac, sic, decoded table, hex rows with ASCII; 404 shows "Record not found: <raw_ref>"; build passes.
   - Reqs: R6, R7, R8, R9
 
-- [ ] 5. Investigation panel and app wiring
+- [x] 5. Investigation panel and app wiring
   - Files: `web/src/components/InvestigationPanel.tsx`, `web/src/App.tsx`, `web/src/main.tsx`
   - Check: selecting an event shows its window and chips; ask shows answer and chips or "Not enough evidence"; against the SCRUM-33 mock API, a chip opens the record.
+  - Note: InvestigationPanel was replaced by EventPanel (web-ui/17); the ask box is covered by web/tests/ask.test.tsx.
   - Reqs: R3, R4, R5, R6, R10
 
 - [x] 6. Wording check

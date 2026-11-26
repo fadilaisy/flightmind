@@ -3,7 +3,8 @@ import type { Api } from "../api/client";
 import type { EventDetail, FlightEvent } from "../api/types";
 import { Charts } from "../components/Charts";
 import { EventFeed } from "../components/EventFeed";
-import { InvestigationPanel } from "../components/InvestigationPanel";
+import { EventPanel } from "../components/EventPanel";
+import { PointCard } from "../components/PointCard";
 import { RawRecordViewer } from "../components/RawRecordViewer";
 import { Scrubber } from "../components/Scrubber";
 import { StateBox } from "../components/StateBox";
@@ -61,10 +62,12 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
 
   const scrubTs = useStore((s) => s.scrubTs);
   const [cited, setCited] = useState<string | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
 
   function select(id: string) {
     const e = events.find((x) => x.id === id);
     store.selectEvent(id, e ? e.icao24 : null);
+    setPanelOpen(true);
   }
 
   /** A citation chip opens the cited-record dialog over the view; the map opens the Records tab. */
@@ -155,22 +158,36 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
         )}
       </div>
       <aside className="side r" aria-label="Investigation">
-        <div className="block slot" aria-label="Compression card area">
-          <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>{STR.compressionEmpty}</p>
-        </div>
-        {selected ? (
-          <InvestigationPanel
-            api={api}
-            event={selected}
-            state={states[selected.id] ?? "to_review"}
-            onSetState={store.setEventState}
-            onOpenRecord={openCited}
-            onOpenEvent={select}
-          />
+        <section className="rcard compression" aria-label="Compression card area">
+          <div className="rhead">
+            <span>{STR.reduction}</span>
+          </div>
+          <p className="empty">{STR.compressionEmptyFull}</p>
+        </section>
+        {selected && track.status === "ready" && track.track.points.length > 0 ? (
+          <PointCard points={track.track.points} scrubTs={scrubTs} onOpenRecord={openCited} />
         ) : (
-          <p className="muted block">{STR.selectEvent}</p>
+          <section className="rcard point" aria-label={STR.selectedPoint}>
+            <div className="rhead">
+              <span>{STR.selectedPoint}</span>
+              <span className="mono">I021</span>
+            </div>
+            <p className="empty">{selected ? STR.loadingTrack : STR.selectEvent}</p>
+          </section>
         )}
       </aside>
+      {selected && panelOpen && (
+        <EventPanel
+          api={api}
+          event={selected}
+          state={states[selected.id] ?? "to_review"}
+          points={track.status === "ready" ? track.track.points : null}
+          onSetState={store.setEventState}
+          onOpenRecord={openCited}
+          onOpenEvent={select}
+          onClose={() => setPanelOpen(false)}
+        />
+      )}
       {cited && (
         <RawRecordViewer
           api={api}

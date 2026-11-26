@@ -161,4 +161,33 @@ def _build():
 
 TRACKS, EVENTS, RAW = _build()
 EVENTS_BY_ID = {e["id"]: e for e in EVENTS}
+
+# Invented, like everything in this module. Sits under the 10 m bound of NACp 10.
+MOCK_MAX_POSITION_ERROR_M = 8.4
+
+
+def _build_compression():
+    kept = set()
+    for t in TRACKS.values():
+        pts = t["points"]
+        kept.update(p["raw_ref"] for p in pts if p["kept_for_event"])  # "event" rule
+        kept.update((pts[0]["raw_ref"], pts[-1]["raw_ref"]))  # "endpoint" rule
+    raw_bytes = sum(len(r["hex"]) // 2 for r in RAW.values())
+    stored_bytes = sum(len(RAW[ref]["hex"]) // 2 for ref in kept)
+    return {
+        RECORDING_ID: {
+            "recording_id": RECORDING_ID,
+            "raw_bytes": raw_bytes,
+            "stored_bytes": stored_bytes,
+            "ratio": round(stored_bytes / raw_bytes, 4),
+            "max_position_error_m": MOCK_MAX_POSITION_ERROR_M,
+            "points_in": len(RAW),
+            "points_kept": len(kept),
+            "events_total": len(EVENTS),
+            "events_kept": sum(1 for e in EVENTS if set(e["raw_refs"]) <= kept),
+        }
+    }
+
+
+COMPRESSION = _build_compression()
 SIM_TIME = iso(max(datetime.strptime(e["end_ts"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc) for e in EVENTS))

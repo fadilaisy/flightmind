@@ -15,6 +15,7 @@ the same pull request.
 - **C4 `event_embeddings`:** one vector per event story.
 - **C5 HTTP API:** as in `openapi.yaml`. Citations are `{kind, id, label}`; kind is
   `cat021_record` (id = raw_ref) or `event` (id = event uuid).
+- **C5 compression report:** `GET /api/compression/{recording_id}` returns the `CompressionReport` with raw and stored size; `events_kept` must equal `events_total`.
 - **C6 clock:** `clock.now()` everywhere; replay is the only required mode.
 - `raw_ref` format: `<recording_file_id>:<record_index>`.
 - After a contract change, regenerate `contracts/types.ts`; never edit it by hand.

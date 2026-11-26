@@ -241,6 +241,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/compression/{recording_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Compression report for one recording, with raw and stored size */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Recording file id, the part of a raw_ref before the colon */
+                    recording_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CompressionReport"];
+                    };
+                };
+                /** @description Unknown recording_id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ask": {
         parameters: {
             query?: never;
@@ -336,6 +382,26 @@ export interface components {
                 [key: string]: unknown;
             };
             hex: string;
+        };
+        CompressionReport: {
+            /** @description Recording file id */
+            recording_id: string;
+            /** @description Size of the recording file in bytes */
+            raw_bytes: number;
+            /** @description Bytes the kept telemetry rows take in storage */
+            stored_bytes: number;
+            /** @description stored_bytes divided by raw_bytes, so smaller is better */
+            ratio: number;
+            /** @description Largest horizontal distance in metres between a dropped point and the position interpolated from its kept neighbours */
+            max_position_error_m: number;
+            /** @description Decoded points before compression */
+            points_in: number;
+            /** @description Points stored */
+            points_kept: number;
+            /** @description Detected events */
+            events_total: number;
+            /** @description Events whose records are all stored; always equals events_total */
+            events_kept: number;
         };
         AskRequest: {
             question: string;

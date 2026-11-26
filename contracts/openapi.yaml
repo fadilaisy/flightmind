@@ -74,6 +74,19 @@ paths:
               schema: { $ref: '#/components/schemas/RawRecord' }
         '404':
           description: Unknown raw_ref
+  /api/compression/{recording_id}:
+    get:
+      summary: Compression report for one recording, with raw and stored size
+      parameters:
+        - { in: path, name: recording_id, required: true, schema: { type: string }, description: 'Recording file id, the part of a raw_ref before the colon' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CompressionReport' }
+        '404':
+          description: Unknown recording_id
   /api/ask:
     post:
       summary: Ask the analyst agent; every claim is cited
@@ -146,6 +159,19 @@ components:
         sic: { type: integer }
         decoded: { type: object, additionalProperties: true }
         hex: { type: string }
+    CompressionReport:
+      type: object
+      required: [recording_id, raw_bytes, stored_bytes, ratio, max_position_error_m, points_in, points_kept, events_total, events_kept]
+      properties:
+        recording_id: { type: string, description: 'Recording file id' }
+        raw_bytes: { type: integer, description: 'Size of the recording file in bytes' }
+        stored_bytes: { type: integer, description: 'Bytes the kept telemetry rows take in storage' }
+        ratio: { type: number, description: 'stored_bytes divided by raw_bytes, so smaller is better' }
+        max_position_error_m: { type: number, description: 'Largest horizontal distance in metres between a dropped point and the position interpolated from its kept neighbours' }
+        points_in: { type: integer, description: 'Decoded points before compression' }
+        points_kept: { type: integer, description: 'Points stored' }
+        events_total: { type: integer, description: 'Detected events' }
+        events_kept: { type: integer, description: 'Events whose records are all stored; always equals events_total' }
     AskRequest:
       type: object
       required: [question]

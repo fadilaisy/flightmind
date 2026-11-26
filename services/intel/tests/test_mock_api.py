@@ -83,6 +83,34 @@ def test_raw_known_and_unknown():
     assert client.get("/api/raw/rec01:999999").status_code == 404
 
 
+def test_compression_report_matches_contract_and_events():
+    report = get_ok("/api/compression/rec01")
+    check(report, "/api/compression/{recording_id}")
+    events = get_ok("/api/events")
+    assert report["recording_id"] == "rec01"
+    assert report["events_kept"] == report["events_total"] == len(events)
+
+
+def test_compression_counts_are_consistent():
+    report = get_ok("/api/compression/rec01")
+    events = get_ok("/api/events")
+    total_points = sum(len(get_ok(f"/api/tracks/{icao}")["points"]) for icao in {e["icao24"] for e in events})
+    assert report["points_in"] == total_points
+    assert 0 < report["points_kept"] < report["points_in"]
+    assert report["stored_bytes"] < report["raw_bytes"]
+    assert report["ratio"] == pytest.approx(report["stored_bytes"] / report["raw_bytes"], abs=1e-3)
+    assert report["points_kept"] >= len({ref for e in events for ref in e["raw_refs"]})
+
+
+def test_compression_for_recording_listed_in_meta():
+    for rec in get_ok("/api/meta")["recordings"]:
+        assert get_ok(f"/api/compression/{rec}")["recording_id"] == rec
+
+
+def test_compression_unknown_recording_is_404():
+    assert client.get("/api/compression/nope").status_code == 404
+
+
 def test_every_citation_resolves():
     """Every event raw_ref and every track raw_ref must open via /api/raw (the UI relies on it)."""
     for e in get_ok("/api/events"):

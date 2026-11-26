@@ -110,7 +110,7 @@ this list.
 | --- | --- |
 | Project | one project, created by the first deploy and moved to Zahran's account by the claim |
 | Domain | the generated `*.vercel.app` domain |
-| Environment variables | none in phase 1. Phase 2 adds `FLIGHTMIND_API_APP`, `DATABASE_URL`, `COARENA_API_KEY` and `GEMINI_API_KEY` as Vercel variables only |
+| Environment variables | none in phase 1. Phase 2 adds `FLIGHTMIND_API_APP`, `DATABASE_URL`, `ANTHROPIC_API_KEY` and `GEMINI_API_KEY` as Vercel variables only |
 | Plan | Hobby (free). Function duration up to 300 s and Python bundle up to 500 MB |
 
 No secret belongs in the repo.

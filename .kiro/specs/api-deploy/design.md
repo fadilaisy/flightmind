@@ -194,7 +194,7 @@ On the first failure it prints `FAIL <url>: <reason>` and exits with 1. A bad ar
 | `FLIGHTMIND_WEB_DIST` | Dockerfile `ENV` | 1 | Folder with the built web UI. Unset or no `index.html` means API only. |
 | `VITE_API_BASE` | Dockerfile build argument, `/.` | 1 | Build-time only. See below. |
 | `DATABASE_URL` | Railway variable only | 2 | Postgres connection for the real API. Never in the repo. |
-| `COARENA_API_KEY` | Railway variable only | 2 | LLM gateway key (agent). Never in the repo. |
+| `ANTHROPIC_API_KEY` | Railway variable only | 2 | Claude API key (agent). Never in the repo. |
 | `GEMINI_API_KEY` | Railway variable only | 2 | Embeddings key. Never in the repo. |
 
 ## The same-origin workaround
@@ -231,7 +231,7 @@ All of this is blocked on SCRUM-37 (real API) and pipeline PR #11.
 1. **Database service.** A second Railway service from the image `timescale/timescaledb-ha:pg16` with a volume mounted at the Postgres data path. It has no public domain. The web service connects over the private network address. The `POSTGRES_*` variables are set in Railway, not in the repo.
 2. **Schema and data.** `contracts/schema.sql` is applied once to the empty database, then the recorded CAT021 data is loaded by the pipeline's loader (PR #11). The method (one-off `psql` from a laptop through a temporary TCP proxy, or a one-off job) is chosen when the loader exists. The temporary proxy is closed afterwards.
 3. **Real API on the web service.** Set `FLIGHTMIND_API_APP` to the real API's `module:attribute`. If the real API needs more runtime packages, they are added to `requirements-serve.txt`. If it is not under `services/intel/mock_api/`, the Dockerfile copy line for the API package is extended. These are the only edits, and they are in files this spec names.
-4. **Secrets.** `DATABASE_URL`, `COARENA_API_KEY` and `GEMINI_API_KEY` are Railway variables on the web service. Not in the repo, the image, logs or README. The real API must not log them.
+4. **Secrets.** `DATABASE_URL`, `ANTHROPIC_API_KEY` and `GEMINI_API_KEY` are Railway variables on the web service. Not in the repo, the image, logs or README. The real API must not log them.
 5. **CORS.** The real API restricts origins to the public origin. Because the UI and API share an origin, it may allow none at all. This is a change in the real API (SCRUM-37), checked here.
 6. **Raw file.** `/api/raw/{raw_ref}` reads bytes from the recording file on demand (`tech.md`). The file must be reachable by the web service: either on a volume mounted on the web service, or fetched into the image at build time from a private location. The choice depends on file size and the plan's volume limit (Open item 5).
 7. **Fallback.** If phase 2 does not work by 2026-12-02, leave the service on phase 1 and say in the README and Devpost text that the public demo uses sample data.

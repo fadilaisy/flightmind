@@ -137,7 +137,7 @@ Acceptance criteria (each is a task marked "blocked on SCRUM-37" in `tasks.md`):
 1. The real API runs as the same Vercel Function: the Vercel environment variable `FLIGHTMIND_API_APP` points at it (`infra/vercel_entry.py` passes no `api_app`, so `serve.py` reads the variable). The Postgres with TimescaleDB and pgvector is hosted outside Vercel and loaded with `contracts/schema.sql` and the recorded CAT021 data. Which free Postgres offers both extensions is not checked (Open item 5).
 2. The function connects to the database over TLS.
 3. The function selects the real API with no change in `serve.py`.
-4. `DATABASE_URL`, `COARENA_API_KEY` and `GEMINI_API_KEY` live only as Vercel environment variables, never in the repo, the logs or the README.
+4. `DATABASE_URL`, `ANTHROPIC_API_KEY` and `GEMINI_API_KEY` live only as Vercel environment variables, never in the repo, the logs or the README.
 5. CORS on the real API is restricted to the public origin. (The mock allows any origin; it is mock only.)
 6. The raw recording file is available to `/api/raw/{raw_ref}` in the deployed function: it either fits inside the 500 MB Python bundle, or it lives in external storage that the function reads on demand.
 7. The smoke check passes against the public URL with real data, and the three demo questions of SCRUM-36 answer with citations in under 30 seconds each on the public URL (function duration limit 300 s on Hobby).

@@ -210,3 +210,25 @@ def test_dependency_lists_name_anthropic_and_httpx():
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     deps = re.search(r"^dependencies\s*=\s*\[(.*?)\]", pyproject, re.S | re.M).group(1)
     assert "anthropic>=2.14,<3" in deps and "httpx" in deps and "fastapi" in deps
+
+
+def test_usage_lines_are_printed_when_nothing_configured_logging(monkeypatch, capsys):
+    """INFO usage lines must reach the output even when no one set up logging (uvicorn, Vercel)."""
+    import logging
+
+    from agent import endpoint
+
+    flight = logging.getLogger("flightmind")
+    root = logging.getLogger()
+    monkeypatch.setattr(flight, "handlers", [])
+    monkeypatch.setattr(flight, "level", logging.NOTSET)
+    monkeypatch.setattr(root, "handlers", [])
+    endpoint.ensure_log_output()
+    try:
+        logging.getLogger("flightmind.agent").info("usage model=test input_tokens=1")
+        assert "usage model=test input_tokens=1" in capsys.readouterr().err
+        endpoint.ensure_log_output()
+        assert len(flight.handlers) == 1  # calling it again adds nothing
+    finally:
+        for handler in list(flight.handlers):
+            flight.removeHandler(handler)

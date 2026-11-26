@@ -20,6 +20,23 @@ log = logging.getLogger("flightmind.agent")
 _warned_missing_sdk = False
 
 
+def ensure_log_output() -> None:
+    """Make the usage lines visible.
+
+    They are INFO, and Python prints only warnings and errors unless something configures
+    logging. uvicorn and Vercel configure their own loggers, not ours, so without this the
+    token counts of every call would be lost (found on the first live run, 2026-11-26).
+    If the application already set up logging, leave it alone.
+    """
+    logger = logging.getLogger("flightmind")
+    if logger.level == logging.NOTSET:
+        logger.setLevel(logging.INFO)
+    if not logger.handlers and not logging.getLogger().handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(levelname)s %(name)s %(message)s"))
+        logger.addHandler(handler)
+
+
 def agent_enabled() -> bool:
     """True when ANTHROPIC_API_KEY is non-empty, FLIGHTMIND_ASK is not 'canned' and the SDK imports."""
     global _warned_missing_sdk
@@ -56,6 +73,7 @@ async def answer_question(question: str, api_app: Any, *, client: Optional[Any] 
     import anthropic
     import httpx
 
+    ensure_log_output()
     api = ApiClient(app=api_app)
     if client is None:
         client = make_client()

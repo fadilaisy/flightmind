@@ -54,7 +54,7 @@ uvicorn serve:app  (one container, non-root)
       '-- any other path          --> static files from FLIGHTMIND_WEB_DIST
 ```
 
-Phase 2 changes two things and no code: `FLIGHTMIND_API_APP` points at the real API, and the real API reads a second Railway service running Postgres (superseded on 2026-11-26 by Vercel, see requirement 9).
+Phase 2 changes two things and no code: `FLIGHTMIND_API_APP` points at the real API, and the real API reads a second Railway service running Postgres (superseded on 2026-11-26 by Vercel, see [requirement 9](requirements.md#9-phase-2-real-api-and-recorded-data-not-built-now)).
 
 ```
 web service (serve.py + real API) --private network--> db service (timescaledb-ha:pg16 + volume)
@@ -209,7 +209,7 @@ Consequences:
 - The page cannot tell it is on the mock, so the "Sample data" label does not show. That is Open item 1, a Role 1 decision.
 - When Role 1 adds a same-origin base, change the build argument and delete the comment in the Dockerfile.
 
-## Railway setup (what lives outside the repo) — superseded on 2026-11-26 by Vercel, see requirement 9
+## Railway setup (what lives outside the repo) — superseded on 2026-11-26 by Vercel, see [requirement 9](requirements.md#9-phase-2-real-api-and-recorded-data-not-built-now)
 
 Written in `infra/README.md`, because these settings are not in a config file (no `railway.json`):
 
@@ -224,7 +224,7 @@ Deploy commands, in the order the README lists them: `railway login`; `railway i
 
 A clean checkout matters because `railway up` uploads the working directory. Uncommitted files would ship. `.dockerignore` limits what is sent, and the README says to deploy from a fresh `git clone` of `main` or a worktree with no local changes.
 
-## Phase 2 design (not built now) — superseded on 2026-11-26 by Vercel, see requirement 9
+## Phase 2 design (not built now) — superseded on 2026-11-26 by Vercel, see [requirement 9](requirements.md#9-phase-2-real-api-and-recorded-data-not-built-now)
 
 All of this is blocked on SCRUM-37 (real API) and pipeline PR #11.
 

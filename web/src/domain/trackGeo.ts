@@ -63,3 +63,9 @@ export function trackFitBounds(points: TrackPoint[], runway: FeatureCollection):
     [Math.max(...lons), Math.max(...lats)],
   ];
 }
+
+/** The part of the track inside the flagged window, as a line. Empty when no point is inside. */
+export function windowLine(points: TrackPoint[], event: FlightEvent): Feature<LineString> {
+  const coordinates = points.filter((p) => pointStyle(p, event) !== "kept").map((p) => [p.lon, p.lat]);
+  return { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates } };
+}

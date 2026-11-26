@@ -1,25 +1,23 @@
 import type { FlightEvent } from "../api/types";
-import { isSquawk } from "../domain/eventLabels";
-import { styleColor, type PointStyle } from "../domain/pointStyle";
+import { windowColor, KEPT_COLOR, GROUND_TRACK_COLOR } from "../domain/mapColors";
 import { STR } from "../strings";
 
-const ITEMS: { style: PointStyle; label: string }[] = [
-  { style: "kept", label: STR.legendKept },
-  { style: "eventWindow", label: STR.legendEventWindow },
-  { style: "flagged", label: STR.legendFlagged },
-];
-
-/** Every colour carries a label. A squawk event draws flagged points in red. */
+/** Three entries with the Figma line swatches. The event window turns red for a squawk. */
 export function Legend({ eventType }: { eventType: FlightEvent["type"] }) {
   return (
     <div className="legend" aria-label={STR.legendLabel}>
-      {ITEMS.map((i) => (
-        <span key={i.style}>
-          <i style={{ background: styleColor(i.style, eventType) }} />
-          {i.label}
-        </span>
-      ))}
-      {isSquawk(eventType) && <span className="muted">{STR.legendSquawk}</span>}
+      <span>
+        <i style={{ background: KEPT_COLOR }} />
+        {STR.threeLegendKept}
+      </span>
+      <span>
+        <i style={{ background: windowColor(eventType) }} />
+        {STR.threeLegendWindow}
+      </span>
+      <span>
+        <i style={{ background: GROUND_TRACK_COLOR }} />
+        {STR.threeLegendGround}
+      </span>
     </div>
   );
 }

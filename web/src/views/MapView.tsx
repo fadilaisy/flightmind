@@ -1,14 +1,17 @@
-import { Map as MapLibre, Popup, setWorkerUrl, type GeoJSONSource } from "maplibre-gl";
+import { Map as MapLibre, Popup, ScaleControl, setWorkerUrl, type GeoJSONSource } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 // Load the worker as its own file so it resolves in dev and in the build.
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import type { Feature, FeatureCollection, Point } from "geojson";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FlightEvent, Track } from "../api/types";
+import { CHIP_MARK } from "../components/CitationChip";
 import { Legend } from "../components/Legend";
 import { StateBox } from "../components/StateBox";
-import { formatPoint } from "../domain/format";
-import { trackFitBounds, trackLine, trackPoints, windowBounds } from "../domain/trackGeo";
+import { derive } from "../domain/derive";
+import { KEPT_COLOR, SCRUB_RING, windowColor } from "../domain/mapColors";
+import { clockZ, pointLine } from "../domain/pointText";
+import { trackFitBounds, trackLine, trackPoints, windowBounds, windowLine } from "../domain/trackGeo";
 import runwayText from "../geo/wiii-runway.geojson?raw";
 import { STR } from "../strings";
 
@@ -27,14 +30,28 @@ let fittedOnce = false;
 setWorkerUrl(new URL(workerUrl, window.location.href).href);
 const EMPTY: FeatureCollection<Point> = { type: "FeatureCollection", features: [] };
 
+function NorthArrow() {
+  return (
+    <div className="north" aria-label={STR.northArrow}>
+      <svg width="16" height="20" viewBox="0 0 16 20" aria-hidden="true">
+        <path d="M8 0 L15 19 L8 14.5 L1 19 Z" fill="#03045e" />
+      </svg>
+      N
+    </div>
+  );
+}
+
 export function MapView({ points, event, scrubTs, onOpenRecord }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibre | null>(null);
   const pointsRef = useRef(points);
+  const ratesRef = useRef<(number | null)[]>([]);
   const openRef = useRef(onOpenRecord);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
+  const rates = useMemo(() => derive(points).verticalRateFpm, [points]);
   pointsRef.current = points;
+  ratesRef.current = rates;
   openRef.current = onOpenRecord;
 
   // Create the map once.
@@ -46,7 +63,8 @@ export function MapView({ points, event, scrubTs, onOpenRecord }: Props) {
         container: box.current,
         center: [106.65, -6.13],
         zoom: 11,
-        attributionControl: { compact: false },
+        // The caption in the card carries the basemap credit, as in Figma.
+        attributionControl: false,
         style: {
           version: 8,
           sources: {
@@ -58,7 +76,15 @@ export function MapView({ points, event, scrubTs, onOpenRecord }: Props) {
               attribution: "© OpenStreetMap contributors",
             },
           },
-          layers: [{ id: "osm", type: "raster", source: "osm" }],
+          // Muted grey basemap, so the track is what stands out.
+          layers: [
+            {
+              id: "osm",
+              type: "raster",
+              source: "osm",
+              paint: { "raster-saturation": -1, "raster-contrast": -0.35, "raster-brightness-min": 0.6, "raster-brightness-max": 1 },
+            },
+          ],
         },
       });
     } catch (e) {
@@ -66,23 +92,45 @@ export function MapView({ points, event, scrubTs, onOpenRecord }: Props) {
       return;
     }
     map.current = m;
-    const popup = new Popup({ closeButton: false, closeOnClick: false, offset: 10 });
+    m.addControl(new ScaleControl({ maxWidth: 120, unit: "metric" }), "bottom-right");
+    const popup = new Popup({ closeButton: false, closeOnClick: false, anchor: "top-left", offset: 12, className: "figtip", maxWidth: "none" });
 
     m.on("load", () => {
       m.addSource("runway", { type: "geojson", data: runway });
-      m.addLayer({ id: "runway", type: "line", source: "runway", paint: { "line-color": "#7d8a9b", "line-width": 5 } });
+      m.addLayer({ id: "runway", type: "line", source: "runway", paint: { "line-color": "#8b94a3", "line-width": 5 } });
       m.addSource("line", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      m.addLayer({ id: "line", type: "line", source: "line", paint: { "line-color": "#0aa2c0", "line-width": 1.5, "line-opacity": 0.7 } });
+      m.addSource("window", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      m.addLayer({
+        id: "halo",
+        type: "line",
+        source: "window",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#f2b13c", "line-width": 16, "line-opacity": 0.28, "line-blur": 4 },
+      });
+      m.addLayer({
+        id: "line",
+        type: "line",
+        source: "line",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": KEPT_COLOR, "line-width": 2.5 },
+      });
+      m.addLayer({
+        id: "windowline",
+        type: "line",
+        source: "window",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#f2b13c", "line-width": 3.5 },
+      });
       m.addSource("points", { type: "geojson", data: EMPTY });
       m.addLayer({
         id: "points",
         type: "circle",
         source: "points",
         paint: {
-          "circle-color": ["get", "color"],
-          "circle-radius": ["match", ["get", "style"], "flagged", 5, "eventWindow", 4, 3],
-          "circle-stroke-color": "#ffffff",
-          "circle-stroke-width": 1,
+          "circle-color": "#ffffff",
+          "circle-radius": ["match", ["get", "style"], "flagged", 4.5, "eventWindow", 4, 3.5],
+          "circle-stroke-color": KEPT_COLOR,
+          "circle-stroke-width": 2,
         },
       });
       m.addSource("scrub", { type: "geojson", data: EMPTY });
@@ -90,7 +138,7 @@ export function MapView({ points, event, scrubTs, onOpenRecord }: Props) {
         id: "scrub",
         type: "circle",
         source: "scrub",
-        paint: { "circle-color": "#14213a", "circle-radius": 6, "circle-stroke-color": "#ffffff", "circle-stroke-width": 2 },
+        paint: { "circle-color": "#ffffff", "circle-radius": 5, "circle-stroke-color": SCRUB_RING, "circle-stroke-width": 4 },
       });
       setReady(true);
     });
@@ -99,17 +147,21 @@ export function MapView({ points, event, scrubTs, onOpenRecord }: Props) {
       const f = e.features?.[0];
       if (!f) return;
       m.getCanvas().style.cursor = "pointer";
-      const p = pointsRef.current[Number(f.properties?.index)];
+      const i = Number(f.properties?.index);
+      const p = pointsRef.current[i];
       if (!p) return;
-      const t = formatPoint(p);
       const el = document.createElement("div");
       el.className = "maptip";
-      for (const [cls, text] of [["mono", t.time], ["mono muted", t.position], ["mono", t.altitude], ["chip", t.rawRef]]) {
-        const line = document.createElement("div");
-        line.className = cls;
-        line.textContent = text;
-        el.appendChild(line);
-      }
+      const time = document.createElement("div");
+      time.className = "t";
+      time.textContent = clockZ(p.ts);
+      const line = document.createElement("div");
+      line.className = "p";
+      line.textContent = pointLine(p, ratesRef.current[i]);
+      const chip = document.createElement("div");
+      chip.className = "chip static";
+      chip.textContent = `${CHIP_MARK} rec ${p.raw_ref}`;
+      el.append(time, line, chip);
       popup.setLngLat((f.geometry as Point).coordinates as [number, number]).setDOMContent(el).addTo(m);
     });
     m.on("mouseleave", "points", () => {
@@ -135,6 +187,11 @@ export function MapView({ points, event, scrubTs, onOpenRecord }: Props) {
     if (!m || !ready) return;
     (m.getSource("points") as GeoJSONSource).setData(trackPoints(points, event));
     (m.getSource("line") as GeoJSONSource).setData(trackLine(points));
+    (m.getSource("window") as GeoJSONSource).setData(windowLine(points, event));
+    const wc = windowColor(event.type);
+    m.setPaintProperty("halo", "line-color", wc);
+    m.setPaintProperty("windowline", "line-color", wc);
+    m.setPaintProperty("points", "circle-stroke-color", ["match", ["get", "style"], "kept", KEPT_COLOR, wc]);
     const first = !fittedOnce;
     fittedOnce = true;
     // First load shows the whole track and the runway; selecting another event zooms to its window.
@@ -163,8 +220,10 @@ export function MapView({ points, event, scrubTs, onOpenRecord }: Props) {
   return (
     <div className="viewport" aria-label={STR.mapArea}>
       <div ref={box} className="mapbox" />
+      <span className="maplabel l">{STR.mapCaption}</span>
+      <span className="maplabel r">{STR.mapHintFigma}</span>
+      <NorthArrow />
       <Legend eventType={event.type} />
-      <span className="maphint">{STR.mapHint}</span>
     </div>
   );
 }

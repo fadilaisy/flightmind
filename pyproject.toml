@@ -10,3 +10,9 @@ entrypoint = "infra.vercel_entry:app"
 
 [tool.vercel.scripts]
 build = "python infra/vercel_build.py"
+
+# So `pytest` run from the repo root finds the services/intel tests (same as running it
+# from services/intel, which has its own pytest.ini).
+[tool.pytest.ini_options]
+testpaths = ["services/intel/tests"]
+pythonpath = ["services/intel"]

@@ -18,13 +18,18 @@ inclusion: always
 
 ## Third-party model APIs (Role 3, SCRUM-32)
 
-- **LLM:** Anthropic Claude API, model `claude-opus-5-5` (Claude Opus 5.5), called with the
+- **LLM:** Anthropic Claude API, model `claude-haiku-5-5` (Claude Haiku 5.5), called with the
   official `anthropic` Python SDK, not an OpenAI-compatible shim. Key via `ANTHROPIC_API_KEY`
   (never committed; on the deployed site it is a server-side env var, never in the web
-  bundle). The model id is read from `FLIGHTMIND_LLM_MODEL` (default `claude-opus-5-5`) so it
+  bundle). The model id is read from `FLIGHTMIND_LLM_MODEL` (default `claude-haiku-5-5`) so it
   can change without a code change. Set effort per route: `low` for event stories,
-  `medium` for cited agent answers. Changed on 2026-11-26 from `gemini-3-8-flash` through
-  the Coarena gateway; no LLM code existed yet.
+  `medium` for cited agent answers. Keep prompts under 100K tokens (Haiku 5.5 costs more
+  above that). Changed on 2026-11-26 from `gemini-3-8-flash` through the Coarena gateway;
+  no LLM code existed yet.
+- **Budget:** the API credit is a fixed $100 that will not be refilled. Log `usage` (input,
+  output and cache tokens) for every call so real cost per answer is measured, not guessed.
+  Before recording the video, run the same hard questions on `claude-opus-5-5` and switch
+  `FLIGHTMIND_LLM_MODEL` only if the answers are clearly better and the measured cost fits.
 - **Public demo guard:** `/api/ask` on the public URL must be rate-limited (SCRUM-36), and the
   Claude Console keeps a spend limit with auto-reload off, so visitors cannot drain the
   $100 API credit.

@@ -41,15 +41,25 @@ Implements `requirements.md` and `design.md` in this folder. All paths are relat
   - Add the third-party disclosure for `mcp` (official Python SDK) and `httpx`.
   - _Requirements: 5.4, 5.5_
 
-- [ ] 7. Verify in Kiro and record what is true
+- [x] 7. Verify in Kiro and record what is true
+  - **Result (2026-11-25):** In the Kiro IDE the folder first opened in Restricted Mode and `flightmind` was not loaded. After Trust and Developer: Reload Window, Kiro's log shows `mcp.connect.ok` for `flightmind` over stdio with the relative `args`, so (a) workspace servers start in the workspace root, and (b) `python` on PATH found `mcp` on this machine. A person did the Trust and Reload steps in the IDE. The three calls were then run through Kiro's chat CLI (`kiro-cli chat`, 3.1.0, same `.kiro/settings/mcp.json`), driven and recorded by Claude Code, not typed by a person: `8A0F21` returned 60 points, callsign GIA123, first `raw_ref` `rec01:0`; `ZZZZZZ` returned "No aircraft with icao24 'ZZZZZZ' in the loaded recording."; with the API stopped it returned "Cannot reach the FlightMind API at http://localhost:8000. ..." (`isError: true`). The server stayed up for all three. Clip and screenshot: `docs/kiro/scrum-34/`. The two checks left open (a person typing the calls into the IDE chat panel, and whether Kiro Crew reads `.kiro/settings/mcp.json`) moved to task 9.
   - Start the mock API (`uvicorn mock_api.app:app --port 8000`). In Kiro chat, ask for the track of `8A0F21` and confirm points with `raw_ref` come back. Ask for `ZZZZZZ` and confirm the unknown-aircraft message. Stop the API, ask again, and confirm the unreachable message. The server must stay alive in all three cases.
   - Confirm the two assumptions from design.md: workspace servers start in the workspace root, and `python` on PATH finds `mcp`. If the first is false, switch `args` to the documented fallback and update design.md and the README.
   - Check whether Kiro Crew reads `.kiro/settings/mcp.json`. Write the answer in the README section. If it does not, state how a Crew user registers the server.
   - A person must do this task at a Kiro window. If no one is available, leave it unchecked and say so in the final report; do not mark it done from the tests alone.
   - _Requirements: 3.1, 3.2, 5.1, 5.4_
 
-- [ ] 8. Hand-offs and log
+- [x] 8. Hand-offs and log
+  - **Result (2026-11-26):** Role 1 issue for the root README line is fadilaisy/flightmind#16. The SCRUM-34 lines are in `KIRO.md` (agent-mcp and agent-mcp/7). Commits use the `Kiro:` trailer; the task 7 work is in PR #15.
   - Open an issue for Role 1 asking for the `mcp` and `httpx` line in the root `README.md` third-party list, noting nothing else changes there.
   - Add the SCRUM-34 line to `KIRO.md` following the existing row format, with the date, Role 3 and the `(chat)` task suffix used for SCRUM-33.
   - Commit with the `Kiro:` trailer from `.gitmessage`. Stage files by name, not `git add .`.
   - _Requirements: 5.5_
+
+- [x] 9. Finish the two checks left from task 7
+  - Added on 2026-11-26 after the PR #15 review: task 7's calls were driven by Claude Code through `kiro-cli`, and Kiro Crew was not checked.
+  - **Result (2026-11-26):** Zahran typed the three asks into the Kiro IDE chat panel: `8A0F21` returned 60 points, callsign GIA123, `raw_ref` `rec01:0` to `rec01:2`; `ZZZZZZ` returned the unknown-aircraft message; with the API stopped it returned the unreachable message. Claude Code started and stopped the mock API and recorded the screen. Clip: `docs/kiro/scrum-34/2026-11-26_role3_mcp-get_track-ide.mp4` (115 s, played at 1.75x). Kiro Crew 0.13.1 does not read `.kiro/settings/mcp.json`: its MCP Servers page lists 13 servers and not `flightmind` (`docs/kiro/scrum-34/2026-11-26_role3_crew-mcp-servers.png`); the README now says so. The clip is in the shared Drive and has a row in `docs/kiro/clips.md`.
+  - With the mock API running, a person types the three asks from task 7 into the Kiro IDE chat panel (`8A0F21`, `ZZZZZZ`, then again with the API stopped) and records a short clip. Name it `YYYY-MM-DD_role3_mcp-get_track-ide.mp4`, upload it to the shared Drive folder and add a row to `docs/kiro/clips.md`.
+  - In Kiro Crew, check whether the `flightmind` server shows up from `.kiro/settings/mcp.json` without a manual entry. Write yes or no in the "MCP server (SCRUM-34)" section of `services/intel/README.md`. If no, keep the manual steps that are there now.
+  - Add a `KIRO.md` row for agent-mcp/9.
+  - _Requirements: 3.1, 3.2, 5.1, 5.4_

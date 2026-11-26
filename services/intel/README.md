@@ -31,6 +31,14 @@ Notes for the UI:
   Speed is set with `MOCK_STREAM_DELAY` seconds between items (default 0.05).
 - `/api/ask` answers by keyword (7700 / go-around / hold) and otherwise returns
   `not_enough_evidence`. The real agent is SCRUM-36.
+- `/api/compression/{recording_id}` returns a `CompressionReport`. Counts and byte sizes are
+  computed from the synthetic records (kept = event points plus each track's first and last
+  point), `/api/tracks` still returns every point, and `max_position_error_m` is an invented
+  constant. The mock measures both sizes in synthetic record bytes, while the real report
+  compares the recording file size with the Postgres row size, so the real ratio will
+  differ. Do not quote the mock ratio (for example in the video). A recording with no data
+  (`raw_bytes` 0) returns 404 with `Recording '<id>' has no data yet.`, the same status as an
+  unknown id, so the UI needs only one "no report" state.
 
 ## MCP server (SCRUM-34)
 
@@ -70,10 +78,30 @@ six calls against the mock API, all as expected. Known aircraft returns 60 point
 `raw_ref` each, `from` narrows it to 30, an unknown aircraft, a missing `icao24` and a stopped
 API each return a tool error, and the server answered correctly after the API came back.
 
-Not yet verified in Kiro (task 7 of the spec): that workspace servers start in the workspace
-root, and whether Kiro Crew reads `.kiro/settings/mcp.json` at all. Until it is checked, assume
-Kiro Crew does not, and add the server by hand in Customize, Connections, MCP Servers with an
-absolute path to `run.py`.
+Checked in Kiro on 2026-11-25 (task 7 of the spec, clip in `docs/kiro/scrum-34/`):
+
+- The Kiro IDE skips the workspace `.kiro/settings/mcp.json` while the folder is in Restricted
+  Mode. Click "Restricted Mode" in the status bar, choose Trust, then run Developer: Reload
+  Window. `flightmind` then shows as Connected (1 tool) under MCP Servers.
+- The relative path in `args` works, so Kiro starts workspace servers in the workspace root.
+- Through Kiro's chat CLI (`kiro-cli chat` from the repo root, which reads the same file):
+  `8A0F21` returned 60 points with `raw_ref`, `ZZZZZZ` returned the unknown-aircraft message,
+  and with the API stopped it returned the unreachable message. The server stayed up.
+
+The calls above were driven through `kiro-cli` by Claude Code, not typed into the IDE chat
+panel by a person. Task 9 of the spec redid them by hand.
+
+Checked again on 2026-11-26 (task 9, clip `docs/kiro/scrum-34/2026-11-26_role3_mcp-get_track-ide.mp4`):
+
+- Zahran typed the three asks into the Kiro IDE chat panel. `8A0F21` returned 60 points,
+  callsign GIA123, `raw_ref` `rec01:0` to `rec01:2`. `ZZZZZZ` returned the unknown-aircraft
+  message. With the API stopped it returned the unreachable message. Claude Code started and
+  stopped the mock API and recorded the screen.
+- Kiro Crew (0.13.1) does **not** read `.kiro/settings/mcp.json`. Customize, MCP Servers lists
+  13 servers (Crew's own and the ones in the user-level `~/.kiro/settings/mcp.json`) and
+  `flightmind` is not one of them (`docs/kiro/scrum-34/2026-11-26_role3_crew-mcp-servers.png`).
+  To use it in Crew, add it by hand in Customize, MCP Servers, Add Custom, with an absolute
+  path to `run.py`.
 
 Notes:
 
@@ -85,3 +113,31 @@ Notes:
 
 - `mcp` (official Model Context Protocol Python SDK): serves the MCP tool over stdio.
 - `httpx`: HTTP client that calls the FlightMind API.
+
+
+## Public entry point (SCRUM-38)
+
+`serve.py` serves the built web UI and the API on one origin: paths that start with `/api/` go to
+the API app, every other path is the static web build. It does not change the API app, so the real
+API replaces the mock with no code change. `/docs`, `/redoc` and `/openapi.json` are not exposed.
+On Vercel the CDN serves the web build, so `infra/vercel_entry.py` builds the app with `web_dist=""`
+(API only); the Docker image uses `FLIGHTMIND_WEB_DIST` instead.
+
+| Variable | Meaning |
+| --- | --- |
+| `FLIGHTMIND_API_APP` | `module:attribute` of the API app. Default `mock_api.app:app`. A value that cannot be imported stops the server at start, with the value in the message. |
+| `FLIGHTMIND_WEB_DIST` | Folder with the built web UI (must hold `index.html`). Unset or empty means API only, and every non-API path answers 404. |
+
+Run it locally from `services/intel`:
+
+```powershell
+$env:FLIGHTMIND_WEB_DIST = "<path to web/dist>"   # optional
+.\.venv\Scripts\python.exe -m uvicorn serve:app --port 8000
+```
+
+Runtime dependencies for the image are in `requirements-serve.txt` (`fastapi`, `uvicorn`).
+Tests: `tests/test_serve.py`. Deploy steps: see "Deploy (SCRUM-38)" in `infra/README.md`.
+
+### Third-party services (for the README disclosure list)
+
+- Vercel (Hobby plan): hosts the public demo. The web build is served from its CDN and `serve.py` runs as one Vercel Function through `infra/vercel_entry.py`. The root `README.md` is owned by Role 1, so the line there is requested by issue.

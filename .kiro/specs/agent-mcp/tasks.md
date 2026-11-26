@@ -158,7 +158,17 @@ Implements requirements 7 to 17 in `requirements.md` and Part 2 of `design.md`. 
   - Update the MCP section to list the four tools. Disclose `anthropic` (official Claude SDK) next to `mcp` and `httpx`.
   - _Requirements: 12.5, 14.4, 15.4_
 
-- [ ] 22. Proof run against the real Claude API, locally
+- [x] 22. Proof run against the real Claude API, locally
+  - **Result (2026-11-26):** Done by hand outside Kiro, against `mock_api.app:app` on localhost with the key set by Zahran in his own terminal, model `claude-haiku-5-5`, branch at e0ed6fb. All three `ok`, all under 30 seconds, and every cited id was opened in the mock API and supports its claim.
+
+    | Question | Time | Model calls | Tool calls | Citations | input / output / cache write / cache read tokens | Cost |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | (a) squawk 7700 | 7.2 s | 2 | search_events | event squawk_7700 SIA9 | 6 / 508 / 3751 / 3478 | $0.0008 |
+    | (b) go-around at WIII | 8.0 s | 3 | search_events, get_track x2 | events go_around GIA123 and CTV88, rec01:107, rec01:141 | 8 / 891 / 6686 / 7415 | $0.0014 |
+    | (c) LNI456 hold | 5.6 s | 3 | search_events, get_track | event holding LNI456, rec01:68, rec01:269 | 8 / 717 / 9243 / 7304 | $0.0016 |
+
+    Cost uses the list rates for prompts up to 100K tokens ($0.10 input, $0.50 output, $0.125 cache write, $0.01 cache read per million tokens): about $0.0012 a question, so the $100 credit is roughly 80,000 questions of this size. An earlier run on 5a44506 (before the review fixes) gave the same answers in 15.5 s, 7.4 s and 5.8 s; the 15.5 s was the first call after the server started.
+    What the run showed: (1) the request shape is accepted by the API (strict tools, `output_config` with `effort` and `format`, no `thinking`); (2) the usage lines were not printed at first because nothing configured logging, fixed in 56806e4; (3) the system prompt and tools (about 3,480 tokens) are written to the cache again for every question, because the only cache breakpoint is after the question. A breakpoint on the system prompt would let later questions read them instead; not done, the saving is about $0.0004 a question; (4) for (b) the model reports the altitude at the start of the flagged event window (833 ft, still descending), not the lowest point before the climb. The cited record shows 833 ft, so the claim is checkable; whether "start" should mean the lowest point is a wording question for the demo.
   - Needs `ANTHROPIC_API_KEY`, set by Zahran in his own shell. Do not write it to any file and do not ask for it in chat.
   - Start the API (`uvicorn serve:app --port 8000` or `mock_api.app:app`). Ask the three demo questions through `POST /api/ask`: (a) "Any emergency squawk 7700?" (b) "Which aircraft went around at WIII, and at what altitude did the go-around start?" (c) "How long did LNI456 hold, and at what altitude?"
   - Record the results in this task (not under `docs/`, which is outside the allowed folders), for each question: the wall-clock time, `status`, the citations, the model id, the four token counts from the `flightmind.agent` log, and the cost in dollars. Read the current Haiku price from the Claude API documentation and write it with the date.

@@ -74,7 +74,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: clicking a map point opens its record; header shows `raw_ref`, `sac`, `sic`; items show unit, LSB, datum.
   - Reqs: R6.1, R6.2, R6.3, R6.6
 
-- [ ] 15. Hex and ASCII panes with linked highlight
+- [x] 15. Hex and ASCII panes with linked highlight
   - Files: `src/components/HexPane.tsx`, `tests/hexpane.test.tsx`
   - Check: rows of 16 with offsets; selecting an item highlights its bytes in both panes; selecting bytes highlights the item.
   - Reqs: R6.4, R6.5

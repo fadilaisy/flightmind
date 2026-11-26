@@ -61,10 +61,11 @@
 .treerow { display: flex; align-items: center; gap: 6px; padding: 3px 8px; cursor: pointer; border-radius: 4px; white-space: nowrap; }
 .treerow:hover { background: #f0f4fa; }
 .treerow.sel { background: var(--bg-raised); color: var(--blue-800); }
+.tree .mono { font-size: 12px; }
 .treearrow { width: 10px; color: var(--muted); font-size: 10px; }
 
 /* Cited-record dialog */
-.dlgback { position: fixed; inset: 0; background: rgba(3, 4, 94, 0.94); display: flex; align-items: center; justify-content: center; z-index: 20; }
+.dlgback { position: fixed; inset: 0; background: rgba(3, 4, 94, 0.97); display: flex; align-items: center; justify-content: center; z-index: 20; }
 .dlg { width: min(960px, 92vw); max-height: 86vh; display: flex; flex-direction: column; background: #fff; border: 1px solid var(--blue-300); border-radius: 12px; box-shadow: 0 0 0 1px var(--blue-400), 0 8px 32px rgba(0, 0, 0, 0.35); overflow: hidden; }
 .dlghead { display: flex; align-items: flex-start; gap: 32px; padding: 18px 24px 14px; border-bottom: 1px solid var(--blue-200); }
 .dlghead .titlecol { flex: 1; min-width: 0; }
@@ -80,8 +81,8 @@
 .dlgsec b { font-weight: 500; color: var(--ink); }
 .dlgbytes { background: var(--bg-raised); border-radius: 8px; padding: 12px 14px; margin-top: 8px; }
 .dlgfoot { display: flex; align-items: center; gap: 10px; padding: 14px 24px; border-top: 1px solid var(--blue-200); }
-.dlgfoot .filter { background: var(--bg-raised); border-radius: 6px; padding: 6px 10px; font-size: 12px; max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dlgfoot .btn { padding: 8px 16px; font-size: 14px; border-radius: 8px; }
+.dlgfoot .filter { flex: 0 1 560px; min-width: 0; background: var(--bg-raised); border-radius: 6px; padding: 6px 10px; font-size: 12px; max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dlgfoot .btn { white-space: nowrap; padding: 8px 16px; font-size: 14px; border-radius: 8px; }
 .dlgfoot .btn.ghost { color: var(--ink); }
 .dlgfoot .btn.alt { border-color: var(--action-primary); color: var(--action-primary); }
 .dlgfoot .btn.primary { background: var(--action-primary); border-color: var(--action-primary); }

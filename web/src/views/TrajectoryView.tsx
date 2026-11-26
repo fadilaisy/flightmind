@@ -1,9 +1,10 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Api } from "../api/client";
 import type { EventDetail, FlightEvent } from "../api/types";
 import { Charts } from "../components/Charts";
 import { EventFeed } from "../components/EventFeed";
 import { InvestigationPanel } from "../components/InvestigationPanel";
+import { RawRecordViewer } from "../components/RawRecordViewer";
 import { Scrubber } from "../components/Scrubber";
 import { StateBox } from "../components/StateBox";
 import { EVENT_LABEL } from "../domain/eventLabels";
@@ -49,10 +50,17 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
   }, [api, eventId]);
 
   const scrubTs = useStore((s) => s.scrubTs);
+  const [cited, setCited] = useState<string | null>(null);
 
   function select(id: string) {
     const e = events.find((x) => x.id === id);
     store.selectEvent(id, e ? e.icao24 : null);
+  }
+
+  /** A citation chip opens the cited-record dialog over the view; the map opens the Records tab. */
+  function openCited(rawRef: string) {
+    store.setRawRef(rawRef);
+    setCited(rawRef);
   }
 
   function openRecord(rawRef: string) {
@@ -132,13 +140,26 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
             event={selected}
             state={states[selected.id] ?? "to_review"}
             onSetState={store.setEventState}
-            onOpenRecord={openRecord}
+            onOpenRecord={openCited}
             onOpenEvent={select}
           />
         ) : (
           <p className="muted block">{STR.selectEvent}</p>
         )}
       </aside>
+      {cited && (
+        <RawRecordViewer
+          api={api}
+          rawRef={cited}
+          event={selected}
+          onClose={() => setCited(null)}
+          onOpenInRecords={(r) => {
+            store.setRawRef(r);
+            setCited(null);
+            navigate({ tab: "records" });
+          }}
+        />
+      )}
     </div>
   );
 }

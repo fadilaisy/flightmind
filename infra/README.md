@@ -73,6 +73,12 @@ Not done: the rollback has not been tried, because the project has only one depl
 deploys need `vercel login` and `vercel link` to the `flightmind` project first; `--temporary` no
 longer applies. Re-run the smoke check on 2026-12-03 and before 2026-12-04 14:00 PT.
 
+Build note: a deploy built on Vercel from Git (2026-11-26, `main` at 8d015db) failed in `tsc` with
+`Cannot find module '../tests/fixtures/mini.json'`. `.vercelignore` had a bare `fixtures` line,
+which follows `.gitignore` rules and so also dropped `web/tests/fixtures`. The local build had
+not shown it, because the ignore file only applies to what is uploaded. Root folders in
+`.vercelignore` are now anchored with `/`.
+
 CLI note: `npx vercel@latest deploy --temporary` failed on Windows with
 `Cannot find module '@vercel/python/package.json'`. It worked after `npm install vercel @vercel/python`
 in an empty folder outside the repo, running that folder's `node_modules/.bin/vercel` from the repo

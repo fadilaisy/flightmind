@@ -367,4 +367,24 @@ tr.sel td { background: var(--primary-soft); }
 .tdlegend i.dash { background: none; border-top: 2px dotted #0077b6; height: 0; }
 .tdtip { position: absolute; z-index: 3; pointer-events: none; background: var(--bg-overlay); border: 1px solid var(--border-strong); border-radius: var(--radius-md); padding: 10px 12px; box-shadow: var(--shadow-pop); }
 
-
+/* Events tab (Figma frame 4). */
+.wrap { padding: 32px; max-width: 1440px; }
+.wrap > p.muted { margin: 0 0 20px; font-size: 13px; }
+.stats { gap: 16px; margin: 0 0 16px; }
+.stats .card { padding: 16px; border-color: var(--line-ui); display: flex; flex-direction: column; gap: 4px; }
+.stats .card .muted { font-size: 12px; line-height: 16px; }
+.stats .big { margin: 4px 0; }
+.stats .cap { margin-top: 8px; font-size: 12px; }
+.evtable { border-color: var(--line-ui); border-radius: 12px; overflow: hidden; }
+.evtable th { background: #f1f3f6; padding: 12px 20px; font-size: 12px; color: var(--text-secondary); border-bottom: 1px solid var(--line-ui); }
+.evtable td { padding: 16px 20px; vertical-align: middle; border-bottom: 1px solid var(--line-ui); }
+.evtable tr:last-child td { border-bottom: 0; }
+.evtable .icao { font-size: 11px; color: var(--text-muted); margin-left: 4px; }
+.evtable tr.dismissed td { color: var(--faint); }
+.evtable .revcell { white-space: nowrap; }
+.rbtn { border: 1px solid var(--line-ui); background: var(--bg-surface); border-radius: var(--radius-md); padding: 4px 12px; font-size: 13px; line-height: 20px; color: var(--text-primary); margin-right: 12px; }
+.rbtn:hover { background: var(--bg-raised); }
+.rbtn.plain { border-color: transparent; background: none; padding: 4px 0; }
+.rstate { font-size: 14px; line-height: 20px; margin-right: 12px; }
+.rstate.confirmed { color: var(--green); font-weight: 500; }
+.rstate.dismissed { color: var(--faint); }

@@ -3,8 +3,8 @@ import type { FlightEvent } from "../api/types";
 import { scopeLine } from "../components/EventFeed";
 import { EventFilters } from "../components/EventFilters";
 import { filterEvents, type TypeFilter } from "../domain/eventFilter";
-import { EVENT_LABEL, isSquawk } from "../domain/eventLabels";
-import { STATE_BADGE, STATE_LABEL, type EventState } from "../domain/eventState";
+import { EventBadge } from "../components/EventBadge";
+import { STATE_LABEL, type EventState } from "../domain/eventState";
 import { formatWindow, formatWindowTitle } from "../domain/format";
 import { getStore } from "../state/store";
 import { STR } from "../strings";
@@ -39,21 +39,25 @@ export function EventsView({ events, states }: Props) {
         <div className="card">
           <div className="muted">{STR.statCandidates}</div>
           <div className="big">{events.length}</div>
+          <div className="muted cap">{STR.statCandidatesNote}</div>
         </div>
         <div className="card">
           <div className="muted">{STATE_LABEL.to_review}</div>
           <div className="big">{count("to_review")}</div>
+          <div className="muted cap">{STR.statReviewNote}</div>
         </div>
         <div className="card">
           <div className="muted">{STATE_LABEL.confirmed}</div>
           <div className="big ok">{count("confirmed")}</div>
+          <div className="muted cap">{STR.statConfirmedNote}</div>
         </div>
         <div className="card">
           <div className="muted">{STATE_LABEL.dismissed}</div>
           <div className="big">{count("dismissed")}</div>
+          <div className="muted cap">{STR.statDismissedNote}</div>
         </div>
       </div>
-      <div className="card" style={{ padding: 0 }}>
+      <div className="card evtable" style={{ padding: 0 }}>
         <div className="eventsbar">
           <EventFilters
             types={types}
@@ -85,29 +89,29 @@ export function EventsView({ events, states }: Props) {
                 return (
                   <tr key={e.id} className={`click ${s}`} onClick={() => open(e)}>
                     <td>
-                      <span className={`badge ${isSquawk(e.type) ? "b-red" : "b-event"}`}>{EVENT_LABEL[e.type]}</span>
+                      <EventBadge type={e.type} />
                     </td>
                     <td>
-                      <b>{e.callsign ?? STR.noCallsign}</b> <span className="mono muted">{e.icao24}</span>
+                      <b>{e.callsign ?? STR.noCallsign}</b> <span className="mono icao">{e.icao24.toUpperCase()}</span>
                       {e.airport && <div className="muted">{e.airport}</div>}
                     </td>
                     <td className="mono" title={formatWindowTitle(e.start_ts, e.end_ts)}>
                       {formatWindow(e.start_ts, e.end_ts)}
                     </td>
                     <td className="mono">{e.raw_refs.length}</td>
-                    <td onClick={(ev) => ev.stopPropagation()}>
-                      <span className={`badge ${STATE_BADGE[s]}`}>{STATE_LABEL[s]}</span>{" "}
+                    <td className="revcell" onClick={(ev) => ev.stopPropagation()}>
+                      <span className={`rstate ${s}`}>{s === "confirmed" ? "\u2713 " : ""}{STATE_LABEL[s]}</span>
                       {s === "to_review" ? (
                         <>
-                          <button type="button" className="btn sm" onClick={() => store.setEventState(e.id, "confirmed")}>
+                          <button type="button" className="rbtn" onClick={() => store.setEventState(e.id, "confirmed")}>
                             {STR.confirm}
                           </button>{" "}
-                          <button type="button" className="btn ghost sm" onClick={() => store.setEventState(e.id, "dismissed")}>
+                          <button type="button" className="rbtn plain" onClick={() => store.setEventState(e.id, "dismissed")}>
                             {STR.dismiss}
                           </button>
                         </>
                       ) : (
-                        <button type="button" className="btn ghost sm" onClick={() => store.setEventState(e.id, "to_review")}>
+                        <button type="button" className="rbtn plain" onClick={() => store.setEventState(e.id, "to_review")}>
                           {STR.backToReview}
                         </button>
                       )}

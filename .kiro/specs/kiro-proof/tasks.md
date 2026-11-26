@@ -11,7 +11,7 @@ Tick a box only when the check passes. After each ticked task, add a line to `KI
   - Check: `git commit --allow-empty -m "test"` is refused after `scripts/install-hooks`.
   - Reqs: R1, R2, R3, R4
 
-- [ ] 2. Backfill and stats
+- [x] 2. Backfill and stats
   - Files: `KIRO.md` (Trailer corrections), `scripts/kiro-stats`
   - Check: `scripts/kiro-stats` prints `commits_unclassified=0`.
   - Reqs: R5

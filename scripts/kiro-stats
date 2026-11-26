@@ -23,27 +23,49 @@ echo "steering_files=$steering"
 echo "custom_agents=$agents"
 echo "kiro_md_entries=$kiro_md_lines"
 echo "commits_total=$(count git -C "$ROOT" rev-list HEAD)"
+
 TYPES="spec vibe hook none"
-for t in $TYPES; do
-  eval "n_$t=$(count git -C "$ROOT" log --format=%H --grep="^Kiro: $t")"
+for t in $TYPES missing; do eval "n_$t=0"; done
+
+# One "<full sha> <type>" line per non-merge commit. The type is the first word of the last
+# "Kiro: " line of the message, or "missing" when there is none or it is not one of the four.
+MAP="$(mktemp)"
+trap 'rm -f "$MAP"' EXIT
+git -C "$ROOT" log --no-merges --format='@@%H%n%B' | tr -d '\r' | awk '
+  function flush() { if (sha != "") { if (t !~ /^(spec|vibe|hook|none)$/) t = "missing"; print sha, t } }
+  /^@@[0-9a-f]+$/ { flush(); sha = substr($0, 3); t = "missing"; next }
+  /^Kiro: / { split(substr($0, 7), w, " "); t = w[1] }
+  END { flush() }
+' > "$MAP"
+non_merge=$(wc -l < "$MAP" | tr -d ' ')
+echo "commits_non_merge=$non_merge"
+for t in $TYPES missing; do
+  eval "n_$t=$(awk -v t="$t" '$2 == t { n++ } END { print n + 0 }' "$MAP")"
 done
 
 # Apply the "## Trailer corrections" section of KIRO.md. Each line is
-# "sha | was | now | reason". A correction moves one commit from "was" to "now",
-# only when the commit's real trailer still says "was", so a later fix does not count twice.
+# "sha | was | now | reason". A correction moves one commit from "was" to "now", only when the
+# commit's real trailer still says "was" ("missing" means the commit has no Kiro: trailer), so a
+# later fix does not count twice.
 corrections=0
 while IFS='|' read -r sha was now _; do
   sha=$(echo "$sha" | tr -d ' '); was=$(echo "$was" | tr -d ' '); now=$(echo "$now" | tr -d ' ')
   [ -n "$sha" ] && [ -n "$was" ] && [ -n "$now" ] || continue
-  git -C "$ROOT" cat-file -e "$sha^{commit}" 2>/dev/null || continue
-  actual=$(git -C "$ROOT" log -1 --format='%(trailers:key=Kiro,valueonly)' "$sha" | sed -E 's/^ *([a-z]+).*/\1/' | head -n1)
+  case " $TYPES missing " in *" $was "*) ;; *) continue ;; esac
+  case " $TYPES " in *" $now "*) ;; *) continue ;; esac
+  full=$(git -C "$ROOT" rev-parse --verify -q "$sha^{commit}" 2>/dev/null) || continue
+  actual=$(awk -v s="$full" '$1 == s { print $2 }' "$MAP")
   [ "$actual" = "$was" ] || continue
   eval "n_$was=\$((n_$was - 1))"
   eval "n_$now=\$((n_$now + 1))"
   corrections=$((corrections + 1))
-done < <(sed -n '/^## Trailer corrections/,/^## /p' "$ROOT/KIRO.md" | grep -E '^[0-9a-f]{7,40} \|' || true)
+done < <(sed -n '/^## Trailer corrections/,$p' "$ROOT/KIRO.md" | tr -d '\r' | grep -E '^[0-9a-f]{7,40} \|' || true)
 
 for t in $TYPES; do
   eval "echo commits_kiro_$t=\$n_$t"
 done
 echo "trailer_corrections_applied=$corrections"
+echo "commits_unclassified=$n_missing"
+for t in $TYPES; do
+  eval "echo share_${t}_pct=\$(awk -v n=\$n_$t -v d=$non_merge 'BEGIN { printf \"%.1f\", d ? 100 * n / d : 0 }')"
+done

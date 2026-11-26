@@ -1,0 +1,12 @@
+.git
+.claude
+.kiro
+data
+docs
+fixtures
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.env*
+web/dist
+services/pipeline

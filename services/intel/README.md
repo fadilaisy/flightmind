@@ -113,3 +113,31 @@ Notes:
 
 - `mcp` (official Model Context Protocol Python SDK): serves the MCP tool over stdio.
 - `httpx`: HTTP client that calls the FlightMind API.
+
+
+## Public entry point (SCRUM-38)
+
+`serve.py` serves the built web UI and the API on one origin: paths that start with `/api/` go to
+the API app, every other path is the static web build. It does not change the API app, so the real
+API replaces the mock with no code change. `/docs`, `/redoc` and `/openapi.json` are not exposed.
+On Vercel the CDN serves the web build, so `infra/vercel_entry.py` builds the app with `web_dist=""`
+(API only); the Docker image uses `FLIGHTMIND_WEB_DIST` instead.
+
+| Variable | Meaning |
+| --- | --- |
+| `FLIGHTMIND_API_APP` | `module:attribute` of the API app. Default `mock_api.app:app`. A value that cannot be imported stops the server at start, with the value in the message. |
+| `FLIGHTMIND_WEB_DIST` | Folder with the built web UI (must hold `index.html`). Unset or empty means API only, and every non-API path answers 404. |
+
+Run it locally from `services/intel`:
+
+```powershell
+$env:FLIGHTMIND_WEB_DIST = "<path to web/dist>"   # optional
+.\.venv\Scripts\python.exe -m uvicorn serve:app --port 8000
+```
+
+Runtime dependencies for the image are in `requirements-serve.txt` (`fastapi`, `uvicorn`).
+Tests: `tests/test_serve.py`. Deploy steps: see "Deploy (SCRUM-38)" in `infra/README.md`.
+
+### Third-party services (for the README disclosure list)
+
+- Vercel (Hobby plan): hosts the public demo. The web build is served from its CDN and `serve.py` runs as one Vercel Function through `infra/vercel_entry.py`. The root `README.md` is owned by Role 1, so the line there is requested by issue.

@@ -83,7 +83,17 @@ class AskGuard:
 
 
 def client_key(headers: Mapping[str, Any], client_host: Optional[str]) -> str:
-    """First address of x-forwarded-for, else the client host, else 'unknown'."""
+    """Key for the per-minute bucket: x-vercel-forwarded-for, then x-forwarded-for, then the host.
+
+    Vercel sets x-vercel-forwarded-for and a client cannot override it, so it is preferred.
+    Outside Vercel a client can forge x-forwarded-for and get a fresh per-minute bucket each
+    time. The per-day cap and the Claude Console spend limit still hold in that case.
+    """
+    vercel = headers.get("x-vercel-forwarded-for") if headers is not None else None
+    if vercel:
+        first = str(vercel).split(",")[0].strip()
+        if first:
+            return first
     forwarded = headers.get("x-forwarded-for") if headers is not None else None
     if forwarded:
         first = str(forwarded).split(",")[0].strip()

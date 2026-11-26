@@ -72,3 +72,12 @@ def test_client_key_prefers_first_forwarded_address():
     assert client_key({}, "10.0.0.1") == "10.0.0.1"
     assert client_key({"x-forwarded-for": ""}, "10.0.0.1") == "10.0.0.1"
     assert client_key({}, None) == "unknown"
+
+
+def test_client_key_order_vercel_then_forwarded_then_host():
+    both = {"x-vercel-forwarded-for": "198.51.100.9", "x-forwarded-for": "203.0.113.5"}
+    assert client_key(both, "10.0.0.1") == "198.51.100.9"
+    assert client_key({"x-vercel-forwarded-for": " 198.51.100.9 , 1.1.1.1"}, None) == "198.51.100.9"
+    assert client_key({"x-vercel-forwarded-for": "", "x-forwarded-for": "203.0.113.5"}, "h") == "203.0.113.5"
+    assert client_key({"x-forwarded-for": "203.0.113.5"}, "h") == "203.0.113.5"
+    assert client_key({}, "h") == "h"

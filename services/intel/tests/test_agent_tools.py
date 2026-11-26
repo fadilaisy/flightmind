@@ -1,4 +1,5 @@
 """Tests for ApiClient and the four tools (SCRUM-36). Backend: the mock API, in process."""
+import asyncio
 import json
 
 import httpx
@@ -245,6 +246,7 @@ async def test_query_tracks_summary_for_holding_aircraft():
         "first_ts": pts[0]["ts"], "last_ts": pts[-1]["ts"],
         "min_alt_ft": min(p["alt_ft"] for p in pts), "max_alt_ft": max(p["alt_ft"] for p in pts),
         "first_raw_ref": pts[0]["raw_ref"], "last_raw_ref": pts[-1]["raw_ref"],
+        "min_alt_raw_ref": pts[0]["raw_ref"], "max_alt_raw_ref": pts[0]["raw_ref"],  # constant altitude
     }
     assert result.raw_refs == [pts[0]["raw_ref"], pts[-1]["raw_ref"]]
 
@@ -351,3 +353,73 @@ def test_model_tool_definitions_are_strict_and_stable():
     assert set(get_track["input_schema"]["properties"]) == {"icao24", "from", "to", "max_points"}
     assert get_track["input_schema"]["properties"]["from"]["anyOf"] == [{"type": "string"}, {"type": "null"}]
     assert get_track["input_schema"]["properties"]["icao24"]["type"] == "string"
+
+
+# --- review fixes (PR #22) -----------------------------------------------------------
+
+@pytest.mark.anyio
+async def test_query_tracks_altitude_extremes_have_citable_refs():
+    result = await tools.query_tracks(api(), icao24=KNOWN)
+    summary = result.data["aircraft"][0]
+    for key, alt in (("min_alt_raw_ref", summary["min_alt_ft"]), ("max_alt_raw_ref", summary["max_alt_ft"])):
+        ref = summary[key]
+        assert ref in result.raw_refs
+        raw = await api().raw(ref)
+        assert raw["decoded"]["baro_alt_ft"] == alt
+    assert summary["min_alt_ft"] < summary["max_alt_ft"]
+
+
+@pytest.mark.anyio
+async def test_query_tracks_altitude_refs_null_without_altitudes():
+    class Fake:
+        async def events(self, **kw):
+            return [{"icao24": "AAAAAA", "callsign": "X1"}]
+
+        async def track(self, icao24, from_=None, to=None):
+            return {"icao24": icao24, "callsign": "X1", "points": [
+                {"ts": "t1", "alt_ft": None, "raw_ref": "r:1"},
+                {"ts": "t2", "alt_ft": None, "raw_ref": "r:2"}]}
+
+    result = await tools.query_tracks(Fake())
+    s = result.data["aircraft"][0]
+    assert s["min_alt_raw_ref"] is None and s["max_alt_raw_ref"] is None
+    assert s["min_alt_ft"] is None
+
+
+@pytest.mark.anyio
+async def test_query_tracks_caps_candidates_and_fan_out():
+    state = {"now": 0, "peak": 0, "calls": 0}
+
+    class Fake:
+        async def events(self, **kw):
+            return [{"icao24": f"{i:06X}", "callsign": f"C{i}"} for i in range(30)]
+
+        async def track(self, icao24, from_=None, to=None):
+            state["calls"] += 1
+            state["now"] += 1
+            state["peak"] = max(state["peak"], state["now"])
+            await asyncio.sleep(0)
+            await asyncio.sleep(0)
+            state["now"] -= 1
+            return {"icao24": icao24, "points": [{"ts": "t", "alt_ft": 100, "raw_ref": f"r:{icao24}"}]}
+
+    result = await tools.query_tracks(Fake())
+    assert tools.MAX_CANDIDATES == 20 and tools.MAX_IN_FLIGHT == 5
+    assert len(result.data["aircraft"]) == 20 and state["calls"] == 20
+    assert result.data["truncated"] is True and result.data["candidates_total"] == 30
+    assert state["peak"] == 5
+
+
+@pytest.mark.anyio
+async def test_query_tracks_not_truncated_when_few():
+    result = await tools.query_tracks(api())
+    assert "truncated" not in result.data
+
+
+def test_descriptions_name_the_new_fields_and_all_types():
+    specs = tools.SPECS_BY_NAME
+    q = specs["query_tracks"].description
+    assert "min_alt_raw_ref" in q and "max_alt_raw_ref" in q and "truncated" in q and "icao24" in q
+    s = specs["search_events"].description
+    for t in ("go_around", "holding", "squawk_7500", "squawk_7600", "squawk_7700"):
+        assert t in s

@@ -136,8 +136,8 @@ Acceptance criteria:
 2. `search_events(type?, airport?, since?)` returns the matching events. Each event is cut down to `id`, `type`, `icao24`, `callsign`, `start_ts`, `end_ts`, `airport`, `severity`, the count of `raw_refs`, and the first and last `raw_ref`. The full `raw_refs` list is not returned.
 3. `get_track(icao24, from?, to?, max_points?)` returns the track. When `max_points` is given and the track has more points, the points are thinned evenly. The first point, the last point and every point with `kept_for_event` true are always kept, up to the cap. `max_points` is at most 200; a larger value is lowered to 200. The result says how many points the full track has. Every returned point keeps its `raw_ref` and its other fields unchanged.
 4. When `max_points` is not given, `get_track` returns the API body unchanged, as in requirement 1.2 and 1.3. The agent always passes `max_points`; its default is 60.
-5. `query_tracks(callsign?, icao24?, from?, to?)` returns one summary per matching aircraft: `icao24`, `callsign`, number of points in the window, first and last `ts`, lowest and highest `alt_ft`, and first and last `raw_ref`. Aircraft with no points in the window are left out.
-6. The contract has no endpoint that lists aircraft. The candidates for `query_tracks` are therefore the aircraft that have at least one event (found through `GET /api/events`). The tool description says so, so the model does not claim that an aircraft without events does not exist.
+5. `query_tracks(callsign?, icao24?, from?, to?)` returns one summary per matching aircraft: `icao24`, `callsign`, number of points in the window, first and last `ts`, lowest and highest `alt_ft`, first and last `raw_ref`, and `min_alt_raw_ref` and `max_alt_raw_ref` (the first point in the window where the lowest and highest `alt_ft` occur; null when no point has an altitude). Both are added to the evidence raw_refs. Aircraft with no points in the window are left out.
+6. The contract has no endpoint that lists aircraft. The candidates for `query_tracks` are therefore the aircraft that have at least one event (found through `GET /api/events`). The tool description says so, so the model does not claim that an aircraft without events does not exist. At most 20 candidates are fetched, with at most 5 requests in flight; when candidates were cut the result has `truncated: true` and `candidates_total`, and the tool description tells the model to narrow by callsign or icao24.
 7. `get_raw(raw_ref)` returns the decoded record and its hex.
 8. An unknown id, an unreachable API or any other API failure comes back as a tool error result (a message the model can read), not an exception that ends the run. For the MCP server the same failure is an `isError` result (requirement 3.6).
 9. No tool reads system time or writes anything.
@@ -189,7 +189,7 @@ Acceptance criteria:
 
 Acceptance criteria:
 1. `services/intel/agent/guard.py` limits questions per client (default 5 per minute) and per process per day (default 300). The settings are `FLIGHTMIND_ASK_PER_MINUTE` and `FLIGHTMIND_ASK_PER_DAY`. Both limits are in memory.
-2. The client key is the first address in the `x-forwarded-for` header, otherwise the client host.
+2. The client key is the first address in the `x-vercel-forwarded-for` header when present, then the first address in `x-forwarded-for`, then the client host. Outside Vercel a client can forge `x-forwarded-for`; the per-day cap and the Claude Console spend limit still hold.
 3. Over a limit the endpoint answers HTTP 429 with a short detail and makes no model call.
 4. The limiter takes a clock argument so tests do not read system time. Production uses a monotonic clock. This is request throttling, not replay time, so contract C6 does not apply.
 5. The limit is stated honestly in the README and design: serverless instances do not share memory, so the guard slows abuse but does not cap spend. The real cap is the spend limit in the Claude Console with auto-reload off (tech.md).
@@ -278,3 +278,8 @@ Acceptance criteria:
 2. **Event context in the question.** The UI sends the selected event as a text prefix of `question` (`web/src/domain/askContext.ts`, about 100 characters). The 500-character limit counts that prefix. If a typed question is refused for length, the UI should show the 422 detail; that is a Role 1 matter.
 3. **HTTP 429 in the UI.** The UI may not show the 429 detail well. Role 1 checks it when the guard is live.
 4. **Guard strength.** The in-memory guard does not cap spend on serverless (requirement 12.5). A shared store (for example a database table) is not planned.
+
+## After review (PR #22): requirement changes
+
+- The 25-second deadline covers the tool batch after each model call, not only the gaps between model calls.
+- An unexpected exception in a tool becomes an `is_error` tool result; it never becomes an HTTP 500.

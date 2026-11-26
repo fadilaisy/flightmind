@@ -1,4 +1,7 @@
-"""HTTP client for GET /api/tracks/{icao24} (contract C5). No MCP code here.
+"""The MCP server now goes through agent/api_client.py and agent/tools.py. This module is kept
+for the SCRUM-34 tests; change error messages in agent/api_client.py, not here.
+
+HTTP client for GET /api/tracks/{icao24} (contract C5). No MCP code here.
 
 The base URL comes from FLIGHTMIND_API_BASE so the mock API (services/intel/mock_api)
 can be swapped for the real API with no change in this package.

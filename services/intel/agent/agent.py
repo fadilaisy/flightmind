@@ -13,7 +13,7 @@ from typing import Any, Callable, Optional
 
 from agent.api_client import ApiClient
 from agent.evidence import EvidenceSet, not_enough
-from agent.tools import TOOLS_FOR_MODEL as TOOLS, run_tool
+from agent.tools import TOOLS_FOR_MODEL as TOOLS, ToolResult, run_tool
 
 log = logging.getLogger("flightmind.agent")
 
@@ -51,13 +51,17 @@ SYSTEM_PROMPT = (
     "about that event unless the question asks for something else.\n"
     "\n"
     "Tools:\n"
-    "- search_events: lists detected events (go_around, holding, squawk_7700) with their ids, aircraft, "
-    "times, airport and severity, plus the first and last raw_ref of each. Start here for any question "
-    "about emergencies, go-arounds or holding.\n"
+    "- search_events: lists detected events with their ids, aircraft, times, airport and severity, "
+    "plus the first and last raw_ref of each. The event types are go_around, holding, squawk_7500 "
+    "(unlawful interference), squawk_7600 (radio failure) and squawk_7700 (general emergency). Start "
+    "here for any question about emergencies, go-arounds or holding.\n"
     "- query_tracks: summarises aircraft tracks (points in a window, first and last time, lowest and "
-    "highest altitude, first and last raw_ref). Use it to find which aircraft were present or to get "
-    "altitude ranges. It only searches aircraft that have at least one detected event, so do not "
-    "conclude that an aircraft is absent from the recording just because it is missing there.\n"
+    "highest altitude, first and last raw_ref, and min_alt_raw_ref and max_alt_raw_ref). Use it to "
+    "find which aircraft were present or to get altitude ranges. Cite min_alt_raw_ref for the lowest "
+    "altitude and max_alt_raw_ref for the highest, never first_raw_ref or last_raw_ref. It only "
+    "searches aircraft that have at least one detected event, so do not conclude that an aircraft is "
+    "absent from the recording just because it is missing there. When the result says truncated, "
+    "repeat the call with a callsign or icao24.\n"
     "- get_track: returns the points of one aircraft (time, position, altitude in feet, raw_ref, and "
     "kept_for_event). Use it to see how an aircraft moved, for example the altitude where a go-around "
     "began or how long a hold lasted. Long tracks are thinned; the result says how many points the "
@@ -119,8 +123,15 @@ def log_usage(usage: Any, model: Any) -> dict:
     return counts
 
 
+TOOL_FAILURE_MESSAGE = "The tool failed unexpectedly. Try a different call or answer from what you have."
+
+
 async def _run_one(api: ApiClient, block: Any, evidence: EvidenceSet) -> tuple:
-    result = await run_tool(api, block.name, block.input, for_agent=True)
+    try:
+        result = await run_tool(api, block.name, block.input, for_agent=True)
+    except Exception as exc:  # not BaseException: cancellation must still work
+        log.error("Tool %s failed: %s", block.name, type(exc).__name__)
+        result = ToolResult(data={"error": TOOL_FAILURE_MESSAGE}, is_error=True)
     evidence.add(result)
     entry: dict = {"tool": block.name, "args": block.input, "result_count": result.result_count}
     if result.is_error:
@@ -188,7 +199,17 @@ async def run_agent(
             if not blocks:
                 reason = "empty_tool_turn"
                 break
-            outcomes = await asyncio.gather(*(_run_one(api, b, evidence) for b in blocks))
+            left = TOTAL_SECONDS - (clock() - start)
+            try:
+                if left <= 0:
+                    raise asyncio.TimeoutError()
+                outcomes = await asyncio.wait_for(
+                    asyncio.gather(*(_run_one(api, b, evidence) for b in blocks)),
+                    timeout=left,
+                )
+            except asyncio.TimeoutError:
+                reason = "deadline"
+                break
             messages.append({"role": "assistant", "content": response.content})
             messages.append({"role": "user", "content": [o[1] for o in outcomes]})
             tool_calls.extend(o[0] for o in outcomes)

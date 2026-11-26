@@ -183,3 +183,15 @@ Implements requirements 7 to 17 in `requirements.md` and Part 2 of `design.md`. 
   - Add the SCRUM-36 lines to `KIRO.md` (what Kiro did, what was fixed by hand), if that file is editable by the task's owner at that time; otherwise hand the lines to Role 1. Commits use the `Kiro:` trailer and stage files by name.
   - Done when the issue link is written here.
   - _Requirements: 8.6, 17.1_
+
+### After review (PR #22)
+
+Fixes applied after review, with their tests; nothing above was unticked.
+
+- `query_tracks` gives `min_alt_raw_ref` and `max_alt_raw_ref` (also in the evidence raw_refs), so altitude claims can cite a record that shows the value.
+- The 25 s deadline also covers the tool batch (`asyncio.wait_for` with the time left; reason `deadline`).
+- `query_tracks` fetches at most 20 aircraft with at most 5 requests in flight; `truncated` and `candidates_total` report a cut.
+- `_run_one` catches `Exception`, logs the class name and returns an `is_error` result with a fixed message; no tool failure is an HTTP 500.
+- `client_key` prefers `x-vercel-forwarded-for`, then `x-forwarded-for`, then the host.
+- The system prompt and the `search_events` description name all five event types; a test checks them against `contracts/openapi.yaml`.
+- `mcp_server/client.py` is kept for the SCRUM-34 tests and says so in its docstring.

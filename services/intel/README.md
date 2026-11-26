@@ -48,7 +48,11 @@ Notes for the UI:
 `GET /api/tracks/{icao24}` and, without `max_points`, returns the body unchanged, so every point
 keeps its `raw_ref`. With `max_points` (2 to 200) it thins the track and keeps the first, last
 and event points. `search_events(type?, airport?, since?)` lists events,
-`query_tracks(callsign?, icao24?, from?, to?)` summarises aircraft that have at least one event,
+`query_tracks(callsign?, icao24?, from?, to?)` summarises aircraft that have at least one event
+(at most 20 per call; the result then has `truncated: true` and `candidates_total`, so narrow by
+callsign or icao24). Each summary has `min_alt_raw_ref` and `max_alt_raw_ref`, the first record
+where the lowest and highest altitude occur, so a claim about an altitude extreme can cite the
+record that shows it,
 and `get_raw(raw_ref)` returns one raw record. Descriptions and schemas live in
 `agent/tools.py`. The server is a thin HTTP client: it never reads the database, so the mock API
 can be replaced by the real API with no change here.
@@ -150,7 +154,8 @@ dropped, a claim left with no citation is dropped, and when nothing is left the 
 **Limits.** A question is at most 500 characters (422 otherwise). At most 6 model calls and 25 s
 per question, 20 s per model call, `max_tokens` 4096. The agent's `get_track` returns at most 60
 points by default (up to 200 on request) and reports how many the full track has.
-`query_tracks` only searches aircraft that have at least one detected event, because the API has
+`query_tracks` searches at most 20 aircraft per call, with 5 track requests in flight, and only
+aircraft that have at least one detected event, because the API has
 no list of aircraft; an aircraft without events can be missing from its result. A Claude API
 failure (bad key, rate limit, timeout, connection) gives `not_enough_evidence` and logs only the
 error class.

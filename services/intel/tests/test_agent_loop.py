@@ -1,7 +1,10 @@
 """Tests for the agent loop (SCRUM-36), with a fake Claude client. No network, no key."""
+import asyncio
 import json
+from pathlib import Path
 
 import pytest
+import yaml
 
 from agent import agent as agent_mod
 from agent.agent import ANSWER_SCHEMA, SYSTEM_PROMPT, run_agent
@@ -267,3 +270,59 @@ async def test_usage_and_summary_lines_are_logged(caplog):
     assert "output_tokens=130" in s and "cache_creation_input_tokens=800" in s and "elapsed_s=" in s
     assert "input_tokens" not in json.dumps(out)
     assert "8A1C07" not in " ".join(lines)
+
+
+# --- review fixes (PR #22) -----------------------------------------------------------
+
+@pytest.mark.anyio
+async def test_deadline_covers_the_tool_batch(monkeypatch):
+    clock = Clock()
+    real = agent_mod.run_tool
+
+    def advance(n):
+        if n == 2:
+            clock.t += 24.999  # the second model call ends with 0.001 s left
+
+    async def slow(api_, name, args, **kw):
+        if name == "get_raw":
+            await asyncio.sleep(1000)
+        return await real(api_, name, args, **kw)
+
+    monkeypatch.setattr(agent_mod, "run_tool", slow)
+    fake = FakeAnthropic([
+        tool_turn(tool_use("a", "search_events", SEARCH_ALL)),
+        tool_turn(tool_use("b", "get_raw", {"raw_ref": "rec01:0"})),
+    ], on_call=advance)
+    out = await ask(fake, clock=clock)
+    assert len(fake.calls) == 2
+    assert out["status"] == "not_enough_evidence" and out["citations"] == []
+    assert [t["tool"] for t in out["tool_calls"]] == ["search_events"]  # earlier turn kept
+
+
+@pytest.mark.anyio
+async def test_unexpected_tool_exception_becomes_is_error_and_run_continues(monkeypatch, caplog):
+    async def boom(*a, **kw):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(agent_mod, "run_tool", boom)
+    caplog.set_level("INFO", logger="flightmind.agent")
+    fake = FakeAnthropic([
+        tool_turn(tool_use("a", "search_events", SEARCH_ALL)),
+        final_turn("not_enough_evidence", []),
+    ])
+    out = await ask(fake)
+    assert len(fake.calls) == 2
+    sent = fake.calls[1]["messages"][2]["content"][0]
+    assert sent["is_error"] is True and "boom" not in sent["content"]
+    assert "boom" not in json.dumps(out)
+    logs = " ".join(r.getMessage() for r in caplog.records)
+    assert "RuntimeError" in logs and "boom" not in logs
+    assert out["tool_calls"][0]["error"]
+
+
+def test_system_prompt_names_every_event_type_in_the_contract():
+    spec = yaml.safe_load((Path(__file__).parents[3] / "contracts" / "openapi.yaml").read_text(encoding="utf-8"))
+    types = spec["components"]["schemas"]["Event"]["properties"]["type"]["enum"]
+    assert len(types) == 5
+    for t in types:
+        assert t in SYSTEM_PROMPT, t

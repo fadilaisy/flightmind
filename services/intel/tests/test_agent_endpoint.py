@@ -232,3 +232,21 @@ def test_usage_lines_are_printed_when_nothing_configured_logging(monkeypatch, ca
     finally:
         for handler in list(flight.handlers):
             flight.removeHandler(handler)
+
+
+@pytest.mark.anyio
+async def test_unexpected_tool_exception_is_not_an_http_500(agent_on, monkeypatch):
+    from agent import agent as agent_mod
+
+    async def boom(*a, **kw):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(agent_mod, "run_tool", boom)
+    agent_on.fake = FakeAnthropic([
+        tool_turn(tool_use("a", "search_events", SEARCH_HOLD)),
+        final_turn("not_enough_evidence", []),
+    ])
+    r = await post()
+    assert r.status_code == 200
+    assert "boom" not in r.text
+    assert r.json()["status"] == "not_enough_evidence"

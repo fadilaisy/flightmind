@@ -14,6 +14,8 @@ from agent.api_client import ApiClient, ApiError
 
 MAX_POINTS_CAP = 200
 AGENT_DEFAULT_MAX_POINTS = 60
+MAX_CANDIDATES = 20  # aircraft query_tracks fetches per call
+MAX_IN_FLIGHT = 5  # track requests running at once
 
 
 @dataclass
@@ -160,8 +162,15 @@ async def query_tracks(
         want_cs = callsign.strip().upper()
         candidates = {k: v for k, v in candidates.items() if (v or "").upper() == want_cs}
 
-    ids = list(candidates)
-    results = await asyncio.gather(*(api.track(i, from_, to) for i in ids), return_exceptions=True)
+    candidates_total = len(candidates)
+    ids = list(candidates)[:MAX_CANDIDATES]
+    gate = asyncio.Semaphore(MAX_IN_FLIGHT)
+
+    async def fetch(ident: str):
+        async with gate:
+            return await api.track(ident, from_, to)
+
+    results = await asyncio.gather(*(fetch(i) for i in ids), return_exceptions=True)
     summaries, raw_refs, skipped = [], [], []
     for ident, res in zip(ids, results):
         if isinstance(res, ApiError):
@@ -174,25 +183,34 @@ async def query_tracks(
         pts = res.get("points") or []
         if not pts:
             continue
-        alts = [p["alt_ft"] for p in pts if p.get("alt_ft") is not None]
+        with_alt = [p for p in pts if p.get("alt_ft") is not None]
+        # min()/max() return the first point holding the extreme value.
+        low = min(with_alt, key=lambda p: p["alt_ft"]) if with_alt else None
+        high = max(with_alt, key=lambda p: p["alt_ft"]) if with_alt else None
         first, last = pts[0], pts[-1]
+        min_ref = low.get("raw_ref") if low else None
+        max_ref = high.get("raw_ref") if high else None
         summaries.append({
             "icao24": res.get("icao24", ident),
             "callsign": res.get("callsign", candidates[ident]),
             "points_in_window": len(pts),
             "first_ts": first.get("ts"),
             "last_ts": last.get("ts"),
-            "min_alt_ft": min(alts) if alts else None,
-            "max_alt_ft": max(alts) if alts else None,
+            "min_alt_ft": low["alt_ft"] if low else None,
+            "max_alt_ft": high["alt_ft"] if high else None,
             "first_raw_ref": first.get("raw_ref"),
             "last_raw_ref": last.get("raw_ref"),
+            "min_alt_raw_ref": min_ref,
+            "max_alt_raw_ref": max_ref,
         })
-        raw_refs.extend(r for r in (first.get("raw_ref"), last.get("raw_ref")) if r)
+        raw_refs.extend(dict.fromkeys(r for r in (first.get("raw_ref"), last.get("raw_ref"), min_ref, max_ref) if r))
     data: dict = {"count": len(summaries), "aircraft": summaries}
+    if candidates_total > len(ids):
+        data["truncated"] = True
+        data["candidates_total"] = candidates_total
     if skipped:
         data["skipped"] = skipped
     return ToolResult(data=data, raw_refs=raw_refs, result_count=len(summaries))
-
 
 # --- get_raw ---------------------------------------------------------------------------
 
@@ -228,11 +246,11 @@ TOOL_SPECS: list = [
         description=(
             "Summarise the tracks of aircraft in the recording: for each aircraft, how many points "
             "it has in the time window, its first and last time, its lowest and highest altitude in "
-            "feet, and the first and last raw_ref. Use it to find which aircraft were present, or "
+            "feet, and the first and last raw_ref. It also gives min_alt_raw_ref and max_alt_raw_ref, the records where the lowest and highest altitude occur: cite those for any claim about an altitude extreme, never first_raw_ref or last_raw_ref. Use it to find which aircraft were present, or "
             "how long or how high one flew, before fetching a full track. Filter by callsign or "
             "icao24, and optionally by a time window. Only aircraft that have at least one detected "
             "event are searched, because the API has no list of aircraft; an aircraft missing from "
-            "the result may still exist. Cite the raw_ref values from the result for any claim."
+            "the result may still exist. At most 20 aircraft are searched; when the result has truncated true, candidates_total says how many matched, so repeat the call with callsign or icao24 to narrow it. Cite the raw_ref values from the result for any claim."
         ),
         properties={
             "callsign": _prop("string", "Callsign to match exactly, case-insensitive, e.g. LNI456"),
@@ -246,13 +264,13 @@ TOOL_SPECS: list = [
     ToolSpec(
         name="search_events",
         description=(
-            "List detected events in the recording: go_around, holding and squawk_7700 (emergency). "
+            "List detected events in the recording: go_around, holding, squawk_7500 (unlawful interference), squawk_7600 (radio failure) and squawk_7700 (general emergency). "
             "Each event has an id, type, aircraft, start and end time, airport, severity, the number "
             "of records behind it, and its first and last raw_ref. Use it first for questions about "
             "emergencies, go-arounds or holding. Cite the event id, or a raw_ref, for any claim."
         ),
         properties={
-            "type": _prop("string", "Event type: go_around, holding or squawk_7700"),
+            "type": _prop("string", "Event type: go_around, holding, squawk_7500, squawk_7600 or squawk_7700"),
             "airport": _prop("string", "Airport code, e.g. WIII"),
             "since": _prop("string", "Only events starting at or after this time, " + _TIME_NOTE),
         },

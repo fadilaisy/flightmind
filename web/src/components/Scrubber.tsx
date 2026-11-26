@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import type { FlightEvent, Track } from "../api/types";
 import { formatTime } from "../domain/format";
 import { getStore, useStore } from "../state/store";

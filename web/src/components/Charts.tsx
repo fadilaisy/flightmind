@@ -1,4 +1,4 @@
-﻿import uPlot from "uplot";
+import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
 import { useEffect, useMemo, useRef } from "react";
 import type { FlightEvent, Track } from "../api/types";

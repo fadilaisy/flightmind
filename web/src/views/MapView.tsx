@@ -1,4 +1,4 @@
-﻿import { Map as MapLibre, Popup, setWorkerUrl, type GeoJSONSource } from "maplibre-gl";
+import { Map as MapLibre, Popup, setWorkerUrl, type GeoJSONSource } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 // Load the worker as its own file so it resolves in dev and in the build.
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";

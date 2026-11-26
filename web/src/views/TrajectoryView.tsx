@@ -7,15 +7,25 @@ import { InvestigationPanel } from "../components/InvestigationPanel";
 import { RawRecordViewer } from "../components/RawRecordViewer";
 import { Scrubber } from "../components/Scrubber";
 import { StateBox } from "../components/StateBox";
-import { EVENT_LABEL } from "../domain/eventLabels";
+import { phrase } from "../domain/eventLabels";
 import type { EventState } from "../domain/eventState";
-import { formatWindow, formatWindowTitle } from "../domain/format";
+import { formatWindowTitle } from "../domain/format";
 import { getStore, useStore } from "../state/store";
 import { useTrack } from "../state/useTrack";
 import { STR } from "../strings";
 import { MapView } from "./MapView";
 import { ThreeDView } from "./ThreeDView";
 import { navigate, useUrlParam } from "./nav";
+
+/** "8A0213 · go-around flag at WIII · 08:00–08:01Z", all from the event and its track. */
+export function headerLine(event: EventDetail, points: { ts: string }[]): string {
+  const parts = [event.icao24.toUpperCase(), event.airport ? `${phrase(event.type)} at ${event.airport}` : phrase(event.type)];
+  if (points.length > 0) {
+    const hm = (iso: string) => iso.slice(11, 16);
+    parts.push(`${hm(points[0].ts)}–${hm(points[points.length - 1].ts)}Z`);
+  }
+  return parts.join(" · ");
+}
 
 interface Props {
   api: Api;
@@ -63,6 +73,12 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
     setCited(rawRef);
   }
 
+  /** Opens the Records tab at the first record the event cites. */
+  function showRawPoints() {
+    if (selected?.raw_refs[0]) store.setRawRef(selected.raw_refs[0]);
+    navigate({ tab: "records" });
+  }
+
   function openRecord(rawRef: string) {
     store.setRawRef(rawRef);
     navigate({ tab: "records" });
@@ -92,31 +108,33 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
       <EventFeed events={events} states={states} selectedId={eventId} onSelect={select} />
       <div className="center">
         {error && <p role="alert">{error}</p>}
-        <div className="titlebar">
-          <h2>{selected ? (selected.callsign ?? selected.icao24) : STR.eventsTitle}</h2>
+        <div className="trackhead">
+          <h2>{selected ? (selected.callsign ?? selected.icao24.toUpperCase()) : STR.eventsTitle}</h2>
           {selected && (
-            <span className="mono muted" title={formatWindowTitle(selected.start_ts, selected.end_ts)}>
-              {selected.icao24} · {EVENT_LABEL[selected.type]} · {formatWindow(selected.start_ts, selected.end_ts)}
+            <span className="sub" title={formatWindowTitle(selected.start_ts, selected.end_ts)}>
+              {headerLine(selected, track.status === "ready" ? track.track.points : [])}
             </span>
           )}
           <div className="spacer" />
-          <div className="seg">
-            <button className={view === "map" ? "on" : undefined} onClick={() => navigate({ view: "map" })}>
+          <div className="seg" role="group" aria-label={STR.threeArea}>
+            <button className={view === "map" ? "on" : undefined} aria-pressed={view === "map"} onClick={() => navigate({ view: "map" })}>
               {STR.viewMap}
             </button>
-            <button className={view === "3d" ? "on" : undefined} onClick={() => navigate({ view: "3d" })}>
+            <button className={view === "3d" ? "on" : undefined} aria-pressed={view === "3d"} onClick={() => navigate({ view: "3d" })}>
               {STR.view3d}
             </button>
             <button
-              className={showCharts ? "on" : undefined}
+              className={showCharts ? "profile on" : "profile"}
               aria-pressed={showCharts}
               onClick={() => navigate({ profile: showCharts ? "off" : null })}
             >
               {STR.viewProfile}
             </button>
           </div>
-        </div>
-        {mainBox()}
+          <button type="button" className="fbtn" disabled={!selected} title={STR.showRawPointsTitle} onClick={showRawPoints}>
+            {STR.showRawPoints}
+          </button>
+        </div>        {mainBox()}
         {showCharts && (
           <div className="chartbox">
             {selected && track.status === "ready" && track.track.points.length > 0 ? (
@@ -163,3 +181,5 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
     </div>
   );
 }
+
+

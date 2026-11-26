@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { FlightEvent } from "../api/types";
+import { scopeLine } from "../components/EventFeed";
 import { EventFilters } from "../components/EventFilters";
 import { filterEvents, type TypeFilter } from "../domain/eventFilter";
 import { EVENT_LABEL, isSquawk } from "../domain/eventLabels";
@@ -22,6 +23,8 @@ export function EventsView({ events, states }: Props) {
   const count = (s: EventState) => events.filter((e) => stateOf(e.id) === s).length;
   const shown = filterEvents(events, type, query);
   const types = [...new Set(events.map((e) => e.type))];
+  const counts: Record<string, number> = {};
+  for (const e of events) counts[e.type] = (counts[e.type] ?? 0) + 1;
 
   function open(e: FlightEvent) {
     store.selectEvent(e.id, e.icao24);
@@ -52,7 +55,16 @@ export function EventsView({ events, states }: Props) {
       </div>
       <div className="card" style={{ padding: 0 }}>
         <div className="eventsbar">
-          <EventFilters types={types} type={type} onType={setType} query={query} onQuery={setQuery} />
+          <EventFilters
+            types={types}
+            counts={counts}
+            total={events.length}
+            type={type}
+            onType={setType}
+            query={query}
+            onQuery={setQuery}
+            scope={scopeLine(events)}
+          />
         </div>
         {shown.length === 0 ? (
           <p style={{ padding: 16 }}>{events.length === 0 ? STR.noEvents : STR.noMatches}</p>

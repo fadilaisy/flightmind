@@ -1,11 +1,13 @@
 import { ApiError, type Api } from "./client";
-import type { EventDetail, FlightEvent, Meta, RawRecord, Track } from "./types";
+import type { CompressionReport, EventDetail, FlightEvent, Meta, RawRecord, Track } from "./types";
 
 export interface MockData {
   meta: Meta;
   events: FlightEvent[];
   tracks: Record<string, Track>;
   raw: Record<string, RawRecord>;
+  /** Optional, keyed by recording id. Missing means 404. */
+  compression?: Record<string, CompressionReport>;
 }
 
 // Serves the same shapes as contracts/openapi.yaml from in-memory data.
@@ -30,6 +32,11 @@ export function mockApi(data: MockData): Api {
       citations: [],
       status: "not_enough_evidence" as const,
     }),
+    compression: async (id) => {
+      const r = data.compression?.[id];
+      if (!r) throw new ApiError(404, `/api/compression/${id}`, `No compression report for this recording`);
+      return r;
+    },
     raw: async (rawRef) => {
       const r = data.raw[rawRef];
       if (!r) throw new ApiError(404, `/api/raw/${rawRef}`, `Record not found: ${rawRef}`);

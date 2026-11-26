@@ -94,7 +94,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: lists MapLibre GL, three.js, uPlot and any other library that does real work.
   - Reqs: tech steering rule
 
-- [ ] 19. Compression before/after size (blocked on SCRUM-60)
+- [x] 19. Compression before/after size
   - Files: `src/components/CompressionBadge.tsx`
   - Check: shows raw and stored point counts and sizes for the recording from GET /api/compression/{recording_id}, once that endpoint is in `contracts/openapi.yaml`. Until then, show nothing. Don't add the endpoint here.
   - Reqs: product steering, headline 2

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Api } from "../api/client";
 import type { EventDetail, FlightEvent } from "../api/types";
+import { CompressionBadge } from "../components/CompressionBadge";
 import { Charts } from "../components/Charts";
 import { EventFeed } from "../components/EventFeed";
 import { EventPanel } from "../components/EventPanel";
@@ -61,6 +62,8 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
     };
   }, [api, eventId, detailAttempt]);
 
+  const firstRef = selected?.raw_refs[0] ?? events[0]?.raw_refs[0] ?? null;
+  const recordingId = firstRef ? firstRef.split(":")[0] : null;
   const scrubTs = useStore((s) => s.scrubTs);
   const [cited, setCited] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -166,12 +169,7 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
         )}
       </div>
       <aside className="side r" aria-label="Investigation">
-        <section className="rcard compression" aria-label="Compression card area">
-          <div className="rhead">
-            <span>{STR.reduction}</span>
-          </div>
-          <p className="empty">{STR.compressionEmptyFull}</p>
-        </section>
+        <CompressionBadge api={api} recordingId={recordingId} />
         {selected && track.status === "ready" && track.track.points.length > 0 ? (
           <PointCard points={track.track.points} scrubTs={scrubTs} onOpenRecord={openCited} />
         ) : (

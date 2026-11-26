@@ -1,5 +1,8 @@
 # Tasks: SCRUM-34 first MCP server with get_track
 
+Part 2 (SCRUM-36, cited agent and three more tools) starts at "Part 2: SCRUM-36 cited agent" below; tasks 1 to 9 are done and unchanged.
+
+
 Implements `requirements.md` and `design.md` in this folder. All paths are relative to `E:\Flight Mind\flightmind`. Run commands from `services/intel` with the `.venv` there. Do not edit anything under `contracts/` or `services/intel/mock_api/`.
 
 - [x] 1. Install the SDK and spike the `from` parameter name
@@ -63,3 +66,107 @@ Implements `requirements.md` and `design.md` in this folder. All paths are relat
   - In Kiro Crew, check whether the `flightmind` server shows up from `.kiro/settings/mcp.json` without a manual entry. Write yes or no in the "MCP server (SCRUM-34)" section of `services/intel/README.md`. If no, keep the manual steps that are there now.
   - Add a `KIRO.md` row for agent-mcp/9.
   - _Requirements: 3.1, 3.2, 5.1, 5.4_
+
+
+---
+
+# Part 2: SCRUM-36 cited agent
+
+Implements requirements 7 to 17 in `requirements.md` and Part 2 of `design.md`. All paths are relative to `E:\Flight Mind\flightmind`. Run commands from `services/intel` with the `.venv` there. Edits are allowed only in `services/intel/`, the `dependencies` list of the root `pyproject.toml`, and this spec folder. Do not edit anything under `web/`, `contracts/` or `services/pipeline/`, and do not commit or switch branches unless the user asks. No task calls the Claude API except tasks 22 to 24, which need a key that only Zahran enters, in his own shell; the key is never written to a file in the repo.
+
+- [ ] 10. Install the SDK and check its argument names
+  - Add `anthropic` to `services/intel/requirements.txt` and `services/intel/requirements-serve.txt`, and add `anthropic` and `httpx` to the `dependencies` list in the root `pyproject.toml` and `httpx` to `requirements-serve.txt`. Change nothing else in `pyproject.toml`. Install into `services/intel/.venv`.
+  - Record here the installed `anthropic` version and the confirmed floor to put in the lists.
+  - Without calling the API, check on the installed SDK that `AsyncAnthropic().messages.create` accepts `output_config` (with `effort` and `format`), top-level `cache_control`, per-call `timeout`, and tools with `strict`. If any name differs from design.md, update design.md before task 14.
+  - Done when `python -c "import anthropic, httpx"` works in the venv, the version is written in this task, and the three dependency lists name `anthropic`.
+  - _Requirements: 10.1, 10.2, 10.4, 15.1, 15.2, 15.3_
+
+- [ ] 11. Write the API client in `services/intel/agent/api_client.py`
+  - Create `services/intel/agent/__init__.py` (empty).
+  - Implement `ApiClient` and `ApiError` as in design.md: methods `events`, `event`, `track`, `raw`; construction with a base URL or with `app=` (ASGI transport); single-segment URL encoding; timeout 10 s; error messages (the `track` messages equal those in `mcp_server/client.py`).
+  - It must not import `mock_api` or read any data file.
+  - Done when `ApiClient(app=mock_api.app).track("8A0F21")` returns the same body as `GET /api/tracks/8A0F21` on the mock.
+  - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
+
+- [ ] 12. Write the four tools in `services/intel/agent/tools.py`
+  - Implement `ToolResult`, `search_events`, `get_track` (with thinning), `query_tracks`, `get_raw`, the `TOOLS` registry with constant descriptions and JSON schemas (`from` and `to` names, `additionalProperties: false`), and the dispatcher that maps `from` to `from_` and fills `max_points = 60` for the agent.
+  - Tool failures return `ToolResult(is_error=True)`; no exception ends a run.
+  - The `query_tracks` description states the candidate limit (aircraft that have at least one event).
+  - Done when each tool returns the expected shape against the mock API through the ASGI transport, and `get_track` without `max_points` returns the API body unchanged.
+  - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 8.9_
+
+- [ ] 13. Write the evidence rule in `services/intel/agent/evidence.py`
+  - Implement `NOT_ENOUGH_TEXT`, `EvidenceSet` (`add`, `label_for`) and `render(final)` as in design.md: validate kind and id against what tools returned, drop and log invalid citations and uncited claims, one line per kept claim with bracketed labels, de-duplicated citations in first-use order, the fixed response in every other case.
+  - Done when a scripted final answer with one valid and one invented citation renders only the valid one, and an answer with only invented citations renders `not_enough_evidence`.
+  - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8_
+
+- [ ] 14. Write the agent loop in `services/intel/agent/agent.py`
+  - Implement `SYSTEM_PROMPT`, `ANSWER_SCHEMA`, `TOOLS_FOR_MODEL` and `run_agent(client, api, question, *, model=None, clock=time.monotonic)` as in design.md: the request arguments of requirement 10 (no `thinking`, `temperature`, `top_p`, `top_k`, `budget_tokens`), the 6-call, 25 s and 20 s limits, one user message per turn of tool results, the stop-reason handling, and the usage and summary logging on logger `flightmind.agent`.
+  - The model id comes from `FLIGHTMIND_LLM_MODEL`, default `claude-haiku-5-5`. The system prompt and tool list contain no timestamp.
+  - Done when a scripted two-turn run against the mock API returns an `AskResponse`-shaped dict and the log has one usage line per call plus one summary line.
+  - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 10.9, 13.1, 13.2, 13.4_
+
+- [ ] 15. Write the demo guard in `services/intel/agent/guard.py`
+  - Implement `AskGuard` and `client_key` as in design.md: per-client per-minute limit, per-process daily limit, defaults 5 and 300, settings `FLIGHTMIND_ASK_PER_MINUTE` and `FLIGHTMIND_ASK_PER_DAY`, injected clock (default `time.monotonic`), a cap on tracked clients. State in the module docstring that this is request throttling, not replay time, and that it does not cap spend on serverless.
+  - Done when a test with a fake clock refuses the sixth request in a minute and allows it after 60 seconds.
+  - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5_
+
+- [ ] 16. Wire the agent into `/api/ask`
+  - Write `services/intel/agent/endpoint.py` (`agent_enabled`, `answer_question`) as in design.md: the key check on `ANTHROPIC_API_KEY` only, the explicit `api_key=` for `AsyncAnthropic`, Claude error handling with the class name only.
+  - In `services/intel/mock_api/app.py` change only `ask`: when `agent_enabled()`, check length (422) and the guard (429), then `await answer_question(...)`; otherwise run the existing canned code unchanged.
+  - Done when `/api/ask` with no key still returns the canned answers in the existing tests, and with a fake client and a key it returns the agent's answer.
+  - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 12.3, 12.6, 10.6, 13.3_
+
+- [ ] 17. Expose the four tools in the MCP server
+  - Edit `services/intel/mcp_server/server.py` so `list_tools` returns `query_tracks`, `search_events`, `get_track` and `get_raw` (descriptions and schemas from `tools.py`, `from` and `to` kept) and `call_tool` runs the function in `tools.py` through an `ApiClient` on `FLIGHTMIND_API_BASE` (using `_transport` when set). A tool error result raises so the client gets `isError`. `get_track` without `max_points` returns the unchanged body. Leave `client.py` as it is.
+  - In `services/intel/tests/test_mcp_server.py` change only the expected tool list. Do not edit `.kiro/settings/mcp.json`.
+  - Done when the 23 existing MCP tests pass with only that one expectation changed.
+  - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_
+
+- [ ] 18. Tests for the client and the tools: `services/intel/tests/test_agent_tools.py`
+  - Cover the rows for requirements 7 and 8 in the design testing table: request paths, query parameters and encoding; each error message; thinning keeps first, last and event points and respects the cap of 200; unchanged body without `max_points`; `query_tracks` summaries, filters and the events-only candidate limit; `get_raw`; unknown ids give a tool error result.
+  - Use `ApiClient(app=mock_api.app)` and `httpx.MockTransport`. Use `@pytest.mark.anyio`.
+  - Done when `python -m pytest -q tests/test_agent_tools.py` passes.
+  - _Requirements: 16.1, 16.8, 7.1, 7.2, 7.3, 7.4, 7.5, 8.2, 8.3, 8.4, 8.5, 8.7, 8.8_
+
+- [ ] 19. Tests for evidence and the loop: `services/intel/tests/test_agent_evidence.py` and `test_agent_loop.py`
+  - Build the `FakeAnthropic` stand-in (scripted responses, recorded request arguments, scripted errors). Cover: all tool results of a turn in one user message; claim citing an unreturned raw_ref dropped; kind mismatch dropped; all dropped gives `not_enough_evidence`; valid run validates against `AskResponse` in `contracts/openapi.yaml`; event label `<type> <callsign>`; first-use order and de-duplication; the 6-call limit, the deadline (fake clock), `max_tokens` and `refusal`; request arguments (no forbidden parameters, `strict`, `cache_control`, `output_config`, stable prompt and tools); usage and summary log lines.
+  - Done when `python -m pytest -q tests/test_agent_evidence.py tests/test_agent_loop.py` passes with no network and no key.
+  - _Requirements: 16.1, 16.2, 16.3, 16.4, 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 10.2, 10.3, 10.4, 10.6, 10.7, 10.8, 13.1, 13.2_
+
+- [ ] 20. Tests for the endpoint, the guard, the MCP tools and the dependency lists: `services/intel/tests/test_agent_endpoint.py`, `test_agent_guard.py`, `test_agent_mcp.py`
+  - Cover: no key gives canned answers and the fake is never called; `ANTHROPIC_AUTH_TOKEN` alone, an empty key and `FLIGHTMIND_ASK=canned` give canned answers; Claude API errors give `not_enough_evidence` with a `claude_api` error entry and the key in neither body nor logs; 422 for 501 characters; guard per minute, per day, two clients, `x-forwarded-for`, 429 with no model call, canned mode not limited; MCP lists exactly four tools and each runs through the in-memory session; the three dependency lists name `anthropic`.
+  - Run the whole suite: `python -m pytest -q` from `services/intel`. Existing tests must pass.
+  - Done when the whole suite passes; record the pass count here.
+  - _Requirements: 16.1, 16.5, 16.6, 16.7, 16.9, 16.10, 11.2, 11.3, 11.5, 12.1, 12.2, 12.3, 12.4, 12.6, 14.1, 15.1_
+
+- [ ] 21. Document in `services/intel/README.md`
+  - Add the section "Cited agent (SCRUM-36)": what `/api/ask` does with and without a key, the environment variables (`ANTHROPIC_API_KEY`, `FLIGHTMIND_LLM_MODEL`, `FLIGHTMIND_ASK`, `FLIGHTMIND_ASK_PER_MINUTE`, `FLIGHTMIND_ASK_PER_DAY`), the four tools, the `query_tracks` limit, the evidence rule, the guard and its honest limit (the Claude Console spend limit with auto-reload off is the real cap), and how to run the agent locally with the key set in the shell only.
+  - Update the MCP section to list the four tools. Disclose `anthropic` (official Claude SDK) next to `mcp` and `httpx`.
+  - _Requirements: 12.5, 14.4, 15.4_
+
+- [ ] 22. Proof run against the real Claude API, locally
+  - Needs `ANTHROPIC_API_KEY`, set by Zahran in his own shell. Do not write it to any file and do not ask for it in chat.
+  - Start the API (`uvicorn serve:app --port 8000` or `mock_api.app:app`). Ask the three demo questions through `POST /api/ask`: (a) "Any emergency squawk 7700?" (b) "Which aircraft went around at WIII, and at what altitude did the go-around start?" (c) "How long did LNI456 hold, and at what altitude?"
+  - Record the results in this task (not under `docs/`, which is outside the allowed folders), for each question: the wall-clock time, `status`, the citations, the model id, the four token counts from the `flightmind.agent` log, and the cost in dollars. Read the current Haiku price from the Claude API documentation and write it with the date.
+  - Check that every cited id exists in the mock API (`GET /api/raw/{raw_ref}` or `GET /api/events/{id}`) and that each answer took under 30 seconds. If a question fails, fix the cause in the prompt or tools, not by loosening the evidence rule.
+  - Done when the three rows are written here, all `ok`, all under 30 seconds.
+  - _Requirements: 17.1, 17.2, 17.3, 17.6, 13.1_
+
+- [ ] 23. Repeat the proof on the public site
+  - Zahran sets `ANTHROPIC_API_KEY` as a server-side environment variable on the Vercel project (not `NEXT_PUBLIC_` or any variable the web bundle reads). Redeploy, then ask the same three questions on https://flightmind.vercel.app and record time, status and citations here. Check that the key is not in the web bundle and that a sixth question in a minute gets 429.
+  - Confirm in the Claude Console that a spend limit is set and auto-reload is off. Write the result here without the key or the limit's account details.
+  - Done when the three rows are written here and the guard check is noted.
+  - _Requirements: 17.4, 17.6, 12.1, 12.3, 12.5_
+
+- [ ] 24. Compare `claude-haiku-5-5` with `claude-opus-5-5` before the video
+  - With Zahran's key, run questions (b) and (c) on both models (`FLIGHTMIND_LLM_MODEL`), three runs each. Record correctness, citations, time and cost per answer.
+  - Switch the default or the Vercel variable only if Opus is clearly better and the measured cost fits the $100 credit (tech.md). Write the decision and the numbers here. Do not edit `tech.md` (Role 1 owns it); if the decision changes it, open an issue for Role 1.
+  - Done when the table and the decision are written here.
+  - _Requirements: 17.5, 13.1_
+
+- [ ] 25. Hand-offs and log
+  - Open an issue for Role 1 asking for a `GET /api/tracks` list endpoint in `contracts/openapi.yaml`, so `query_tracks` can find aircraft without events. Add one line for the open items about the UI (500-character limit with the event prefix, how the UI shows HTTP 429).
+  - Add the SCRUM-36 lines to `KIRO.md` (what Kiro did, what was fixed by hand), if that file is editable by the task's owner at that time; otherwise hand the lines to Role 1. Commits use the `Kiro:` trailer and stage files by name.
+  - Done when the issue link is written here.
+  - _Requirements: 8.6, 17.1_

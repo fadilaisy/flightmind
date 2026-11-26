@@ -89,10 +89,10 @@ async def direct_track(icao24=KNOWN, query=""):
 async def test_tool_list_is_exactly_get_track():
     async with create_connected_server_and_client_session(server_mod.server) as session:
         tools = (await session.list_tools()).tools
-    assert [t.name for t in tools] == ["get_track"]
-    schema = tools[0].inputSchema
+    assert [t.name for t in tools] == ["query_tracks", "search_events", "get_track", "get_raw"]
+    schema = next(t for t in tools if t.name == "get_track").inputSchema
     assert schema["required"] == ["icao24"]
-    assert set(schema["properties"]) == {"icao24", "from", "to"}
+    assert set(schema["properties"]) == {"icao24", "from", "to", "max_points"}
 
 
 @pytest.mark.anyio

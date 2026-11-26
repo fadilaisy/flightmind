@@ -327,7 +327,7 @@ client.messages.create(
   6. Any other stop reason (`max_tokens`, `refusal`, `pause_turn`, unknown): fixed response.
 - `tool_calls` entries come from the `ToolResult`s: `{tool, args, result_count}`, plus `error` for failed ones. The args are what the model sent.
 - A question of 500 characters at about 4 characters per token plus the system prompt and four tool schemas is far below 100K tokens (tech.md). A tool result is at most about 200 points, which is bounded by the thinning cap.
-- Anthropic errors (`anthropic.APIError` and subclasses, including `APITimeoutException` and `APIConnectionError`) are not caught in `run_agent`; `endpoint.answer_question` catches them (requirement 11.5). The deadline is checked between calls, and each call's own timeout is `min(20, time_left)`.
+- Anthropic errors (`anthropic.APIError` and subclasses, including `APITimeoutError` and `APIConnectionError`) are not caught in `run_agent`; `endpoint.answer_question` catches them (requirement 11.5). The deadline is checked between calls, and each call's own timeout is `min(20, time_left)`.
 - At the end, one summary line is logged (requirement 13.2).
 
 ### `guard.py`

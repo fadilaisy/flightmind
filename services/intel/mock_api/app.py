@@ -9,14 +9,19 @@ import os
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from agent.endpoint import agent_enabled, answer_question
+from agent.guard import AskGuard, client_key
+
 from . import data
 
 app = FastAPI(title="FlightMind mock API", version="1.1.0")
+
+_guard = AskGuard()  # only used when the cited agent is on (SCRUM-36)
 
 # Mock only: lets the web UI on another local port call it. The real API (SCRUM-37)
 # should restrict origins.
@@ -136,8 +141,15 @@ def _first_ref(event):
 
 
 @app.post("/api/ask")
-def ask(body: AskRequest):
-    """Canned answers by keyword. The real agent is SCRUM-36; only the shape is real."""
+async def ask(body: AskRequest, request: Request):
+    """Cited agent when ANTHROPIC_API_KEY is set (SCRUM-36); otherwise canned answers by keyword."""
+    if agent_enabled():
+        if len(body.question) > 500:
+            raise HTTPException(status_code=422, detail="Question is longer than 500 characters.")
+        host = request.client.host if request.client else None
+        if not _guard.check(client_key(request.headers, host)):
+            raise HTTPException(status_code=429, detail="Too many questions. Try again in a minute.")
+        return await answer_question(body.question, request.app)
     q = body.question.lower()
     if any(w in q for w in ("7700", "emergency", "squawk", "mayday")):
         etype = "squawk_7700"

@@ -25,6 +25,7 @@ WORKDIR /app
 COPY services/intel/requirements-serve.txt .
 RUN pip install --no-cache-dir -r requirements-serve.txt
 COPY services/intel/mock_api/ mock_api/
+COPY services/intel/agent/ agent/
 COPY services/intel/serve.py .
 COPY --from=web /src/web/dist /app/web-dist
 ENV FLIGHTMIND_WEB_DIST=/app/web-dist

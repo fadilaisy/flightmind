@@ -6,7 +6,7 @@ Tick a box only when the check passes. After each ticked task, add a line to `KI
   - Files: `.kiro/specs/kiro-proof/requirements.md`, `design.md`, `tasks.md`
   - Check: requirements are in EARS style and cite SCRUM-70.
 
-- [ ] 1. Trailer check
+- [x] 1. Trailer check
   - Files: `.githooks/commit-msg`, `scripts/install-hooks`, `.kiro/hooks/commit-trailer.kiro.hook`
   - Check: `git commit --allow-empty -m "test"` is refused after `scripts/install-hooks`.
   - Reqs: R1, R2, R3, R4

@@ -1,0 +1,6 @@
+# Shell scripts and git hooks must keep LF line endings on Windows checkouts.
+.githooks/* text eol=lf
+scripts/install-hooks text eol=lf
+scripts/kiro-stats text eol=lf
+scripts/kiro-sessions-export text eol=lf
+scripts/kiro-timeline.mjs text eol=lf

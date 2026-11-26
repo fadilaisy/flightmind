@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-26T08:14:33.196Z",
-  "head": "37d398b7813539497ba4b98b8edd8d431c6c5eda",
+  "generatedAt": "2026-11-26T08:16:21.968Z",
+  "head": "cf5f0639a9124cf78b76199f497d425d2531443d",
   "repo": "https://github.com/fadilaisy/flightmind",
   "mix": {
-    "spec": 49,
+    "spec": 50,
     "vibe": 41,
     "hook": 0,
     "none": 34
@@ -75,6 +75,7 @@
         "tasks": ".kiro/specs/kiro-proof/tasks.md"
       },
       "commits": [
+        "cf5f0639a9124cf78b76199f497d425d2531443d",
         "37d398b7813539497ba4b98b8edd8d431c6c5eda",
         "b1ff3f6662f3aaa744d2ab47bcf26b5febe0c297",
         "9fd0d8baee6af2079a5002ec970fe54af167af23",
@@ -175,6 +176,16 @@
     }
   ],
   "commits": [
+    {
+      "sha": "cf5f0639a9124cf78b76199f497d425d2531443d",
+      "short": "cf5f063",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "kiro-proof/6: KIRO.md evidence index, docs/kiro/README.md, refreshed logs and timeline",
+      "kind": "spec",
+      "spec": "kiro-proof",
+      "task": "6"
+    },
     {
       "sha": "37d398b7813539497ba4b98b8edd8d431c6c5eda",
       "short": "37d398b",

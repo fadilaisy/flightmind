@@ -29,7 +29,7 @@ Old commits are never rewritten. Extend the existing "## Trailer corrections" me
 - Redaction before writing: replace the user's home directory (`Path.home()`, both slash styles) with `~`, temp scratchpad paths with `<temp>`, and anything that looks like a secret (`sk-[A-Za-z0-9_-]{16,}`, `AKIA[0-9A-Z]{16}`, `ghp_[A-Za-z0-9]{20,}`, `xox[bp]-[A-Za-z0-9-]+`, `-----BEGIN [A-Z ]*PRIVATE KEY-----` blocks, values of `ANTHROPIC_API_KEY=`/`*_TOKEN=`/`*_SECRET=`) with `<redacted>`. Also redact email addresses.
 - Writes `docs/kiro/sessions/cli/README.md` as an index table: date, session id, first prompt (one line), prompts, tool calls, link.
 - Re-running is idempotent (same input gives same files).
-Run it with `--also-cwd` set to the folder `~\OneDrive\Documents\flightmind kiroween\flightmind` (the main checkout, where most sessions ran) in addition to this clone. Before committing, grep the output for `Pongo`, `@gmail`, `sk-`, `AKIA`, `ghp_` and `BEGIN` and fix the redaction if anything shows up. Commit the generated files. If a single session file is over 1 MB of markdown, cut tool-call lines after the first 2000 and say so at the end of that file.
+Run it with `--also-cwd` set to the folder `~\OneDrive\Documents\flightmind kiroween\flightmind` (the main checkout, where most sessions ran) in addition to this clone. Before committing, grep the output for `<user>`, `@gmail`, `sk-`, `AKIA`, `ghp_` and `BEGIN` and fix the redaction if anything shows up. Commit the generated files. If a single session file is over 1 MB of markdown, cut tool-call lines after the first 2000 and say so at the end of that file.
 Update `docs/kiro/sessions/2026-11-14-scrum-31-32-chat.md` only if a matching CLI session exists; otherwise leave it.
 
 ## Task 4: timeline data

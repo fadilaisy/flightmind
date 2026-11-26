@@ -62,6 +62,12 @@ def _home_pattern() -> re.Pattern[str]:
 
 
 HOME = _home_pattern()
+# The bare user name (for example inside a grep pattern) is redacted too, when it is long enough
+# not to mangle ordinary words.
+_USER = Path.home().name
+USER_NAME = (
+    re.compile(r"(?<![A-Za-z0-9_])" + re.escape(_USER) + r"(?![A-Za-z0-9_])", re.I) if len(_USER) >= 4 else None
+)
 
 
 def redact(text: str) -> str:
@@ -70,6 +76,8 @@ def redact(text: str) -> str:
     text = ENV_SECRET.sub(lambda m: f"{m.group(1)}{m.group(2)}<redacted>", text)
     text = TEMP_SCRATCHPAD.sub("<temp>", text)
     text = HOME.sub("~", text)
+    if USER_NAME is not None:
+        text = USER_NAME.sub("<user>", text)
     text = ONEDRIVE_ORG.sub("OneDrive", text)
     text = EMAIL.sub("<redacted>", text)
     return text

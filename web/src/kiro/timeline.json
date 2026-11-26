@@ -1,0 +1,1292 @@
+{
+  "generatedAt": "2026-11-26T08:05:18.528Z",
+  "head": "9fd0d8baee6af2079a5002ec970fe54af167af23",
+  "repo": "https://github.com/fadilaisy/flightmind",
+  "mix": {
+    "spec": 47,
+    "vibe": 41,
+    "hook": 0,
+    "none": 34
+  },
+  "unclassified": 0,
+  "specs": [
+    {
+      "name": "agent-mcp",
+      "title": "Requirements: SCRUM-34 first MCP server with get_track",
+      "tasksDone": 23,
+      "tasksTotal": 25,
+      "files": {
+        "requirements": ".kiro/specs/agent-mcp/requirements.md",
+        "design": ".kiro/specs/agent-mcp/design.md",
+        "tasks": ".kiro/specs/agent-mcp/tasks.md"
+      },
+      "commits": [
+        "f23e3b20f5107074de2c26a16377a447d7296d18",
+        "d5e535cf3f6cbc1c460a088b0504981864236013"
+      ]
+    },
+    {
+      "name": "api-deploy",
+      "title": "Requirements: SCRUM-38 deploy the public live URL in replay mode",
+      "tasksDone": 12,
+      "tasksTotal": 20,
+      "files": {
+        "requirements": ".kiro/specs/api-deploy/requirements.md",
+        "design": ".kiro/specs/api-deploy/design.md",
+        "tasks": ".kiro/specs/api-deploy/tasks.md"
+      },
+      "commits": [
+        "c72a04629fdeeaa6a6fc39e9ca3e56afa25f15a4",
+        "1fcd6cbf29536dece5726ae56dcf7a08e2826238"
+      ]
+    },
+    {
+      "name": "compression",
+      "title": "Requirements: compression",
+      "tasksDone": 5,
+      "tasksTotal": 5,
+      "files": {
+        "requirements": ".kiro/specs/compression/requirements.md",
+        "design": ".kiro/specs/compression/design.md",
+        "tasks": ".kiro/specs/compression/tasks.md"
+      },
+      "commits": []
+    },
+    {
+      "name": "detectors",
+      "title": "Requirements: detectors",
+      "tasksDone": 17,
+      "tasksTotal": 17,
+      "files": {
+        "requirements": ".kiro/specs/detectors/requirements.md",
+        "design": ".kiro/specs/detectors/design.md",
+        "tasks": ".kiro/specs/detectors/tasks.md"
+      },
+      "commits": []
+    },
+    {
+      "name": "kiro-proof",
+      "title": "Requirements: kiro-proof (SCRUM-70)",
+      "tasksDone": 4,
+      "tasksTotal": 7,
+      "files": {
+        "requirements": ".kiro/specs/kiro-proof/requirements.md",
+        "design": ".kiro/specs/kiro-proof/design.md",
+        "tasks": ".kiro/specs/kiro-proof/tasks.md"
+      },
+      "commits": [
+        "9fd0d8baee6af2079a5002ec970fe54af167af23",
+        "8ece81580c445d243211bae3f1a49a90ec8f0942",
+        "03921047596d1a00ff44a16788b52519fc5276be",
+        "154d228b8ea505ec770cd3fef8e435896571707f"
+      ]
+    },
+    {
+      "name": "scrum-19",
+      "title": "Requirements: SCRUM-19 Kiro hooks and data-quality-reviewer agent",
+      "tasksDone": 5,
+      "tasksTotal": 6,
+      "files": {
+        "requirements": ".kiro/specs/scrum-19/requirements.md",
+        "design": ".kiro/specs/scrum-19/design.md",
+        "tasks": ".kiro/specs/scrum-19/tasks.md"
+      },
+      "commits": [
+        "2766b21b37f5683a66a4d3ceddd65d60ec6c0474"
+      ]
+    },
+    {
+      "name": "scrum-40",
+      "title": "Requirements: SCRUM-40 event feed and investigation panel",
+      "tasksDone": 6,
+      "tasksTotal": 6,
+      "files": {
+        "requirements": ".kiro/specs/scrum-40/requirements.md",
+        "design": ".kiro/specs/scrum-40/design.md",
+        "tasks": ".kiro/specs/scrum-40/tasks.md"
+      },
+      "commits": [
+        "05252713e7e8ed2aa5b6b22b62deee9c37f6da54",
+        "57828c7e23c53f236160ec47632fc8d462d449e9"
+      ]
+    },
+    {
+      "name": "storage",
+      "title": "Requirements: storage",
+      "tasksDone": 13,
+      "tasksTotal": 14,
+      "files": {
+        "requirements": ".kiro/specs/storage/requirements.md",
+        "design": ".kiro/specs/storage/design.md",
+        "tasks": ".kiro/specs/storage/tasks.md"
+      },
+      "commits": []
+    },
+    {
+      "name": "web-ui",
+      "title": "Requirements: web-ui (SCRUM-39)",
+      "tasksDone": 18,
+      "tasksTotal": 19,
+      "files": {
+        "requirements": ".kiro/specs/web-ui/requirements.md",
+        "design": ".kiro/specs/web-ui/design.md",
+        "tasks": ".kiro/specs/web-ui/tasks.md"
+      },
+      "commits": [
+        "ddcaf5b78729d7b93e46e1b88eb1b5bd02be6126",
+        "2f111c1e6c7be50709b4b2c1eff1f28461bc5846",
+        "f2587bc25e2a4cb50cfb79d87b5aab78f8ae739f",
+        "bf51c1bbfe7bbdb4b163dfd5206c4c4f0c8ea267",
+        "565c68e324ee61c4a389261c08383b63333e9742",
+        "6d92cf33ccfdfd9bd26ad07345dd4d4fa823b10e",
+        "16841fe7582c7dffb486ac025348334b15c4143b",
+        "c555b3a9771a881a81792bf5d6fc9eef9b1081d3",
+        "e6d457e851207acd5a0f8c41ef5afed87e2a82e9",
+        "45d0df0f2ff866270a92c154d9db719d9a803b66",
+        "338e7c959dcc0b3da8db0d2752ddb26e02cff42c",
+        "58127488e88643d54dcad6ca6eee60396e2bedc2",
+        "40b9bc9cafc83780cb4dba11c437ecd21ffedd5f",
+        "6d8e29c2edd630c6ca14a9d50bb5989d225135a0",
+        "6d8f589b6b389b382845c521a44cdac760889ef1",
+        "222e899f0def97a25ffb1ceeb55679a554416a01",
+        "e78210bff275262ba189a2d20153abc9782e6724",
+        "5eea0f7ab0ac32a913aa0847b92c71db02703839",
+        "6a30f158b7f71da0d6b527ecb47d4f0135d189d1",
+        "0f7c79bf060f8b63d116f33b73b070488faed346",
+        "f9cc0054515faef936590e5527a39bec5a0621cc",
+        "7c9af5e1a26dc67d7c6995ff4477ce2b0fda0186",
+        "c55a68a0f582b6170a05e827cfc1bd598a11b3a5",
+        "48d0b8d2552dfa483e2cb506956a97653818a73a",
+        "bedc6a71f09b72c89c905c3c193286875a967b00",
+        "62c38937003f1054c30d2cd95c7aa1ecee30e51e",
+        "26f3a75905ea7c90795f9eb0c0c2a167b1715562",
+        "06429d3baf2c86c4b86daa9f7faf00eff17343de",
+        "3d4565471e21f62c723d6b5f77fbd7736c2c41c2",
+        "84e050036cdc6a44950ea006150c4babf136b168",
+        "30ea88a2c2a9455e949f39c104e78ecffbfb2b09",
+        "33a5e3b5aa60016a26aa4eec1fe21ec29c53c35e",
+        "b8ced0619c28f59cf19eeee3e6daf92cdce375b7",
+        "cb6f4c0c1dfdaabed0111587f88338dbc55e921e",
+        "ec6f98c7ba76e39fddee9bddac8cb6d1c3a4a6a2",
+        "9c4b8d5a6365d6f2c1a6edd1305446e9275bde57"
+      ]
+    }
+  ],
+  "commits": [
+    {
+      "sha": "9fd0d8baee6af2079a5002ec970fe54af167af23",
+      "short": "9fd0d8b",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "kiro-proof/3: export Kiro CLI session logs with redaction",
+      "kind": "spec",
+      "spec": "kiro-proof",
+      "task": "3"
+    },
+    {
+      "sha": "8ece81580c445d243211bae3f1a49a90ec8f0942",
+      "short": "8ece815",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "kiro-proof/2: backfill missing trailers by correction, kiro-stats shows unclassified and shares",
+      "kind": "spec",
+      "spec": "kiro-proof",
+      "task": "2"
+    },
+    {
+      "sha": "03921047596d1a00ff44a16788b52519fc5276be",
+      "short": "0392104",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "kiro-proof/1: commit-msg trailer check, install-hooks and IDE hook",
+      "kind": "spec",
+      "spec": "kiro-proof",
+      "task": "1"
+    },
+    {
+      "sha": "154d228b8ea505ec770cd3fef8e435896571707f",
+      "short": "154d228",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "kiro-proof/0: spec for verifiable Kiro usage (SCRUM-70)",
+      "kind": "spec",
+      "spec": "kiro-proof",
+      "task": "0"
+    },
+    {
+      "sha": "ddcaf5b78729d7b93e46e1b88eb1b5bd02be6126",
+      "short": "ddcaf5b",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "test(web): smoke test for each tab and Figma difference list",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "17"
+    },
+    {
+      "sha": "2f111c1e6c7be50709b4b2c1eff1f28461bc5846",
+      "short": "2f111c1",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "fix(web): Records card scrolls, fills Length and Fields, no underline on bytes",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "14"
+    },
+    {
+      "sha": "f2587bc25e2a4cb50cfb79d87b5aab78f8ae739f",
+      "short": "f2587bc",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "fix(web): compact flagged window label and clear row labels in charts",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "10"
+    },
+    {
+      "sha": "bf51c1bbfe7bbdb4b163dfd5206c4c4f0c8ea267",
+      "short": "bf51c1b",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "fix(web): 3D view frames the track and keeps the altitude axis in view",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "12"
+    },
+    {
+      "sha": "565c68e324ee61c4a389261c08383b63333e9742",
+      "short": "565c68e",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "feat(web): Reduction card from /api/compression (task 19)",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "19"
+    },
+    {
+      "sha": "f12cbff0d757714ebdef066ee0cefb13202e1a56",
+      "short": "f12cbff",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-36): note the confirmed Claude Console spend limit (task 23)",
+      "kind": "none"
+    },
+    {
+      "sha": "43856a256e68c906ef82a911fba7ee7814ae49ec",
+      "short": "43856a2",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-36): record the proof on the public site (task 23)",
+      "kind": "none"
+    },
+    {
+      "sha": "6d92cf33ccfdfd9bd26ad07345dd4d4fa823b10e",
+      "short": "6d92cf3",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/16: wording test scans strings.ts and every component",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "16"
+    },
+    {
+      "sha": "05252713e7e8ed2aa5b6b22b62deee9c37f6da54",
+      "short": "0525271",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "scrum-40: ask box test, flagged window wording on the charts, tick tasks 3 to 5",
+      "kind": "spec",
+      "spec": "scrum-40",
+      "task": "3-5"
+    },
+    {
+      "sha": "9d9c0b1354ebed5f13a471121df80026d4412337",
+      "short": "9d9c0b1",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-36): record the proof run on the real Claude API (task 22)",
+      "kind": "none"
+    },
+    {
+      "sha": "16841fe7582c7dffb486ac025348334b15c4143b",
+      "short": "16841fe",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/17: loading, empty and error states with Retry",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "17"
+    },
+    {
+      "sha": "2f2c849d70cded368e95a7e9be7723d215742079",
+      "short": "2f2c849",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "fix(intel): review fixes for the cited agent (SCRUM-36)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "c555b3a9771a881a81792bf5d6fc9eef9b1081d3",
+      "short": "c555b3a",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/6: Events tab matches Figma frame 4",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "6"
+    },
+    {
+      "sha": "56806e49d01352f87e3d8c99770a0184c0c53f7a",
+      "short": "56806e4",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "fix(intel): print the agent's token usage lines when nothing configured logging (SCRUM-36)",
+      "kind": "none"
+    },
+    {
+      "sha": "e6d457e851207acd5a0f8c41ef5afed87e2a82e9",
+      "short": "e6d457e",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/10: charts rows keep their labels clear of the plots",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "10"
+    },
+    {
+      "sha": "45d0df0f2ff866270a92c154d9db719d9a803b66",
+      "short": "45d0df0",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/14: Records tab matches Figma frame 9",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "14"
+    },
+    {
+      "sha": "5a44506b5711786db84863eecdb8fe460ce725c9",
+      "short": "5a44506",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(kiro): log SCRUM-36 cited agent",
+      "kind": "none"
+    },
+    {
+      "sha": "f23e3b20f5107074de2c26a16377a447d7296d18",
+      "short": "f23e3b2",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "feat(intel): cited agent on the Claude API with four tools and an evidence rule (SCRUM-36)",
+      "kind": "spec",
+      "spec": "agent-mcp",
+      "task": "10-21"
+    },
+    {
+      "sha": "338e7c959dcc0b3da8db0d2752ddb26e02cff42c",
+      "short": "338e7c9",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/17: Figma alignment for the right column and the event panel drawer",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "17"
+    },
+    {
+      "sha": "cfaa83bad268f11575e64125b8e726f4e1473fd9",
+      "short": "cfaa83b",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(spec): agent-mcp part 2, the cited agent (SCRUM-36)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "deb894b8101659ff06150dd0a8345cc09a895e64",
+      "short": "deb894b",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "fix(deploy): serve the web build from the Vercel function, not from public/ (SCRUM-38)",
+      "kind": "none"
+    },
+    {
+      "sha": "c2801d1bb5de8a9c5b281edd86fe0a868aafc0c9",
+      "short": "c2801d1",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "fix(deploy): anchor .vercelignore so web/tests/fixtures reaches the Vercel build (SCRUM-38)",
+      "kind": "none"
+    },
+    {
+      "sha": "58127488e88643d54dcad6ca6eee60396e2bedc2",
+      "short": "5812748",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/11: Figma alignment for the scrubber card",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "11"
+    },
+    {
+      "sha": "5722ccf9f9038573a05eb8c077ca0d3adc66d9d5",
+      "short": "5722ccf",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-36): start on Claude Haiku 5.5 and measure cost",
+      "kind": "none"
+    },
+    {
+      "sha": "40b9bc9cafc83780cb4dba11c437ecd21ffedd5f",
+      "short": "40b9bc9",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/10: Figma alignment for the charts card",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "10"
+    },
+    {
+      "sha": "6d8e29c2edd630c6ca14a9d50bb5989d225135a0",
+      "short": "6d8e29c",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/8: Figma alignment for the map card",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "8"
+    },
+    {
+      "sha": "d079d6f0da44de0cf7dfd598d0d750a91cbe9ba5",
+      "short": "d079d6f",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-36): switch the LLM from Coarena to the Claude API",
+      "kind": "none"
+    },
+    {
+      "sha": "6d8f589b6b389b382845c521a44cdac760889ef1",
+      "short": "6d8f589",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/3: Figma alignment for app bar, event list and track header",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "3"
+    },
+    {
+      "sha": "70e116f3a4cd28d4ad3846bf137eb60a1417f1e3",
+      "short": "70e116f",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-38): record the public URL https://flightmind.vercel.app and its checks",
+      "kind": "none"
+    },
+    {
+      "sha": "22e4271a349e91fcebff49561e2e7ff00017912c",
+      "short": "22e4271",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "chore(deploy): let pytest run from the repo root (SCRUM-38)",
+      "kind": "none"
+    },
+    {
+      "sha": "b1d413baff10091ef5fc9dec468e9216a678e735",
+      "short": "b1d413b",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "fix(deploy): keep the test cache out of the Vercel bundle; record the first deploy (SCRUM-38)",
+      "kind": "none"
+    },
+    {
+      "sha": "c72a04629fdeeaa6a6fc39e9ca3e56afa25f15a4",
+      "short": "c72a046",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "feat(deploy): build the public URL on Vercel instead of Railway (SCRUM-38)",
+      "kind": "spec",
+      "spec": "api-deploy",
+      "task": "17,18,20"
+    },
+    {
+      "sha": "015b1aaa76784d839522170c09f33b9c0ba3ac6c",
+      "short": "015b1aa",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(kiro): correct the SCRUM-38 test count to 19",
+      "kind": "none"
+    },
+    {
+      "sha": "ebc847a6a512f304c615c3f9897b936f1a9e38d1",
+      "short": "ebc847a",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-38): record the browser check, the blocked deploy and the KIRO.md row",
+      "kind": "none"
+    },
+    {
+      "sha": "eb1d7e6f61d1994d28a8c06ac1d59e475e9cb682",
+      "short": "eb1d7e6",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "fix(SCRUM-60): empty recording returns 404, not ratio 0",
+      "kind": "none"
+    },
+    {
+      "sha": "1fcd6cbf29536dece5726ae56dcf7a08e2826238",
+      "short": "1fcd6cb",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "feat(deploy): one image for the web UI and the API, with a smoke check (SCRUM-38)",
+      "kind": "spec",
+      "spec": "api-deploy",
+      "task": "1-7"
+    },
+    {
+      "sha": "886f4da4e4daf3654a272cd9a5af8b0dd546ab25",
+      "short": "886f4da",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(spec): api-deploy requirements and design (SCRUM-38)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "f9aa23add3372b3bd1db9798b93e9449fadd85a9",
+      "short": "f9aa23a",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "fix(SCRUM-60): review fixes for the compression endpoint",
+      "kind": "vibe"
+    },
+    {
+      "sha": "334cfd21ba33bd3b9091f031b55f862c6cbbab60",
+      "short": "334cfd2",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(kiro): log SCRUM-60 compression endpoint",
+      "kind": "none"
+    },
+    {
+      "sha": "9da7174e1b5d1cc49942a5b6f95d02759126a0e2",
+      "short": "9da7174",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "feat(contracts): add GET /api/compression/{recording_id} and serve it from the mock API (SCRUM-60)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "dd13adb9a8daffb28272c429568f73ff6b3c7c90",
+      "short": "dd13adb",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-34): log the task 7 clip in clips.md",
+      "kind": "none"
+    },
+    {
+      "sha": "76087b2bf87c2dfc59a3f1681f32b672a3808625",
+      "short": "76087b2",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-34): log the IDE clip and tick agent-mcp task 9",
+      "kind": "none"
+    },
+    {
+      "sha": "222e899f0def97a25ffb1ceeb55679a554416a01",
+      "short": "222e899",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/15: hex pane with linked highlight and cited-record dialog",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "15"
+    },
+    {
+      "sha": "870f238bedeff21c113f4b7fd5f0b8788808b5eb",
+      "short": "870f238",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-34): IDE chat check by hand and Kiro Crew answer (agent-mcp task 9)",
+      "kind": "none"
+    },
+    {
+      "sha": "e78210bff275262ba189a2d20153abc9782e6724",
+      "short": "e78210b",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/14: Records tab with tables, item card and bytes card",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "14"
+    },
+    {
+      "sha": "5eea0f7ab0ac32a913aa0847b92c71db02703839",
+      "short": "5eea0f7",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/12: 3D trajectory view with three.js",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "12"
+    },
+    {
+      "sha": "6dffc91fb5c0b7feee99f6a36fcc434daf6af254",
+      "short": "6dffc91",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "docs(kiro): Figma design context and assets for frames 5 and 6",
+      "kind": "none",
+      "corrected": true
+    },
+    {
+      "sha": "6a30f158b7f71da0d6b527ecb47d4f0135d189d1",
+      "short": "6a30f15",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/11: scrubber with play, slider and keyboard",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "11"
+    },
+    {
+      "sha": "0f7c79bf060f8b63d116f33b73b070488faed346",
+      "short": "0f7c79b",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/10: altitude, speed and vertical rate charts",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "10"
+    },
+    {
+      "sha": "f9cc0054515faef936590e5527a39bec5a0621cc",
+      "short": "f9cc005",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/8: track points, line, hover card and zoom to window",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "8"
+    },
+    {
+      "sha": "7c9af5e1a26dc67d7c6995ff4477ce2b0fda0186",
+      "short": "7c9af5e",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "web-ui/7: map with OSM basemap, WIII runway and legend",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "7"
+    },
+    {
+      "sha": "fe9d0900a0425d6468e680c1df41a9b4495a6970",
+      "short": "fe9d090",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "docs(kiro): Figma and prototype reference screenshots for the web UI review; add figma MCP server",
+      "kind": "none",
+      "corrected": true
+    },
+    {
+      "sha": "c55a68a0f582b6170a05e827cfc1bd598a11b3a5",
+      "short": "c55a68a",
+      "date": "2026-11-25",
+      "author": "fadilaisy",
+      "subject": "web-ui/9: derived speed and vertical rate",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "9"
+    },
+    {
+      "sha": "48d0b8d2552dfa483e2cb506956a97653818a73a",
+      "short": "48d0b8d",
+      "date": "2026-11-25",
+      "author": "fadilaisy",
+      "subject": "web-ui/13: item metadata table and derived values",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "13"
+    },
+    {
+      "sha": "bedc6a71f09b72c89c905c3c193286875a967b00",
+      "short": "bedc6a7",
+      "date": "2026-11-25",
+      "author": "fadilaisy",
+      "subject": "web-ui/6: events tab",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "6"
+    },
+    {
+      "sha": "62c38937003f1054c30d2cd95c7aa1ecee30e51e",
+      "short": "62c3893",
+      "date": "2026-11-25",
+      "author": "fadilaisy",
+      "subject": "web-ui/5: point style and window logic",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "5"
+    },
+    {
+      "sha": "275421921865928973184a622ae417da1614f234",
+      "short": "2754219",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-34): address PR #15 review (task 9, clip names, log row)",
+      "kind": "none"
+    },
+    {
+      "sha": "b7f74c2df9c00dd4e104ebcc5938dd595887dc95",
+      "short": "b7f74c2",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(kiro): log agent-mcp task 8 (SCRUM-34)",
+      "kind": "none"
+    },
+    {
+      "sha": "1d9da9006487267db98c3a2c27669006d7fa231c",
+      "short": "1d9da90",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-34): tick agent-mcp task 8 (Role 1 issue #16, KIRO.md log)",
+      "kind": "none"
+    },
+    {
+      "sha": "b9d3fd5a0b8fa24a79de482958feaab739b4ad67",
+      "short": "b9d3fd5",
+      "date": "2026-11-25",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-34): verify get_track in Kiro and add the clip (agent-mcp task 7)",
+      "kind": "none"
+    },
+    {
+      "sha": "3ca7457c3a4a6a61fbaabfc91c6a6a13dd43b8db",
+      "short": "3ca7457",
+      "date": "2026-11-25",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-34): record the independent SDK-client check and what is still unverified",
+      "kind": "vibe"
+    },
+    {
+      "sha": "09de8aefff8c471c562ab4c148b9557b192a5907",
+      "short": "09de8ae",
+      "date": "2026-11-25",
+      "author": "ZahranTnc",
+      "subject": "docs(kiro): log SCRUM-34 agent-mcp",
+      "kind": "vibe"
+    },
+    {
+      "sha": "5c7326da0f28a33f0b7306cdffed019390f1b13f",
+      "short": "5c7326d",
+      "date": "2026-11-25",
+      "author": "ZahranTnc",
+      "subject": "feat(kiro): register the flightmind MCP server in .kiro/settings/mcp.json (SCRUM-34)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "d5e535cf3f6cbc1c460a088b0504981864236013",
+      "short": "d5e535c",
+      "date": "2026-11-25",
+      "author": "ZahranTnc",
+      "subject": "feat(intel): MCP server with get_track as a thin client of the API (SCRUM-34)",
+      "kind": "spec",
+      "spec": "agent-mcp",
+      "task": "1-4,6"
+    },
+    {
+      "sha": "26f3a75905ea7c90795f9eb0c0c2a167b1715562",
+      "short": "26f3a75",
+      "date": "2026-11-25",
+      "author": "fadilaisy",
+      "subject": "web-ui/3: drop event type from ask prefix, document useStore, select first event",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "3"
+    },
+    {
+      "sha": "06429d3baf2c86c4b86daa9f7faf00eff17343de",
+      "short": "06429d3",
+      "date": "2026-11-25",
+      "author": "fadilaisy",
+      "subject": "web-ui/3: PR #13 review fixes",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "3"
+    },
+    {
+      "sha": "3d4565471e21f62c723d6b5f77fbd7736c2c41c2",
+      "short": "3d45654",
+      "date": "2026-11-25",
+      "author": "fadilaisy",
+      "subject": "web-ui/3: restyle to prototype v2 Trajectory screen",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "3"
+    },
+    {
+      "sha": "827b37e4f6d26d0cd3d73644addd475a733125ad",
+      "short": "827b37e",
+      "date": "2026-11-25",
+      "author": "fadilaisy",
+      "subject": "docs: add prototype v2 as visual reference",
+      "kind": "none"
+    },
+    {
+      "sha": "84e050036cdc6a44950ea006150c4babf136b168",
+      "short": "84e0500",
+      "date": "2026-11-25",
+      "author": "fadilaisy",
+      "subject": "web-ui/4: store",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "4"
+    },
+    {
+      "sha": "30ea88a2c2a9455e949f39c104e78ecffbfb2b09",
+      "short": "30ea88a",
+      "date": "2026-11-25",
+      "author": "fadilaisy",
+      "subject": "web-ui/3: tokens and shell with tabs",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "3"
+    },
+    {
+      "sha": "4481df7277281dc7ba5ac556de4e215f6a335887",
+      "short": "4481df7",
+      "date": "2026-11-25",
+      "author": "fadilaisy",
+      "subject": "docs(kiro): remove stray BOM from KIRO.md",
+      "kind": "vibe"
+    },
+    {
+      "sha": "5677ea0a3d88033c943492fa946442908b3ee0a6",
+      "short": "5677ea0",
+      "date": "2026-11-25",
+      "author": "fadilaisy",
+      "subject": "docs(kiro): log SCRUM-40",
+      "kind": "vibe"
+    },
+    {
+      "sha": "57828c7e23c53f236160ec47632fc8d462d449e9",
+      "short": "57828c7",
+      "date": "2026-11-24",
+      "author": "fadilaisy",
+      "subject": "feat(web): event feed, investigation panel and raw record viewer (SCRUM-40)",
+      "kind": "spec",
+      "spec": "scrum-40",
+      "task": "1-6"
+    },
+    {
+      "sha": "24a70548183d331d4e575606cc61aaba43c33079",
+      "short": "24a7054",
+      "date": "2026-11-24",
+      "author": "fadilaisy",
+      "subject": "docs(scrum-40): spec for event feed and investigation panel",
+      "kind": "vibe"
+    },
+    {
+      "sha": "2a0d9b0d0970dcfe75a5c297cb429a5b8f4195da",
+      "short": "2a0d9b0",
+      "date": "2026-11-24",
+      "author": "tokyokoolkar-sys",
+      "subject": "test(pipeline): dev-only cross-check of decoded fields against aviconv-asterix (MIT)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "84b1459cc4c5d4c8c35e07258c838c1c1210b375",
+      "short": "84b1459",
+      "date": "2026-11-23",
+      "author": "tokyokoolkar-sys",
+      "subject": "chore(pipeline): trim trailing blank lines; comment the probe test (review 2026-11-23c)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "796c233bb83bfb5cd6514a403d1d770cb8e6f503",
+      "short": "796c233",
+      "date": "2026-11-23",
+      "author": "tokyokoolkar-sys",
+      "subject": "fix(pipeline): hard 60 s confirm cap and named climb gap; spec for climb rule; KIRO.md week section (review 2026-11-23b)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "a13f4ccee2da93a38691936c305d75b60a3cd0f1",
+      "short": "a13f4cc",
+      "date": "2026-11-23",
+      "author": "tokyokoolkar-sys",
+      "subject": "fix(pipeline): stale go-around approach after a gap inside the box; dev extras; fixture smoke test (review)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "a73929d83d6c8a1196a58b5752c82cab99ef49b1",
+      "short": "a73929d",
+      "date": "2026-11-23",
+      "author": "tokyokoolkar-sys",
+      "subject": "docs: tick done spec tasks, log finished steps in KIRO.md, add 500-packet CAT021 fixture",
+      "kind": "vibe"
+    },
+    {
+      "sha": "5f07b0f370a9df4f9308374d4cf41d0d1be6188e",
+      "short": "5f07b0f",
+      "date": "2026-11-23",
+      "author": "tokyokoolkar-sys",
+      "subject": "docs(specs): detector citation windows are by record position (2026-11-17 decision)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "7ca8cc232f9d263e7259f51133c0be52a0daeea3",
+      "short": "7ca8cc2",
+      "date": "2026-11-23",
+      "author": "tokyokoolkar-sys",
+      "subject": "feat(bench): Postgres rowstore vs columnstore and DuckDB storage benchmark (plan steps 9-10)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "780edacd4ec18f2a18147d516e7dbc51e40f6512",
+      "short": "780edac",
+      "date": "2026-11-23",
+      "author": "tokyokoolkar-sys",
+      "subject": "perf(pipeline): skip the per-split error scan when an anchor lacks altitude (identical output, 531 s to 29 s on hour 00)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "11b4835300e492d56bb87ef23accf8d8a0733c6d",
+      "short": "11b4835",
+      "date": "2026-11-23",
+      "author": "tokyokoolkar-sys",
+      "subject": "feat(pipeline): transactional storage writer and CLI with compression report (plan step 7)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "d9645751fd4902a3382898b7818a2a6ebe57cb9c",
+      "short": "d964575",
+      "date": "2026-11-23",
+      "author": "tokyokoolkar-sys",
+      "subject": "feat(pipeline): NACp-gated Douglas-Peucker compression with SED (plan step 6)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "cd6c372f7cc32ca02fbe40e584adf07462fd9458",
+      "short": "cd6c372",
+      "date": "2026-11-23",
+      "author": "tokyokoolkar-sys",
+      "subject": "fix(pipeline): nacp_range in event details; lost approach before climb outside the box (gate round 1)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "b9a5de948fc83c924244d1ae70ae2596da813eea",
+      "short": "b9a5de9",
+      "date": "2026-11-22",
+      "author": "tokyokoolkar-sys",
+      "subject": "feat(pipeline): holding detector from racetrack leg segmentation (plan step 5)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "ba246992ac1498cefd23018d40da600765666af8",
+      "short": "ba24699",
+      "date": "2026-11-22",
+      "author": "fadilaisy",
+      "subject": "docs(kiro): Sunday review 2026-11-22 and Crew hook log line (SCRUM-43)",
+      "kind": "none"
+    },
+    {
+      "sha": "5565defe428e2b25ad02f4555f36e6c74a01ac91",
+      "short": "5565def",
+      "date": "2026-11-22",
+      "author": "tokyokoolkar-sys",
+      "subject": "feat(pipeline): go-around detector, climb checked before runway box (plan step 4)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "1950a7e8a905339fe5aa9d8255d818e0590db1d0",
+      "short": "1950a7e",
+      "date": "2026-11-22",
+      "author": "tokyokoolkar-sys",
+      "subject": "feat(pipeline): squawk detector with raw_ref windows by position (plan step 3)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "2c583ee41638aa1d42911439f1949bd28c71e9aa",
+      "short": "2c583ee",
+      "date": "2026-11-22",
+      "author": "tokyokoolkar-sys",
+      "subject": "feat(pipeline): points, pcap reader, tracks and runway geometry (plan steps 1-2)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "192a0f8535e797c1d7a03e840925b185b4a93b77",
+      "short": "192a0f8",
+      "date": "2026-11-22",
+      "author": "tokyokoolkar-sys",
+      "subject": "docs(specs): detectors, compression and storage specs from the Opus plan",
+      "kind": "vibe"
+    },
+    {
+      "sha": "c340a1427a1a108d44dd02bbd8944c6e6be4245f",
+      "short": "c340a14",
+      "date": "2026-11-22",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-33): note /api/stream is unused by the UI, finish KIRO.md line",
+      "kind": "none"
+    },
+    {
+      "sha": "c55bc88bb8b49e21646a4dd5ec6af919d1abf75e",
+      "short": "c55bc88",
+      "date": "2026-11-22",
+      "author": "ZahranTnc",
+      "subject": "docs(kiro): log SCRUM-33 mock API",
+      "kind": "none"
+    },
+    {
+      "sha": "55a70bc306b8d84fae4e3905f488739902e4576c",
+      "short": "55a70bc",
+      "date": "2026-11-21",
+      "author": "fadilaisy",
+      "subject": "feat(kiro): Crew Stop hook that guards contract types (SCRUM-19)",
+      "kind": "none"
+    },
+    {
+      "sha": "512452ec256b70cb5922cc953167d929e4341c49",
+      "short": "512452e",
+      "date": "2026-11-21",
+      "author": "fadilaisy",
+      "subject": "docs(kiro): correct the 2766b21 trailer (SCRUM-19)",
+      "kind": "none"
+    },
+    {
+      "sha": "4fd594341026f0d8ddaefd33391e61e3572c6fa0",
+      "short": "4fd5943",
+      "date": "2026-11-22",
+      "author": "fadilaisy",
+      "subject": "docs(scrum-19): tell the truth in KIRO.md, treat pytest exit 5 as success",
+      "kind": "vibe"
+    },
+    {
+      "sha": "9999634fea71222574468fd03b8132691d32469a",
+      "short": "9999634",
+      "date": "2026-11-22",
+      "author": "fadilaisy",
+      "subject": "docs(scrum-19): address PR 7 review",
+      "kind": "vibe"
+    },
+    {
+      "sha": "391e7989b5a78c4125ec51ac577d5b1bbf0bb39f",
+      "short": "391e798",
+      "date": "2026-11-22",
+      "author": "fadilaisy",
+      "subject": "docs(kiro): log SCRUM-19",
+      "kind": "vibe"
+    },
+    {
+      "sha": "2766b21b37f5683a66a4d3ceddd65d60ec6c0474",
+      "short": "2766b21",
+      "date": "2026-11-22",
+      "author": "fadilaisy",
+      "subject": "feat(kiro): add four hooks and the data-quality-reviewer agent (SCRUM-19)",
+      "kind": "spec",
+      "spec": "scrum-19",
+      "task": "1-4"
+    },
+    {
+      "sha": "f68cfe86dd10c9c59cec7261e6ea653922723861",
+      "short": "f68cfe8",
+      "date": "2026-11-22",
+      "author": "fadilaisy",
+      "subject": "docs(scrum-19): spec for hooks and data-quality-reviewer",
+      "kind": "vibe"
+    },
+    {
+      "sha": "19ae2d8f06a586143d3c19da32cf01d50844ce74",
+      "short": "19ae2d8",
+      "date": "2026-11-17",
+      "author": "fadilaisy",
+      "subject": "docs(web-ui): address PR 5 review",
+      "kind": "vibe"
+    },
+    {
+      "sha": "1965c59daaf734bbf234712d76644ca24ccb4465",
+      "short": "1965c59",
+      "date": "2026-11-17",
+      "author": "fadilaisy",
+      "subject": "docs(kiro): define trailers, add trailer corrections and chat session note",
+      "kind": "vibe"
+    },
+    {
+      "sha": "33a5e3b5aa60016a26aa4eec1fe21ec29c53c35e",
+      "short": "33a5e3b",
+      "date": "2026-11-17",
+      "author": "fadilaisy",
+      "subject": "docs(kiro): log web-ui tasks 1-2",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "2"
+    },
+    {
+      "sha": "b8ced0619c28f59cf19eeee3e6daf92cdce375b7",
+      "short": "b8ced06",
+      "date": "2026-11-17",
+      "author": "fadilaisy",
+      "subject": "docs(web-ui): tick tasks 1 and 2",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "2"
+    },
+    {
+      "sha": "cb6f4c0c1dfdaabed0111587f88338dbc55e921e",
+      "short": "cb6f4c0",
+      "date": "2026-11-17",
+      "author": "fadilaisy",
+      "subject": "feat(web): typed API client and mock client with sample fixture",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "2"
+    },
+    {
+      "sha": "ec6f98c7ba76e39fddee9bddac8cb6d1c3a4a6a2",
+      "short": "ec6f98c",
+      "date": "2026-11-17",
+      "author": "fadilaisy",
+      "subject": "feat(web): scaffold Vite + React + TypeScript app",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "1"
+    },
+    {
+      "sha": "9c4b8d5a6365d6f2c1a6edd1305446e9275bde57",
+      "short": "9c4b8d5",
+      "date": "2026-11-17",
+      "author": "fadilaisy",
+      "subject": "docs(web-ui): add requirements, design and tasks for the trajectory view",
+      "kind": "spec",
+      "spec": "web-ui",
+      "task": "spec"
+    },
+    {
+      "sha": "4a6fb807691e5c8dfdeb05e96629e43766c86c7c",
+      "short": "4a6fb80",
+      "date": "2026-11-17",
+      "author": "ZahranTnc",
+      "subject": "feat(intel): mock API serving contracts/openapi.yaml from synthetic data (SCRUM-33)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "e8d5d4da3228ae41425655501dca14aa6c85686b",
+      "short": "e8d5d4d",
+      "date": "2026-11-17",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-32): README third-party services, name model in schema C4, note L2 normalization",
+      "kind": "vibe",
+      "corrected": true
+    },
+    {
+      "sha": "1b1d7478eea292fb4791bb5830ef6c0b3092266a",
+      "short": "1b1d747",
+      "date": "2026-11-16",
+      "author": "ZahranTnc",
+      "subject": "revert(contracts): keep vector(1024), use gemini-embedding-001 @ output_dimensionality=1024 (SCRUM-32)",
+      "kind": "vibe",
+      "corrected": true
+    },
+    {
+      "sha": "ce2a636997eebe249493d865c7bddd2350fefe75",
+      "short": "ce2a636",
+      "date": "2026-11-16",
+      "author": "ZahranTnc",
+      "subject": "fix(contracts): switch to gemini-embedding-001@768, add model API disclosure (SCRUM-32 review)",
+      "kind": "vibe",
+      "corrected": true
+    },
+    {
+      "sha": "efcab93d7c0892d50c8c20cd22a8f0bb38c188d3",
+      "short": "efcab93",
+      "date": "2026-11-15",
+      "author": "ZahranTnc",
+      "subject": "feat(contracts): set event_embeddings to vector(768) for Google text-embedding-004 (SCRUM-32)",
+      "kind": "vibe",
+      "corrected": true
+    },
+    {
+      "sha": "b35126b3c0955121cbf71dc7a7695495cae12f8a",
+      "short": "b35126b",
+      "date": "2026-11-15",
+      "author": "ZahranTnc",
+      "subject": "docs(kiro): log SCRUM-31 local stack",
+      "kind": "vibe",
+      "corrected": true
+    },
+    {
+      "sha": "02f7f48a0cc87c4791e5f405643624a82895b519",
+      "short": "02f7f48",
+      "date": "2026-11-15",
+      "author": "ZahranTnc",
+      "subject": "feat(infra): local stack with Timescale + pgvector loading schema and seed (SCRUM-31)",
+      "kind": "vibe"
+    },
+    {
+      "sha": "7d3bf31222a017430eed46e5a09ab0ee25222150",
+      "short": "7d3bf31",
+      "date": "2026-11-14",
+      "author": "fadilaisy",
+      "subject": "scrum 19 Expand roles and contracts section in README",
+      "kind": "none",
+      "corrected": true
+    },
+    {
+      "sha": "41119d64cbaf3f216d378257c652e92028f15cb4",
+      "short": "41119d6",
+      "date": "2026-11-12",
+      "author": "fadilaisy",
+      "subject": "chore(repo): add MIT license, make kiro-stats executable, set CODEOWNERS",
+      "kind": "vibe"
+    },
+    {
+      "sha": "97f1eb71aeeb2d2fdedd792cc63071ddd1787551",
+      "short": "97f1eb7",
+      "date": "2026-11-12",
+      "author": "fadilaisy",
+      "subject": "chore(scaffold): initialize FlightMind project scaffold",
+      "kind": "none"
+    },
+    {
+      "sha": "c170f6a66e8709d23b2fe0b594aa9e5537f6de91",
+      "short": "c170f6a",
+      "date": "2026-11-12",
+      "author": "fadilaisy",
+      "subject": "Initial commit",
+      "kind": "none",
+      "corrected": true
+    }
+  ],
+  "hooks": [
+    {
+      "file": ".kiro/hooks/commit-trailer.kiro.hook",
+      "name": "Check commit trailer",
+      "when": "agentStop"
+    },
+    {
+      "file": ".kiro/hooks/log-ticked-task.kiro.hook",
+      "name": "Log ticked task",
+      "when": "fileEdited: .kiro/specs/**/tasks.md"
+    },
+    {
+      "file": ".kiro/hooks/pipeline-property-tests.kiro.hook",
+      "name": "Pipeline property tests",
+      "when": "fileEdited: services/pipeline/**/*.py"
+    },
+    {
+      "file": ".kiro/hooks/raw-ref-guard.kiro.hook",
+      "name": "raw_ref guard",
+      "when": "fileEdited: services/**/*.py"
+    },
+    {
+      "file": ".kiro/hooks/regenerate-contract-types.kiro.hook",
+      "name": "Regenerate contract types",
+      "when": "fileEdited: contracts/openapi.yaml"
+    }
+  ],
+  "steering": [
+    ".kiro/steering/aviation-glossary.md",
+    ".kiro/steering/data-contracts.md",
+    ".kiro/steering/product.md",
+    ".kiro/steering/structure.md",
+    ".kiro/steering/tech.md",
+    ".kiro/steering/ui.md"
+  ],
+  "sessions": 9
+}

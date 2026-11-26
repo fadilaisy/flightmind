@@ -21,7 +21,7 @@ Tick a box only when the check passes. After each ticked task, add a line to `KI
   - Check: second run changes no file; grep for `Pongo`, `@gmail`, `sk-`, `AKIA`, `ghp_`, `BEGIN` finds nothing.
   - Reqs: R6
 
-- [ ] 4. Timeline data
+- [x] 4. Timeline data
   - Files: `scripts/kiro-timeline.mjs`, `web/src/domain/kiroTimeline.ts`, `web/src/kiro/timeline.json`, `web/tests/kiroTimeline.test.ts`
   - Check: tests cover `spec web-ui/3`, `spec agent-mcp/10-21`, a `missing` correction and task counting.
   - Reqs: R7

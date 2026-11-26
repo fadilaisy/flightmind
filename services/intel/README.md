@@ -31,6 +31,14 @@ Notes for the UI:
   Speed is set with `MOCK_STREAM_DELAY` seconds between items (default 0.05).
 - `/api/ask` answers by keyword (7700 / go-around / hold) and otherwise returns
   `not_enough_evidence`. The real agent is SCRUM-36.
+- `/api/compression/{recording_id}` returns a `CompressionReport`. Counts and byte sizes are
+  computed from the synthetic records (kept = event points plus each track's first and last
+  point), `/api/tracks` still returns every point, and `max_position_error_m` is an invented
+  constant. The mock measures both sizes in synthetic record bytes, while the real report
+  compares the recording file size with the Postgres row size, so the real ratio will
+  differ. Do not quote the mock ratio (for example in the video). A recording with no data
+  (`raw_bytes` 0) returns 404 with `Recording '<id>' has no data yet.`, the same status as an
+  unknown id, so the UI needs only one "no report" state.
 
 ## MCP server (SCRUM-34)
 

@@ -89,6 +89,16 @@ def raw(raw_ref: str):
     return record
 
 
+@app.get("/api/compression/{recording_id}")
+def compression(recording_id: str):
+    report = data.COMPRESSION.get(recording_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Unknown recording_id")
+    if report["raw_bytes"] == 0:
+        raise HTTPException(status_code=404, detail=f"Recording '{recording_id}' has no data yet.")
+    return report
+
+
 @app.get("/api/stream")
 async def stream():
     """Finite replay of the sample recording as server-sent events.

@@ -54,7 +54,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: three charts share one time axis; null altitude shows a gap; the flagged window is shaded; titles for speed and vertical rate say "computed from positions".
   - Reqs: R4.1, R4.2, R4.3, R4.7
 
-- [ ] 11. Scrubber
+- [x] 11. Scrubber
   - Files: `src/components/Scrubber.tsx`, `tests/scrubber.test.tsx`
   - Check: drag and arrow keys move the cursor on map and charts; Shift moves ten points; the marker sits on the nearest point at or before the time.
   - Reqs: R4.4, R4.5, R4.6

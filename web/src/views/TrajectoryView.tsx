@@ -4,6 +4,7 @@ import type { EventDetail, FlightEvent } from "../api/types";
 import { Charts } from "../components/Charts";
 import { EventFeed } from "../components/EventFeed";
 import { InvestigationPanel } from "../components/InvestigationPanel";
+import { Scrubber } from "../components/Scrubber";
 import { StateBox } from "../components/StateBox";
 import { EVENT_LABEL } from "../domain/eventLabels";
 import type { EventState } from "../domain/eventState";
@@ -109,7 +110,11 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
             ) : null}
           </div>
         )}
-        <div className="scrub" aria-label="Scrubber area" />
+        {selected && track.status === "ready" ? (
+          <Scrubber points={track.track.points} event={selected} />
+        ) : (
+          <div className="scrub" aria-label={STR.scrubberLabel} />
+        )}
       </div>
       <aside className="side r" aria-label="Investigation">
         <div className="block slot" aria-label="Compression card area">

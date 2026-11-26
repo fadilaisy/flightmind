@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-26T08:05:18.528Z",
-  "head": "9fd0d8baee6af2079a5002ec970fe54af167af23",
+  "generatedAt": "2026-11-26T08:14:33.196Z",
+  "head": "37d398b7813539497ba4b98b8edd8d431c6c5eda",
   "repo": "https://github.com/fadilaisy/flightmind",
   "mix": {
-    "spec": 47,
+    "spec": 49,
     "vibe": 41,
     "hook": 0,
     "none": 34
@@ -67,7 +67,7 @@
     {
       "name": "kiro-proof",
       "title": "Requirements: kiro-proof (SCRUM-70)",
-      "tasksDone": 4,
+      "tasksDone": 7,
       "tasksTotal": 7,
       "files": {
         "requirements": ".kiro/specs/kiro-proof/requirements.md",
@@ -75,6 +75,8 @@
         "tasks": ".kiro/specs/kiro-proof/tasks.md"
       },
       "commits": [
+        "37d398b7813539497ba4b98b8edd8d431c6c5eda",
+        "b1ff3f6662f3aaa744d2ab47bcf26b5febe0c297",
         "9fd0d8baee6af2079a5002ec970fe54af167af23",
         "8ece81580c445d243211bae3f1a49a90ec8f0942",
         "03921047596d1a00ff44a16788b52519fc5276be",
@@ -173,6 +175,26 @@
     }
   ],
   "commits": [
+    {
+      "sha": "37d398b7813539497ba4b98b8edd8d431c6c5eda",
+      "short": "37d398b",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "kiro-proof/5: Built with Kiro page at ?tab=kiro",
+      "kind": "spec",
+      "spec": "kiro-proof",
+      "task": "5"
+    },
+    {
+      "sha": "b1ff3f6662f3aaa744d2ab47bcf26b5febe0c297",
+      "short": "b1ff3f6",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "kiro-proof/4: timeline data from git, KIRO.md corrections and specs",
+      "kind": "spec",
+      "spec": "kiro-proof",
+      "task": "4"
+    },
     {
       "sha": "9fd0d8baee6af2079a5002ec970fe54af167af23",
       "short": "9fd0d8b",

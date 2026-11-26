@@ -10,6 +10,49 @@ Line format:
 The spec/task column takes a spec and task (`ingest/2.3`) or a Jira key plus `(chat)` or
 `(spec)`, for example `SCRUM-32 (chat)`.
 
+## Evidence
+
+You can check what is claimed below from the repository itself.
+
+- Specs, one folder each with requirements, design and tasks (ticked boxes are the progress):
+  [agent-mcp](.kiro/specs/agent-mcp/), [api-deploy](.kiro/specs/api-deploy/),
+  [compression](.kiro/specs/compression/), [detectors](.kiro/specs/detectors/),
+  [kiro-proof](.kiro/specs/kiro-proof/), [scrum-19](.kiro/specs/scrum-19/),
+  [scrum-40](.kiro/specs/scrum-40/), [storage](.kiro/specs/storage/), [web-ui](.kiro/specs/web-ui/)
+- Hooks: [.kiro/hooks/](.kiro/hooks/). Steering files: [.kiro/steering/](.kiro/steering/).
+- Trailer check: every commit ends with a `Kiro:` trailer. [.githooks/commit-msg](.githooks/commit-msg)
+  refuses a commit without one; install it with [scripts/install-hooks](scripts/install-hooks).
+  Rules and the correction mechanism: [docs/kiro/README.md](docs/kiro/README.md).
+- Counts: [scripts/kiro-stats](scripts/kiro-stats). Output when this section was written (run it
+  for the current numbers):
+
+```
+specs=9
+tasks_done=106
+tasks_open=13
+hooks=5
+steering_files=6
+custom_agents=1
+kiro_md_entries=63
+commits_total=155
+commits_non_merge=124
+commits_kiro_spec=49
+commits_kiro_vibe=41
+commits_kiro_hook=0
+commits_kiro_none=34
+trailer_corrections_applied=9
+commits_unclassified=0
+share_spec_pct=39.5
+share_vibe_pct=33.1
+share_hook_pct=0.0
+share_none_pct=27.4
+```
+
+- Kiro CLI session logs, redacted: [docs/kiro/sessions/cli/README.md](docs/kiro/sessions/cli/README.md)
+- Screen recordings: [docs/kiro/clips.md](docs/kiro/clips.md)
+- The page that links every number to its commit or spec file: https://flightmind.vercel.app/?tab=kiro
+  (source: [web/src/views/KiroView.tsx](web/src/views/KiroView.tsx))
+
 ## Week of 2026-11-09
 
 <!-- hook lines go here -->
@@ -44,6 +87,7 @@ The spec/task column takes a spec and task (`ingest/2.3`) or a Jira key plus `(c
 2026-11-26 | Fadil | kiro-proof/3 | Wrote scripts/kiro-sessions-export (Python, standard library only) and exported the 9 Kiro CLI sessions of this repo and the main checkout to docs/kiro/sessions/cli/ with an index, plus the 8 prompt files they read to docs/kiro/sessions/prompts/; home and temp paths, secrets and emails are redacted; a second run on a frozen copy of the sessions gave identical files; grep for Pongo, @gmail, sk-, AKIA, ghp_ and BEGIN finds only the prompt file K-kiro-proof.md quoting those words as instructions | nothing
 2026-11-26 | Fadil | kiro-proof/4 | Wrote web/src/domain/kiroTimeline.ts (trailer, corrections, task count and title parsing), scripts/kiro-timeline.mjs (git log, KIRO.md corrections and .kiro/specs to web/src/kiro/timeline.json: 122 commits, 9 specs, mix 47 spec / 41 vibe / 0 hook / 34 none, 0 unclassified, the same counts as scripts/kiro-stats) and 11 tests, one of which checks that the script's copy of the parser agrees with the TypeScript copy; added the kiro:timeline npm script | nothing
 2026-11-26 | Fadil | kiro-proof/5 | Built the Built with Kiro page at ?tab=kiro (web/src/views/KiroView.tsx, styles/kiro.css, strings in strings.ts): commit mix card with a stacked bar and counts, one card per spec with tasks done linked to tasks.md and an expandable commit list, a timeline grouped by date with a kind filter and 'classified in KIRO.md' marks, and footer links to hooks, steering, session logs and KIRO.md; every commit and file links to GitHub. It renders from the generated timeline, so it works when the API is down. Added a Built with Kiro entry to the app bar. 8 new tests (123 in web), npm run build passes | not checked in a browser, only in jsdom; Figma has no frame for this page, so it reuses the existing card, badge and segmented-control styles
+2026-11-26 | Fadil | kiro-proof/6 | Put an Evidence section at the top of KIRO.md (specs, hooks, steering, the trailer check, kiro-stats output, session logs, clips and the Built with Kiro page), updated docs/kiro/README.md (install-hooks, the missing correction value, how to refresh session logs and the timeline), refreshed the session logs and regenerated web/src/kiro/timeline.json; npm test and npm run build pass | nothing
 
 ## Week of 2026-11-16
 

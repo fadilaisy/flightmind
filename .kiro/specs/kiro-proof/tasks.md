@@ -31,7 +31,7 @@ Tick a box only when the check passes. After each ticked task, add a line to `KI
   - Check: `npm test` and `npm run build` in `web/` pass; `?tab=kiro` renders without a recording.
   - Reqs: R8, R9
 
-- [ ] 6. KIRO.md as the index
+- [x] 6. KIRO.md as the index
   - Files: `KIRO.md`, `docs/kiro/README.md`, `web/src/kiro/timeline.json`
   - Check: Evidence section links resolve; timeline regenerated; tests and build pass.
   - Reqs: R10

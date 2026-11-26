@@ -17,4 +17,4 @@ Refresh: `python scripts/kiro-sessions-export --also-cwd <other clone of this re
 | 2026-11-26 | `c51295d5` | Read the file docs/kiro/sessions/prompts/F-deploy-fixes.md and carry out every step in it, in this repository. | 1 | 57 | [2026-11-26-c51295d5.md](2026-11-26-c51295d5.md) |
 | 2026-11-26 | `a673814a` | Read the file docs/kiro/sessions/prompts/U-scrum66-upload.md and carry out every step in it, in this reposi... | 1 | 82 | [2026-11-26-a673814a.md](2026-11-26-a673814a.md) |
 | 2026-11-26 | `ccfdb42a` | Read the file docs/kiro/sessions/prompts/V-scrum69-preview-clean-export.md and carry out every step in it, ... | 1 | 61 | [2026-11-26-ccfdb42a.md](2026-11-26-ccfdb42a.md) |
-| 2026-11-26 | `c6bcabfe` | Read the file docs/kiro/sessions/prompts/K-kiro-proof.md and carry out every step in it, in this repository. | 1 | 36 | [2026-11-26-c6bcabfe.md](2026-11-26-c6bcabfe.md) |
+| 2026-11-26 | `c6bcabfe` | Read the file docs/kiro/sessions/prompts/K-kiro-proof.md and carry out every step in it, in this repository. | 1 | 62 | [2026-11-26-c6bcabfe.md](2026-11-26-c6bcabfe.md) |

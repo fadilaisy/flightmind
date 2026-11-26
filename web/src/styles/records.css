@@ -16,7 +16,11 @@
 
 .reccols { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 .reccol { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.recpair { display: grid; grid-template-columns: 1fr 1.1fr; gap: 12px; }
+.recpair { display: grid; grid-template-columns: 1fr 1.1fr; gap: 12px; align-items: start; }
+/* The Records card scrolls inside a fixed height so 72 rows do not stretch the page. */
+.recpair .reccard { display: flex; flex-direction: column; max-height: 200px; }
+.recscroll { overflow: auto; min-height: 0; }
+.recscroll thead th { position: sticky; top: 0; z-index: 1; }
 
 .reccard { background: var(--panel); border: 1px solid var(--line-ui); border-radius: 8px; overflow: hidden; }
 .reccard > header { padding: 9px 16px; font-size: 12.5px; border-bottom: 1px solid var(--line); background: var(--panel); }
@@ -48,7 +52,7 @@
 .hexascii { color: var(--muted); }
 .hb { cursor: pointer; border-radius: 2px; }
 .hb:hover { background: var(--bg-hover); }
-.hb.sel { background: #cfe0ff; color: var(--primary); text-decoration: underline; }
+.hb.sel { background: #cfe0ff; color: var(--primary); text-decoration: none; }
 .hb.pick { outline: 1px solid var(--primary); }
 .hexnote { margin: 8px 0 0; font-family: var(--font-text); font-size: 12px; }
 .hexlegend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin: 12px 0; }

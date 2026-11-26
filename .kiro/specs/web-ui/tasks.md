@@ -79,7 +79,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: rows of 16 with offsets; selecting an item highlights its bytes in both panes; selecting bytes highlights the item.
   - Reqs: R6.4, R6.5
 
-- [ ] 16. Wording check
+- [x] 16. Wording check
   - Files: `src/strings.ts`, `tests/wording.test.ts`
   - Check: the test fails if "went around" or "no touchdown" appears; "no on-ground flag (I021/040) was set" is used where the flag is absent; no all-caps labels.
   - Reqs: R1.3, R7

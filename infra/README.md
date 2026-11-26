@@ -41,9 +41,10 @@ docker compose -f infra/docker-compose.yml up -d
 ## Deploy (SCRUM-38)
 
 Phase 1: one Vercel project (Hobby plan, free) serves the built web UI and the **mock API**
-(synthetic data, no database) on one origin. Vercel's CDN serves the web build from `public/`;
-every other request goes to one Vercel Function (`infra/vercel_entry.py`) that answers `/api/`
-and returns 404 for anything else, so `/docs` and `/openapi.json` stay private. **The public demo
+(synthetic data, no database) on one origin. One Vercel Function (`infra/vercel_entry.py`)
+serves everything through `serve.py`, as the container does: `/api/` goes to the API, every other
+path is a file from the web build, and anything else is 404, so `/docs` and `/openapi.json` stay
+private. **The public demo
 uses sample data.**
 
 Public URL: **https://flightmind.vercel.app** (Vercel project `flightmind` in Zahran's account,
@@ -73,6 +74,20 @@ Not done: the rollback has not been tried, because the project has only one depl
 deploys need `vercel login` and `vercel link` to the `flightmind` project first; `--temporary` no
 longer applies. Re-run the smoke check on 2026-12-03 and before 2026-12-04 14:00 PT.
 
+Build note 2: with the ignore file fixed, the next build on Vercel from Git succeeded but the site
+answered 404 on `/` while `/api/` worked. The build script wrote the web build to a root `public/`
+folder, and Vercel only publishes `public/` files that exist before the build. The first deploy had
+worked only because a local build had left `public/` on disk. The web build now goes to
+`services/intel/web_dist/` and the function serves it. The bad deployment was live on
+`flightmind.vercel.app` for about two minutes on 2026-11-26 before the domain was pointed back at
+the previous deployment. Check a preview deployment's `/` before promoting one.
+
+Build note: a deploy built on Vercel from Git (2026-11-26, `main` at 8d015db) failed in `tsc` with
+`Cannot find module '../tests/fixtures/mini.json'`. `.vercelignore` had a bare `fixtures` line,
+which follows `.gitignore` rules and so also dropped `web/tests/fixtures`. The local build had
+not shown it, because the ignore file only applies to what is uploaded. Root folders in
+`.vercelignore` are now anchored with `/`.
+
 CLI note: `npx vercel@latest deploy --temporary` failed on Windows with
 `Cannot find module '@vercel/python/package.json'`. It worked after `npm install vercel @vercel/python`
 in an empty folder outside the repo, running that folder's `node_modules/.bin/vercel` from the repo
@@ -84,7 +99,7 @@ expired and a plan had to be selected, Render refused a free service without a c
 (HTTP 402), and Azure for Students rejected the sign-up. Vercel does not run Dockerfiles, so the
 root `Dockerfile` is only for local runs and container hosts; the public URL is built by the
 Vercel Python runtime from `pyproject.toml`, `vercel.json`, `.vercelignore`,
-`infra/vercel_entry.py` and `infra/vercel_build.py`. `public/` is build output and is not committed.
+`infra/vercel_entry.py` and `infra/vercel_build.py`. `services/intel/web_dist/` is build output and is not committed.
 
 ### Steps
 

@@ -9,5 +9,5 @@ __pycache__/
 .venv/
 dist/
 # Vercel build output and local project link
-/public/
+/services/intel/web_dist/
 .vercel/

@@ -19,8 +19,18 @@ def load_entry():
     return module
 
 
+WEB_DIST = REPO / "services" / "intel" / "web_dist"
+
+
 @pytest.fixture
-def client(monkeypatch):
+def no_web_dist():
+    """These tests need the build output folder to be absent; skip when a local build left one."""
+    if WEB_DIST.exists():
+        pytest.skip(f"{WEB_DIST} exists (a local Vercel build ran); remove it to run this test")
+
+
+@pytest.fixture
+def client(monkeypatch, no_web_dist):
     monkeypatch.delenv("FLIGHTMIND_WEB_DIST", raising=False)
     return TestClient(load_entry().app)
 
@@ -31,8 +41,25 @@ def test_meta_is_replay(client):
     assert r.json()["mode"] == "replay"
 
 
-def test_root_is_404(client):
+def test_root_is_404_without_a_build(client):
     assert client.get("/").status_code == 404
+
+
+def test_serves_the_web_build_when_present(no_web_dist):
+    """After infra/vercel_build.py has run, the function serves the page and its assets itself."""
+    try:
+        (WEB_DIST / "assets").mkdir(parents=True)
+        (WEB_DIST / "index.html").write_text("<html>flightmind</html>", encoding="utf-8")
+        (WEB_DIST / "assets" / "app.js").write_text("console.log(1)", encoding="utf-8")
+        c = TestClient(load_entry().app)
+        assert c.get("/").text == "<html>flightmind</html>"
+        assert c.get("/assets/app.js").status_code == 200
+        assert c.get("/api/meta").json()["mode"] == "replay"
+        assert c.get("/docs").status_code == 404
+    finally:
+        import shutil
+
+        shutil.rmtree(WEB_DIST, ignore_errors=True)
 
 
 def test_docs_and_openapi_are_404(client):
@@ -40,7 +67,7 @@ def test_docs_and_openapi_are_404(client):
         assert client.get(path).status_code == 404
 
 
-def test_root_is_404_even_when_web_dist_is_set(monkeypatch, tmp_path):
+def test_env_web_dist_is_not_read_by_the_entry(monkeypatch, tmp_path, no_web_dist):
     (tmp_path / "index.html").write_text("<html>flightmind</html>", encoding="utf-8")
     monkeypatch.setenv("FLIGHTMIND_WEB_DIST", str(tmp_path))
     c = TestClient(load_entry().app)

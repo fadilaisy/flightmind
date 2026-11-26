@@ -1,7 +1,9 @@
-"""Vercel build step (SCRUM-38): build the web UI and copy it to public/.
+"""Vercel build step (SCRUM-38): build the web UI and copy it next to the API code.
 
-Runs `npm ci` and `npm run build` in web/, then replaces the root public/ folder with a copy
-of web/dist. Standard library only; works on Windows and Linux.
+Runs `npm ci` and `npm run build` in web/, then replaces services/intel/web_dist with a copy
+of web/dist. The Vercel function serves that folder itself (infra/vercel_entry.py). A root
+public/ folder is not used: Vercel only publishes public/ files that exist before the build,
+so a build on Vercel from Git left the site without its page (2026-11-26). Standard library only; works on Windows and Linux.
 
     python infra/vercel_build.py
 """
@@ -14,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 DIST = WEB / "dist"
-PUBLIC = ROOT / "public"
+TARGET = ROOT / "services" / "intel" / "web_dist"
 
 
 def main() -> int:
@@ -40,11 +42,11 @@ def main() -> int:
         print(f"vercel_build: {DIST / 'index.html'} does not exist after the build.", file=sys.stderr)
         return 1
 
-    if PUBLIC.exists():
-        shutil.rmtree(PUBLIC)
-    shutil.copytree(DIST, PUBLIC)
-    count = sum(1 for p in PUBLIC.rglob("*") if p.is_file())
-    print(f"vercel_build: copied {DIST} to {PUBLIC} ({count} files)")
+    if TARGET.exists():
+        shutil.rmtree(TARGET)
+    shutil.copytree(DIST, TARGET)
+    count = sum(1 for p in TARGET.rglob("*") if p.is_file())
+    print(f"vercel_build: copied {DIST} to {TARGET} ({count} files)")
     return 0
 
 

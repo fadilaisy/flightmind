@@ -46,20 +46,32 @@ every other request goes to one Vercel Function (`infra/vercel_entry.py`) that a
 and returns 404 for anything else, so `/docs` and `/openapi.json` stay private. **The public demo
 uses sample data.**
 
-Public URL: not final yet. On 2026-11-26 the branch was deployed as a temporary Vercel deployment
-(`https://brisk-zenith-i0v5z3t.tmp.now`), which is deleted about one hour after the deploy unless
-Zahran claims it. The final URL goes here after the claim.
+Public URL: **https://flightmind.vercel.app** (Vercel project `flightmind` in Zahran's account,
+Hobby plan). Deployed and claimed on 2026-11-26 from the branch `role3/scrum-38-api-deploy`.
 
-Checks on 2026-11-26 against the temporary URL:
+Checks on 2026-11-26 against `https://flightmind.vercel.app`:
 
-- From an outside network: `/` rendered the page with the mock's 4 events, and `/api/meta`,
-  `/api/events/<id>`, `/api/raw/rec01%3A68` and `/api/tracks/8A1C07` returned the expected JSON.
-  So the `/.` workaround also works on Vercel.
-- From Zahran's own network every path returned `403 This request was blocked` with the header
-  `x-vercel-mitigated: deny`, in `curl`, `infra/smoke.py` and a browser, while `vercel.com` loaded
-  normally. That is Vercel's firewall refusing this network, not the app. `infra/smoke.py` has
-  therefore not passed against the public URL yet. Check again after the claim, from more than
-  one network, because a judge on a refused network would see the same 403.
+- `python infra/smoke.py https://flightmind.vercel.app`: 6 of 6 passed, exit 0.
+- `/docs`, `/openapi.json` and an unknown path give 404; an unknown `/api/x` gives the API's JSON
+  404; `POST /api/ask` answers.
+- Browser (Chromium 156): the event list, the first event and its records loaded from
+  `/api/meta`, `/api/events` and `/api/events/<id>` on the same origin, with no console error. So
+  the `/.` workaround also works on Vercel.
+- Read from a second, outside network: `/api/meta` returned the expected JSON.
+
+How it got there: the first deploy was `vercel deploy --temporary` (no account), which gave
+`https://brisk-zenith-i0v5z3t.tmp.now`. While it was unclaimed, Vercel's firewall answered
+`403 This request was blocked` (`x-vercel-mitigated: deny`) on every path from Zahran's network,
+though it loaded from an outside network. After the claim the 403 stopped. The project was then
+renamed `flightmind` and given the domain `flightmind.vercel.app`.
+
+Vercel Authentication is on for the per-deployment URLs (`...-anon-beta-lake.vercel.app` redirects
+to a Vercel login). The production domain `flightmind.vercel.app` is public. Give judges only that
+one.
+
+Not done: the rollback has not been tried, because the project has only one deployment. Later
+deploys need `vercel login` and `vercel link` to the `flightmind` project first; `--temporary` no
+longer applies. Re-run the smoke check on 2026-12-03 and before 2026-12-04 14:00 PT.
 
 CLI note: `npx vercel@latest deploy --temporary` failed on Windows with
 `Cannot find module '@vercel/python/package.json'`. It worked after `npm install vercel @vercel/python`

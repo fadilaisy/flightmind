@@ -99,13 +99,14 @@ Tasks 1 to 10 are phase 1 and are built now (task 9, the Railway deploy, is supe
   - **Result (2026-11-26):** `python -m pytest -q` from `services/intel`: 61 passed (54 before, plus 1 in `test_serve.py` and 6 in `test_vercel_entry.py`).
   - _Requirements: 1.2, 1.6, 2.5, 2.7, 3.1, 3.2_
 
-- [ ] 19. Deploy with `vercel deploy --temporary` and check the public URL
+- [x] 19. Deploy with `vercel deploy --temporary` and check the public URL
   - From a clean checkout of the repo root, run `npx vercel@latest deploy --temporary`. It needs no account. Keep the claim link private: do not paste it in chat, an issue or the repo.
   - Run `python infra/smoke.py <public url>`. Open the URL in a browser with no Vercel session and repeat the check from task 8 (event list, event, `raw_ref`, `/api/...` requests, no fixture, no login page).
   - Zahran opens the claim link so the project moves into his Vercel account. Later deploys use `npx vercel@latest login` and `npx vercel@latest deploy --prod`. Try the rollback once and write down the command that worked.
   - Record the public URL, the date and the smoke-check result in `infra/README.md`.
   - Done when the smoke check exits 0 against the public URL, the claim is done, and the URL, date and rollback command are in `infra/README.md`.
   - **Result (2026-11-26):** Partly done, by hand outside Kiro. `vercel deploy --temporary` succeeded on the third try: the CLI first could not find `@vercel/python` (fixed by installing `vercel` and `@vercel/python` in a folder outside the repo and setting `NODE_PATH`), then the bundle traced `services/intel/.pytest_cache`, which `.vercelignore` excludes (fixed by adding `**/.pytest_cache/**` to `excludeFiles` in `vercel.json`). The temporary URL served the page and the API correctly from an outside network. From Zahran's network Vercel's firewall answered 403 on every path (`x-vercel-mitigated: deny`), so `infra/smoke.py` has not passed against the public URL. Still open: Zahran claims the deployment, the smoke check from a network that is not refused, the browser check, the rollback, and the final URL in `infra/README.md`.
+  - **Result (2026-11-26, after the claim):** Zahran approved the access and the deployment was claimed into his Vercel account through the Vercel connector, by hand outside Kiro. The project is `flightmind` with the domain `https://flightmind.vercel.app`. `infra/smoke.py` passed 6 of 6 against it from Zahran's network, the browser check passed, and `/api/meta` also read correctly from an outside network. The 403 stopped once the deployment was claimed. Not done: the rollback, because there is only one deployment; it stays written in `infra/README.md` as not tried.
   - _Requirements: 1.1, 1.3, 1.5, 6.1, 6.3, 6.5, 8.1, 8.3, 8.4, 8.5_
 
 - [x] 20. Update the docs for Vercel

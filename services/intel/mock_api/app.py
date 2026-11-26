@@ -94,6 +94,8 @@ def compression(recording_id: str):
     report = data.COMPRESSION.get(recording_id)
     if report is None:
         raise HTTPException(status_code=404, detail="Unknown recording_id")
+    if report["raw_bytes"] == 0:
+        raise HTTPException(status_code=404, detail=f"Recording '{recording_id}' has no data yet.")
     return report
 
 

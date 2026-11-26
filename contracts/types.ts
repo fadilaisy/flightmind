@@ -270,7 +270,7 @@ export interface paths {
                         "application/json": components["schemas"]["CompressionReport"];
                     };
                 };
-                /** @description Unknown recording_id */
+                /** @description Unknown recording_id, or the recording has no data yet (raw_bytes 0) */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -390,7 +390,7 @@ export interface components {
             raw_bytes: number;
             /** @description Bytes the kept telemetry rows take in storage */
             stored_bytes: number;
-            /** @description stored_bytes divided by raw_bytes, so smaller is better; 0 when raw_bytes is 0, never null */
+            /** @description stored_bytes divided by raw_bytes, so smaller is better. Never null: a recording with raw_bytes 0 returns 404 instead of a report */
             ratio: number;
             /** @description Largest horizontal distance in metres between a dropped point and the position interpolated from its kept neighbours */
             max_position_error_m: number;

@@ -112,6 +112,14 @@ def test_compression_unknown_recording_is_404():
     assert client.get("/api/compression/nope").status_code == 404
 
 
+def test_compression_empty_recording_is_404(monkeypatch):
+    empty = {**data.COMPRESSION["rec01"], "recording_id": "empty", "raw_bytes": 0, "stored_bytes": 0, "ratio": 0}
+    monkeypatch.setitem(data.COMPRESSION, "empty", empty)
+    r = client.get("/api/compression/empty")
+    assert r.status_code == 404
+    assert r.json()["detail"] == "Recording 'empty' has no data yet."
+
+
 def test_every_citation_resolves():
     """Every event raw_ref and every track raw_ref must open via /api/raw (the UI relies on it)."""
     for e in get_ok("/api/events"):

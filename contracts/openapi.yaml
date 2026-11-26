@@ -86,7 +86,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/CompressionReport' }
         '404':
-          description: Unknown recording_id
+          description: Unknown recording_id, or the recording has no data yet (raw_bytes 0)
   /api/ask:
     post:
       summary: Ask the analyst agent; every claim is cited
@@ -166,7 +166,7 @@ components:
         recording_id: { type: string, description: 'Recording file id' }
         raw_bytes: { type: integer, description: 'Size of the recording file in bytes' }
         stored_bytes: { type: integer, description: 'Bytes the kept telemetry rows take in storage' }
-        ratio: { type: number, description: 'stored_bytes divided by raw_bytes, so smaller is better; 0 when raw_bytes is 0, never null' }
+        ratio: { type: number, description: 'stored_bytes divided by raw_bytes, so smaller is better. Never null: a recording with raw_bytes 0 returns 404 instead of a report' }
         max_position_error_m: { type: number, description: 'Largest horizontal distance in metres between a dropped point and the position interpolated from its kept neighbours' }
         points_in: { type: integer, description: 'Decoded points before compression' }
         points_kept: { type: integer, description: 'Points stored' }

@@ -67,8 +67,16 @@ export function httpApi(baseUrl: string): Api {
       get<Track>(withRecording(`/api/tracks/${encodeURIComponent(icao24)}`, recording)),
     ask: (question, recording) =>
       postJson<AskResponse>("/api/ask", recording ? { question, recording_id: recording } : { question }),
-    compression: (recordingId) =>
-      get<CompressionReport>(`/api/compression/${encodeURIComponent(recordingId)}`),
+    compression: async (recordingId) => {
+      try {
+        return await get<CompressionReport>(`/api/compression/${encodeURIComponent(recordingId)}`);
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) {
+          throw new ApiError(404, e.url, `No compression report for this recording`);
+        }
+        throw e;
+      }
+    },
     streamUrl: (recording) => `${baseUrl}${withRecording("/api/stream", recording)}`,
     raw: async (rawRef) => {
       try {

@@ -263,8 +263,8 @@ tr.sel td { background: var(--primary-soft); }
 .chartrows { position: absolute; inset: 0; }
 .chartrow { position: absolute; left: 0; right: 0; }
 .chartrow .uplot { font-family: var(--font-data); }
-.charttitle { position: absolute; left: 15px; top: 5px; font-size: 11px; line-height: 16px; font-weight: 500; color: var(--text-muted); white-space: nowrap; }
-.laneLabel { position: absolute; left: 16px; font-size: 11px; color: var(--axis-muted); white-space: nowrap; }
+.charttitle { position: absolute; z-index: 1; background: var(--bg-surface); padding-right: 4px; left: 15px; top: 5px; font-size: 11px; line-height: 16px; font-weight: 500; color: var(--text-muted); white-space: nowrap; }
+.laneLabel { position: absolute; left: 16px; z-index: 1; background: var(--bg-surface); padding-right: 4px; font-size: 11px; color: var(--axis-muted); white-space: nowrap; }
 .chartflag { position: absolute; top: 5px; font-size: 12px; line-height: 16px; color: var(--event-amber); white-space: nowrap; }
 .chartcursor { position: absolute; top: 15px; bottom: 1px; width: 1px; background: var(--ink-navy); pointer-events: none; }
 .chartval { position: absolute; margin-left: 6px; font-family: var(--font-data); font-size: 11px; color: var(--ink-navy); pointer-events: none; white-space: nowrap; }
@@ -492,3 +492,10 @@ tr.sel td { background: var(--primary-soft); }
 .files li:last-child { border-bottom: 0; }
 .filename { color: var(--text-primary); font-size: 13px; margin-bottom: 2px; }
 .evtable h2.cardtitle { background: none; }
+.cbig { display: flex; align-items: baseline; gap: 12px; }
+.cratio { font-size: 32px; line-height: 40px; font-weight: 600; color: var(--text-primary); }
+.csizes { font-size: 12px; color: var(--text-secondary); }
+.cbars { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; align-items: center; font-size: 12px; color: var(--text-secondary); }
+.cbars .bar { display: block; width: auto; height: 6px; }
+.cbars .bar i { display: block; height: 6px; background: var(--blue-600); border-radius: 3px; }
+.cpill { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--radius-sm); background: #0b3d2a; color: #fff; font-size: 12px; line-height: 16px; }

@@ -59,6 +59,11 @@ export function RecordsView({ api, events, eventId }: Props) {
   const [path, setPath] = useState<string | null>(null);
   const [selectedByte, setSelectedByte] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  // Records opened so far, so their Length and Fields stay filled in the Records card.
+  const [seen, setSeen] = useState<Record<string, RawRecord>>({});
+  useEffect(() => {
+    if (record) setSeen((s) => (s[record.raw_ref] === record ? s : { ...s, [record.raw_ref]: record }));
+  }, [record]);
 
   // Open the first record of the event when none is selected yet.
   useEffect(() => {
@@ -183,6 +188,7 @@ export function RecordsView({ api, events, eventId }: Props) {
               <header>
                 <b>{STR.blocksTitle}</b> <span className="muted" title={STR.blocksMissing}>in recording {recordingId ?? "n/a"}</span>
               </header>
+              <div className="recscroll">
               <table>
                 <thead>
                   <tr>
@@ -201,12 +207,14 @@ export function RecordsView({ api, events, eventId }: Props) {
                   </tr>
                 </tbody>
               </table>
+              </div>
             </section>
 
             <section className="reccard" aria-label={STR.recordsTableTitle}>
               <header>
                 <b>{STR.recordsTableTitle}</b> <span className="muted" title={STR.notInApi}>in block 1</span>
               </header>
+              <div className="recscroll">
               <table>
                 <thead>
                   <tr>
@@ -221,6 +229,7 @@ export function RecordsView({ api, events, eventId }: Props) {
                   {refs.map((r) => {
                     const parsed = parseRawRef(r);
                     const selected = r === rawRef;
+                    const known = seen[r] ?? (selected ? record : null);
                     return (
                       <tr
                         key={r}
@@ -233,8 +242,8 @@ export function RecordsView({ api, events, eventId }: Props) {
                         <td title={STR.notInApi}>
                           <Muted>n/a</Muted>
                         </td>
-                        <td className="mono">{selected && record ? byteCount(record.hex) : ""}</td>
-                        <td className="mono">{selected && record ? Object.keys(record.decoded).length : ""}</td>
+                        <td className="mono">{known ? byteCount(known.hex) : <Muted>n/a</Muted>}</td>
+                        <td className="mono">{known ? Object.keys(known.decoded).length : <Muted>n/a</Muted>}</td>
                         <td className="mono">{event ? event.icao24.toUpperCase() : ""}</td>
                       </tr>
                     );
@@ -248,6 +257,7 @@ export function RecordsView({ api, events, eventId }: Props) {
                   )}
                 </tbody>
               </table>
+              </div>
             </section>
           </div>
 

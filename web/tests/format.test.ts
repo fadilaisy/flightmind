@@ -53,3 +53,10 @@ describe("point text details", () => {
     expect(formatAltitude(35000)).toBe("35,000 ft, barometric");
   });
 });
+
+import { formatWindowCompact } from "../src/domain/format";
+describe("formatWindowCompact", () => {
+  it("gives the compact chart form", () => {
+    expect(formatWindowCompact("2026-10-13T03:01:40Z", "2026-10-13T03:07:35Z")).toBe("03:01:40\u201303:07:35Z");
+  });
+});

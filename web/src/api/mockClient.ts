@@ -20,6 +20,8 @@ export interface MockData {
   events: FlightEvent[];
   tracks: Record<string, Track>;
   raw: Record<string, RawRecord>;
+  /** Optional, keyed by recording id. Missing means 404. */
+  compression?: Record<string, CompressionReport>;
 }
 
 /** Where a mock recording is after each step, in milliseconds. About 10 s from process to ready. */
@@ -252,7 +254,13 @@ export function mockApi(data: MockData, options: MockOptions = {}): Api {
       status: "not_enough_evidence" as const,
     }),
     compression: async (recordingId) => {
+      const provided = data.compression?.[recordingId];
+      if (provided) return provided;
       const e = entries.get(recordingId);
+      // With a supplied report set, unknown ids have none. Without one, the mock builds a report from its points.
+      if (!e && data.compression) {
+        throw new ApiError(404, `/api/compression/${recordingId}`, `No compression report for this recording`);
+      }
       if (e && view(e).status !== "ready") {
         throw new ApiError(404, `/api/compression/${recordingId}`, `Recording not ready: ${recordingId}`);
       }

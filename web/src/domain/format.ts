@@ -13,6 +13,11 @@ export function formatWindow(startIso: string, endIso: string): string {
   return `${clock(startIso)} to ${clock(endIso)} UTC${length}`;
 }
 
+/** Flagged window as "08:00:20-08:00:40Z" (with an en dash), for tight spots like the chart header. */
+export function formatWindowCompact(startIso: string, endIso: string): string {
+  return `${clock(startIso)}\u2013${clock(endIso)}Z`;
+}
+
 /** Full ISO times, for a title tooltip. */
 export function formatWindowTitle(startIso: string, endIso: string): string {
   return `${startIso} to ${endIso}`;

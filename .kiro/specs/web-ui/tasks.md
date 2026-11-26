@@ -89,12 +89,12 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: the mock loads, each tab opens, no console errors; a person compares each view with the Figma page and logs differences in `docs/kiro/clips.md` or an issue.
   - Reqs: R8
 
-- [ ] 18. README and library list
+- [x] 18. README and library list
   - Files: `README.md` (web section)
   - Check: lists MapLibre GL, three.js, uPlot and any other library that does real work.
   - Reqs: tech steering rule
 
-- [ ] 19. Compression before/after size (blocked on SCRUM-60)
+- [x] 19. Compression before/after size
   - Files: `src/components/CompressionBadge.tsx`
   - Check: shows raw and stored point counts and sizes for the recording from GET /api/compression/{recording_id}, once that endpoint is in `contracts/openapi.yaml`. Until then, show nothing. Don't add the endpoint here.
   - Reqs: product steering, headline 2

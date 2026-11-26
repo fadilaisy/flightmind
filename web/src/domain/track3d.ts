@@ -30,6 +30,9 @@ export interface Track3D {
   maxAltFt: number;
   /** Height of the altitude axis in scene units (metres, already exaggerated). */
   axisHeight: number;
+  /** Where the altitude axis stands: just outside the south-west corner of the track. */
+  axisX: number;
+  axisZ: number;
   tickStepFt: number;
   /** x, y, z per track point. y is 0 for a point with no altitude. */
   world: Float32Array;
@@ -205,6 +208,20 @@ export function buildTrack3D(
   const groundGeometry = new BufferGeometry();
   groundGeometry.setAttribute("position", new Float32BufferAttribute(ground, 3));
 
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minZ = Infinity;
+  let maxZ = -Infinity;
+  for (let i = 0; i < n; i++) {
+    minX = Math.min(minX, world[i * 3]);
+    maxX = Math.max(maxX, world[i * 3]);
+    minZ = Math.min(minZ, world[i * 3 + 2]);
+    maxZ = Math.max(maxZ, world[i * 3 + 2]);
+  }
+  const axisPad = Math.max(gridStep * 0.5, Math.max(maxX - minX, maxZ - minZ) * 0.08);
+  const axisX = (n ? minX : 0) - axisPad;
+  const axisZ = (n ? maxZ : 0) + axisPad;
+
   return {
     exaggeration,
     half,
@@ -212,6 +229,8 @@ export function buildTrack3D(
     maxAltFt: axisTop,
     axisHeight: axisTop * FT_TO_M * exaggeration,
     tickStepFt,
+    axisX,
+    axisZ,
     world,
     hasAlt,
     pointGeometry,
@@ -236,4 +255,54 @@ export function disposeTrack3D(t: Track3D): void {
   t.glowGeometry.dispose();
   t.dropGeometry.dispose();
   t.groundGeometry.dispose();
+}
+
+
+export interface Frame {
+  center: [number, number, number];
+  /** Radius of a sphere that holds everything to keep in view, padding included. */
+  radius: number;
+  /** The box the sphere was made from, for an exact projected fit. */
+  min: [number, number, number];
+  max: [number, number, number];
+}
+
+/**
+ * The sphere the camera must fit: the track, the altitude axis and its tick labels, and the runway when
+ * it lies within three quarters of the track's size from the track. Padding is 18 percent.
+ */
+export function frameTrack(t: Track3D, runwayXZ: [number, number][] = []): Frame {
+  const min = [Infinity, Infinity, Infinity];
+  const max = [-Infinity, -Infinity, -Infinity];
+  const add = (x: number, y: number, z: number) => {
+    min[0] = Math.min(min[0], x);
+    max[0] = Math.max(max[0], x);
+    min[1] = Math.min(min[1], y);
+    max[1] = Math.max(max[1], y);
+    min[2] = Math.min(min[2], z);
+    max[2] = Math.max(max[2], z);
+  };
+  const n = t.hasAlt.length;
+  for (let i = 0; i < n; i++) add(t.world[i * 3], t.world[i * 3 + 1], t.world[i * 3 + 2]);
+  if (n === 0) add(0, 0, 0);
+  const span = Math.max(max[0] - min[0], max[2] - min[2], 1);
+  for (const [x, z] of runwayXZ) {
+    const dx = Math.max(min[0] - x, 0, x - max[0]);
+    const dz = Math.max(min[2] - z, 0, z - max[2]);
+    if (Math.hypot(dx, dz) <= span * 0.75) add(x, 0, z);
+  }
+  add(t.axisX, 0, t.axisZ);
+  add(t.axisX, t.axisHeight, t.axisZ);
+  // Room on the left of the axis for the tick labels and ALT.
+  add(t.axisX - span * 0.12, 0, t.axisZ);
+  const center: [number, number, number] = [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2, (min[2] + max[2]) / 2];
+  const diag = Math.hypot(max[0] - min[0], max[1] - min[1], max[2] - min[2]);
+  return { center, radius: Math.max((diag / 2) * 1.18, 50), min: [min[0], min[1], min[2]], max: [max[0], max[1], max[2]] };
+}
+
+/** Distance at which a sphere of `radius` fits the view in both directions. */
+export function fitDistance(radius: number, vfovDeg: number, aspect: number): number {
+  const v = (vfovDeg * Math.PI) / 180;
+  const h = 2 * Math.atan(Math.tan(v / 2) * aspect);
+  return radius / Math.sin(Math.min(v, h) / 2);
 }

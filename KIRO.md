@@ -39,6 +39,16 @@ The spec/task column takes a spec and task (`ingest/2.3`) or a Jira key plus `(c
 2026-11-26 | Role 3 | SCRUM-36 (chat) LLM provider | nothing | by hand, outside Kiro: switched the LLM in tech.md and the README provider table from gemini-3-8-flash via Coarena to the Claude API (claude-haiku-5-5, ANTHROPIC_API_KEY, model id in FLIGHTMIND_LLM_MODEL) before any LLM code existed; embeddings stay on gemini-embedding-001
 2026-11-26 | Role 3 | agent-mcp/10-21 (SCRUM-36) | kiro-cli chat extended the agent-mcp spec with Part 2 (requirements 7 to 17, tasks 10 to 25) and implemented tasks 10 to 21 in three runs: services/intel/agent (ApiClient shared with the MCP server, the tools query_tracks, search_events, get_track and get_raw, the Claude API tool-use loop on claude-haiku-5-5, the evidence rule that drops any claim whose citation no tool returned, the demo guard, the /api/ask wiring that stays canned without a key), the four MCP tools, and 86 tests with a fake client (153 in services/intel). Kiro found that the SDK's timeout class is APITimeoutError and that the SCRUM-34 tool-list test had to change | by hand, outside Kiro: the prompts fixed the design and gave the current anthropic SDK call shapes (output_config, strict tools, no thinking or sampling parameters); review found the Docker image did not copy the new agent package, which Kiro then fixed with a test; uv.lock regenerated with uv; one class name corrected in design.md. Later the same day, by hand: the PR #22 review fixes went through kiro-cli (altitude refs in query_tracks, tool batch inside the deadline, fan-out cap, catch-all for tool errors), and task 22 ran on the real Claude API with Zahran's key in his own terminal: the three demo questions answered with checked citations in 7.2 s, 8.0 s and 5.6 s for about $0.0012 each. Still open: the key on Vercel (task 23) and Haiku versus Opus (task 24)
 
+## Week of 2026-11-16
+
+2026-11-22 | Role 2 | detectors/1-2 | Kiro-assisted (subagent workers and architect): points, pcap reader, decoder wrapper, tracks, runway geometry, 12 tests; commit 2c583ee | fixed by hand: runway tolerance 30 m to 45 m (advisor coordinates give 42.4 m); airport radius 72,224 m to 74,080 m (40 NM)
+2026-11-22 | Role 2 | detectors/3 | squawk detector, 9 tests; commit 1950a7e | fixed by hand: shared-timestamp citations moved from timestamp windows to record position after a test caught it
+2026-11-22 | Role 2 | detectors/4 | go-around detector, 11 tests; commit 5565def | fixed by hand: option A (climb checked before the runway box) after the first test run found no event; gate round 1 added the lost-approach timeout ahead of the climb check
+2026-11-22 | Role 2 | detectors/5 | holding detector, 9 tests; commit b9a5de9 | nothing
+2026-11-22 | Role 2 | compression/6 | NACp-gated Douglas-Peucker with SED, 15 tests; commits d964575, 780edac | fixed by hand: gate found the property test read tolerances from the code under test; table moved to literals; speed fix for quadratic scan (531 s to 29 s on hour 00, identical output)
+2026-11-22 | Role 2 | storage/7 | transactional writer and CLI, 65 tests with database; commit 11b4835 | fixed by hand: re-run delete range widened to stored and new range; accuracy statement wording
+2026-11-22 | Role 2 | storage/9-10 | storage benchmark, rowstore vs columnstore vs DuckDB; commit 7ca8cc2 | fixed by hand: DuckDB Q2 moved to Postgres bench.events; Q3 uses all 20 refs; results file rewritten per run
+
 ## Trailer corrections
 
 Commits are never rewritten. A wrong trailer is fixed here, and `scripts/kiro-stats` moves
@@ -50,6 +60,7 @@ ce2a636 | none | vibe | Kiro chat session wrote it, see docs/kiro/sessions/2026-
 1b1d747 | none | vibe | Kiro chat session wrote it, see docs/kiro/sessions/2026-11-14-scrum-31-32-chat.md
 e8d5d4d | none | vibe | Kiro chat session wrote it, see docs/kiro/sessions/2026-11-14-scrum-31-32-chat.md
 2766b21 | spec scrum-19/1-4 | none | hook and agent files typed by hand from setup-prompts.md, not generated from the spec; see the SCRUM-19 line above
+
 
 ### Sunday review 2026-11-22 (SCRUM-43)
 - Stats (`scripts/kiro-stats`, main at 6cc62b8): 2 specs (web-ui, scrum-19), 7 spec tasks done and 18 open, 4 IDE hooks plus 1 Kiro Crew Stop hook (lives in the Crew dashboard, script in `scripts/crew-hooks/`), 6 steering files, 1 custom agent, 7 KIRO.md entries before this review. 37 commits: `Kiro: spec` 6, `vibe` 15, `hook` 0, `none` 5, after 5 trailer corrections. By person: Fadil and Zahran have commits; Koolkar has none yet.

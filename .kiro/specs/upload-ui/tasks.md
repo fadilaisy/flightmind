@@ -29,7 +29,7 @@
   - Check: button enabled, list from GET /api/recordings, picking sets `?recording=`, filename in the header, reload keeps it.
   - Reqs: R5, R6
 
-- [ ] 6. Tests and screenshots
+- [x] 6. Tests and screenshots
   - Files: `web/tests/upload.test.ts(x)`, `docs/kiro/figma-check/66-*.png`
   - Check: polling, part retry and error-state tests pass; five screenshots compared with frame 1.
   - Reqs: R8

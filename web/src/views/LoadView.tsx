@@ -59,7 +59,7 @@ export function LoadView({ api, follow = null, start = null, onReady, onReset }:
           live() &&
           setPhase((p) =>
             p.name === "working"
-              ? { ...p, recording: r, filename: r.filename, size: r.size_bytes, sent: r.status === "uploading" ? p.sent : r.size_bytes }
+              ? { ...p, recording: r, filename: r.filename, size: r.size_bytes, sent: r.status === "uploading" ? Math.max(p.sent, r.bytes_received) : r.size_bytes }
               : p,
           ),
       });

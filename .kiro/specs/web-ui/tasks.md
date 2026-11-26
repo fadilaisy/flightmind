@@ -1,4 +1,4 @@
-# Tasks: web-ui (SCRUM-39)
+﻿# Tasks: web-ui (SCRUM-39)
 
 Do not implement until the spec is approved. Tick a box only when the check passes. After each ticked task, add a line to `KIRO.md`.
 Paths are under `web/` unless noted.
@@ -34,7 +34,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: list shows type, callsign, window, state; the three state buttons work; a click selects the event.
   - Reqs: R3.4, R3.8
 
-- [ ] 7. Map with basemap and WIII runway
+- [x] 7. Map with basemap and WIII runway
   - Files: `src/views/MapView.tsx`, `src/geo/wiii-runway.geojson`, `src/components/Legend.tsx`
   - Check: map shows the runway layer; legend lists kept, event window, flagged.
   - Reqs: R3.1, R3.3

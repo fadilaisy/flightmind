@@ -154,3 +154,11 @@ td { padding: 7px 8px; border-bottom: 1px solid #edf1f6; vertical-align: top; }
 tr.click { cursor: pointer; }
 tr.click:hover td { background: #f0f4fa; }
 tr.sel td { background: var(--primary-soft); }
+
+.viewport { height: clamp(240px, calc(100vh - 470px), 430px); min-height: 240px; flex: none; }
+.mapbox { position: absolute; inset: 0; }
+.legend { position: absolute; left: 12px; bottom: 28px; display: flex; gap: 14px; font-size: 12px; background: rgba(255, 255, 255, 0.92); padding: 4px 10px; border-radius: 6px; z-index: 2; }
+.legend i { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 5px; }
+.maphint { position: absolute; right: 12px; top: 8px; font-size: 12px; color: var(--muted); background: rgba(255, 255, 255, 0.85); padding: 2px 8px; border-radius: 6px; z-index: 2; }
+.maptip { font-size: 12.5px; color: var(--ink); }
+.maplibregl-popup-content { padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line); box-shadow: 0 1px 4px rgba(20, 33, 58, 0.08); }

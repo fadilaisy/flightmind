@@ -1,10 +1,10 @@
-# Tasks: upload-ui
+﻿# Tasks: upload-ui
 
 - [x] 0. Spec
   - Files: `.kiro/specs/upload-ui/`
   - Reqs: R1 to R8
 
-- [ ] 1. Types and API
+- [x] 1. Types and API
   - Files: `web/src/api/uploadTypes.ts`, `client.ts`, `mockClient.ts`, `web/tests/uploadApi.test.ts`
   - Check: mock stage progression, 413, 415 and failed cases tested; `recording` passed to events, tracks, stream, ask and compression.
   - Reqs: R2, R3, R4, R6

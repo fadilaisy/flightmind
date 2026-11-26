@@ -8,3 +8,4 @@ export type FlightEvent = components["schemas"]["Event"];
 export type EventDetail = components["schemas"]["EventDetail"];
 export type RawRecord = components["schemas"]["RawRecord"];
 export type AskResponse = components["schemas"]["AskResponse"];
+export type CompressionReport = components["schemas"]["CompressionReport"];

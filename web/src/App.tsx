@@ -9,6 +9,7 @@ import { EventsView } from "./views/EventsView";
 import { RecordsView } from "./views/RecordsView";
 import { Shell } from "./views/Shell";
 import { TrajectoryView } from "./views/TrajectoryView";
+import { readParam } from "./views/nav";
 import mini from "../tests/fixtures/mini.json";
 
 export function App() {
@@ -28,8 +29,8 @@ export function App() {
   const load = useCallback(() => {
     setError(null);
     setEvents(null);
-    api
-      .events()
+    const recording = readParam("recording");
+    (recording ? api.events(recording) : api.events())
       .then((list) => {
         setEvents(list);
         // Open the first event on load, unless one is already selected.

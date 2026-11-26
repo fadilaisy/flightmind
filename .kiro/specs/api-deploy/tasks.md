@@ -2,7 +2,7 @@
 
 Implements `requirements.md` and `design.md` in this folder. All paths are relative to the repo root. Run Python commands from `services/intel` with the `.venv` there. Do not edit anything under `web/`, `contracts/`, `services/pipeline/` or `services/intel/mock_api/`. Do not add `railway.json` or `railway.toml`.
 
-Tasks 1 to 9 are phase 1 and are built now. Tasks 10 to 16 are phase 2: they are open and are not built now.
+Tasks 1 to 10 are phase 1 and are built now (task 9, the Railway deploy, is superseded by tasks 17 to 20). Tasks 11 to 16 are phase 2: they are open and are not built now. Tasks 17 to 20 are phase 1 on Vercel.
 
 ## Phase 1
 
@@ -65,6 +65,7 @@ Tasks 1 to 9 are phase 1 and are built now. Tasks 10 to 16 are phase 2: they are
   - _Requirements: 1.5, 4.1, 4.3_
 
 - [ ] 9. Deploy to Railway and run the smoke check on the public URL
+  - **Superseded on 2026-11-26 by tasks 17 to 20 (host changed to Vercel).** Left unticked on purpose; the text below is the original Railway task.
   - Confirm the plan first (Open item 3 in `requirements.md`): the service must not sleep or stop on a credit limit. This is Zahran's account decision. Do not deploy until it is answered.
   - From a clean checkout of `main`, follow the README section: `railway login`, create or link the project, `railway up`, generate the domain, set the healthcheck `/api/meta` and restart on failure. Fix any README step that did not work as written.
   - Run `python infra/smoke.py https://<name>.up.railway.app`, then open the URL in a browser from a device with no Railway login and repeat the check from task 8.
@@ -81,27 +82,60 @@ Tasks 1 to 9 are phase 1 and are built now. Tasks 10 to 16 are phase 2: they are
   - Done when the issues exist and the commit is made.
   - _Requirements: 6.6_
 
+## Phase 1 on Vercel
+
+- [x] 17. Add the Vercel files
+  - Files: `pyproject.toml`, `vercel.json`, `.vercelignore`, `infra/vercel_entry.py`, `infra/vercel_build.py`, `.gitignore` (add `/public/` and `.vercel/`).
+  - `pyproject.toml` names `infra.vercel_entry:app` as `tool.vercel.entrypoint`, depends on `fastapi>=0.110` only, and runs `python infra/vercel_build.py` as the build script. `infra/vercel_entry.py` builds the app with `web_dist=""` (API only). `infra/vercel_build.py` builds `web/` with `VITE_API_BASE=/.` and copies `web/dist` to `public/`. `vercel.json` excludes everything the API does not need from the function bundle.
+  - Do not edit `web/`, `contracts/`, `services/pipeline/` or `services/intel/mock_api/`. Do not run any `vercel` or `railway` command in this task.
+  - Done when `python infra/vercel_build.py` from the repo root exits 0, `public/index.html` exists and `git status` does not list `public/`.
+  - **Result (2026-11-26):** `python infra/vercel_build.py` exited 0 (13 files copied: `public/index.html` and `public/assets/`), and `git status` did not list `public/`. `serve.build_app` already treated `""` as "API only" (only `None` reads `FLIGHTMIND_WEB_DIST`), so `serve.py` needed no change.
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
+
+- [x] 18. Test the Vercel entry point
+  - File: `services/intel/tests/test_vercel_entry.py`, plus one test in `test_serve.py` that an explicit empty `web_dist` ignores `FLIGHTMIND_WEB_DIST`.
+  - With `TestClient` on `infra/vercel_entry.py` loaded by path: `/api/meta` is 200 with `mode` = `replay`; `/`, `/docs` and `/openapi.json` are 404, also when `FLIGHTMIND_WEB_DIST` points at a folder with an `index.html`. The entrypoint in `pyproject.toml` names a module file that exists, and its `fastapi` floor equals the one in `requirements-serve.txt`.
+  - Done when `python -m pytest -q` from `services/intel` passes.
+  - **Result (2026-11-26):** `python -m pytest -q` from `services/intel`: 61 passed (54 before, plus 1 in `test_serve.py` and 6 in `test_vercel_entry.py`).
+  - _Requirements: 1.2, 1.6, 2.5, 2.7, 3.1, 3.2_
+
+- [ ] 19. Deploy with `vercel deploy --temporary` and check the public URL
+  - From a clean checkout of the repo root, run `npx vercel@latest deploy --temporary`. It needs no account. Keep the claim link private: do not paste it in chat, an issue or the repo.
+  - Run `python infra/smoke.py <public url>`. Open the URL in a browser with no Vercel session and repeat the check from task 8 (event list, event, `raw_ref`, `/api/...` requests, no fixture, no login page).
+  - Zahran opens the claim link so the project moves into his Vercel account. Later deploys use `npx vercel@latest login` and `npx vercel@latest deploy --prod`. Try the rollback once and write down the command that worked.
+  - Record the public URL, the date and the smoke-check result in `infra/README.md`.
+  - Done when the smoke check exits 0 against the public URL, the claim is done, and the URL, date and rollback command are in `infra/README.md`.
+  - _Requirements: 1.1, 1.3, 1.5, 6.1, 6.3, 6.5, 8.1, 8.3, 8.4, 8.5_
+
+- [x] 20. Update the docs for Vercel
+  - `infra/README.md`, section "Deploy (SCRUM-38)": Vercel steps (first deploy, claim, login, later deploys, smoke check, rollback), what lives in Vercel and not in the repo, why there is no Railway, the `/.` workaround and the local image check. `services/intel/README.md`: the `serve.py` note names `infra/vercel_entry.py` and lists Vercel in the third-party line.
+  - Done when a teammate can follow the section from a clean checkout to a passing smoke check with no secret in the repo.
+  - **Result (2026-11-26):** Both files updated. The Vercel commands and the rollback are written as not yet run; task 19 confirms them. The public URL stays "not deployed yet".
+  - _Requirements: 6.2, 6.3, 6.4, 6.6, 6.7_
+
 ## Phase 2 (open, not built now)
 
-- [ ] 11. Add the database service on Railway (blocked on SCRUM-37)
-  - Create a second service from `timescale/timescaledb-ha:pg16` with a volume at the Postgres data path and no public domain. Set the `POSTGRES_*` variables in Railway only.
-  - Done when the web service can reach it over the private network and `pg_isready` passes.
+All of phase 2 is blocked on SCRUM-37 (the real API) and, for the data, on pipeline PR #11. It runs on Vercel.
+
+- [ ] 11. Host the database outside Vercel (blocked on SCRUM-37)
+  - Choose a hosted Postgres with both TimescaleDB and pgvector (not checked yet which free one has both). Keep its credentials out of the repo.
+  - Done when the function can connect over TLS and the two extensions exist.
   - _Requirements: 9.1, 9.2, 9.4_
 
 - [ ] 12. Load the schema and recorded data (blocked on SCRUM-37 and pipeline PR #11)
-  - Apply `contracts/schema.sql` to the empty database, then load the recorded CAT021 data with the pipeline loader. Close any temporary TCP proxy afterwards.
-  - Done when the row counts match the loader's report and `extensions` for TimescaleDB and pgvector exist.
+  - Apply `contracts/schema.sql` to the empty database, then load the recorded CAT021 data with the pipeline loader.
+  - Done when the row counts match the loader's report.
   - _Requirements: 9.1_
 
-- [ ] 13. Make the raw recording file available to the web service (blocked on SCRUM-37)
-  - Choose and apply one method (volume on the web service, or a private fetch at build time) from design.md, after checking the file size against the plan's volume limit.
-  - Done when `/api/raw/{raw_ref}` on the deployed service returns the bytes for a `raw_ref` taken from a real event.
+- [ ] 13. Make the raw recording file available to the function (blocked on SCRUM-37)
+  - Either the file fits in the 500 MB Python bundle (and is not excluded by `vercel.json` or `.vercelignore`), or it lives in external storage that the function reads on demand. Check the file size first.
+  - Done when `/api/raw/{raw_ref}` on the deployed URL returns the bytes for a `raw_ref` taken from a real event.
   - _Requirements: 9.6_
 
-- [ ] 14. Switch the web service to the real API (blocked on SCRUM-37)
-  - Set `FLIGHTMIND_API_APP` to the real API's `module:attribute` in Railway. Add any runtime packages to `services/intel/requirements-serve.txt` and extend the Dockerfile copy lines if the API package is not `mock_api`. Set `DATABASE_URL`, `COARENA_API_KEY` and `GEMINI_API_KEY` as Railway variables only. Confirm they are not in the repo, the image layers or the logs.
+- [ ] 14. Switch the function to the real API (blocked on SCRUM-37)
+  - Set `FLIGHTMIND_API_APP` to the real API's `module:attribute` as a Vercel environment variable. Add any runtime packages to `pyproject.toml` and `services/intel/requirements-serve.txt`, and check `vercel.json` does not exclude the real API's files. Set `DATABASE_URL`, `COARENA_API_KEY` and `GEMINI_API_KEY` as Vercel environment variables only.
   - Done when `python infra/smoke.py <public url>` exits 0 with real data and `git grep` finds no key value in the repo.
-  - _Requirements: 9.3, 9.4_
+  - _Requirements: 9.1, 9.3, 9.4_
 
 - [ ] 15. Restrict CORS on the real API (blocked on SCRUM-37)
   - Check that the real API allows only the public origin (or none, since the UI shares the origin). If it does not, raise it with SCRUM-37 and do not change `mock_api`.
@@ -110,6 +144,6 @@ Tasks 1 to 9 are phase 1 and are built now. Tasks 10 to 16 are phase 2: they are
 
 - [ ] 16. Verify the demo on the public URL and decide the fallback (blocked on SCRUM-37)
   - Ask the three demo questions of SCRUM-36 on the public URL and time them: each must answer with citations in under 30 seconds. Run the smoke check on 2026-12-03 and again before 2026-12-04 14:00 PT, and note each run with its date in `infra/README.md`.
-  - If phase 2 is not working by 2026-12-02, set `FLIGHTMIND_API_APP` back to `mock_api.app:app`, and make sure the README and Devpost text say the public demo uses sample data.
+  - If phase 2 is not working by 2026-12-02, remove `FLIGHTMIND_API_APP` from the Vercel environment (back to `mock_api.app:app`), and make sure the README and Devpost text say the public demo uses sample data.
   - Done when the three answers and both smoke runs are recorded, or the fallback is applied and recorded.
   - _Requirements: 8.3, 9.7, 9.8_

@@ -92,6 +92,8 @@ Notes:
 `serve.py` serves the built web UI and the API on one origin: paths that start with `/api/` go to
 the API app, every other path is the static web build. It does not change the API app, so the real
 API replaces the mock with no code change. `/docs`, `/redoc` and `/openapi.json` are not exposed.
+On Vercel the CDN serves the web build, so `infra/vercel_entry.py` builds the app with `web_dist=""`
+(API only); the Docker image uses `FLIGHTMIND_WEB_DIST` instead.
 
 | Variable | Meaning |
 | --- | --- |
@@ -110,4 +112,4 @@ Tests: `tests/test_serve.py`. Deploy steps: see "Deploy (SCRUM-38)" in `infra/RE
 
 ### Third-party services (for the README disclosure list)
 
-- Railway: hosts the public demo container. The root `README.md` is owned by Role 1, so the line there is requested by issue.
+- Vercel (Hobby plan): hosts the public demo. The web build is served from its CDN and `serve.py` runs as one Vercel Function through `infra/vercel_entry.py`. The root `README.md` is owned by Role 1, so the line there is requested by issue.

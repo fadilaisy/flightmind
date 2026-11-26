@@ -107,6 +107,15 @@ def test_empty_dist_env_serves_api_only(monkeypatch):
     assert c.get("/").status_code == 404
 
 
+def test_explicit_empty_web_dist_ignores_environment(monkeypatch, dist):
+    # Only None reads FLIGHTMIND_WEB_DIST; "" means API only (used by infra/vercel_entry.py).
+    monkeypatch.setenv("FLIGHTMIND_WEB_DIST", str(dist))
+    c = TestClient(serve.build_app(web_dist=""))
+    assert c.get("/api/meta").status_code == 200
+    assert c.get("/").status_code == 404
+    assert TestClient(serve.build_app()).get("/").status_code == 200
+
+
 def test_dist_without_index_serves_api_only(tmp_path):
     (tmp_path / "other.txt").write_text("x", encoding="utf-8")
     c = TestClient(serve.build_app(web_dist=str(tmp_path)))

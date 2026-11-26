@@ -1,6 +1,42 @@
 # Design: SCRUM-38 deploy the public live URL in replay mode
 
-Implements `requirements.md` in this folder. Decisions taken: Railway; one container; routing in a small ASGI module that does not touch the API app; no `railway.json`; deploy by `railway up`.
+Implements `requirements.md` in this folder. Decisions taken: one origin; routing in a small ASGI module that does not touch the API app; no `railway.json`. Host: Vercel since 2026-11-26 (first written for Railway; see the update below).
+
+## Update after the host change (2026-11-26)
+
+**Change.** The host for SCRUM-38 is now Vercel (free Hobby plan), not Railway. On 2026-11-26 Railway refused to create a project because the account trial had expired, Render refused a free service without a card on file (HTTP 402), and Azure for Students rejected the sign-up. Vercel runs a FastAPI app as one Vercel Function and serves static files from its CDN. Vercel does not run Dockerfiles, so the root `Dockerfile` and `.dockerignore` stay for local runs and container hosts, but the public URL is built by the Vercel Python runtime.
+
+**Request flow.**
+
+```
+Judge's browser
+      |  https://<name>.vercel.app
+      v
+Vercel
+      |-- file exists in public/ (/, /assets/...)  --> CDN serves it (web build)
+      '-- anything else                            --> one Vercel Function: infra/vercel_entry.py -> app
+                                                         |-- path starts with /api/ --> mock_api.app:app
+                                                         '-- any other path         --> 404 (/docs, /openapi.json stay private)
+```
+
+`infra/vercel_entry.py` calls `build_app(web_dist="")`. In `serve.py` only `None` reads `FLIGHTMIND_WEB_DIST`, so an explicit empty string means "API only" even if the variable is set. The CDN, not the function, serves the web UI.
+
+**Build.** Vercel loads `app` from the module named by `tool.vercel.entrypoint` in the root `pyproject.toml` (`infra.vercel_entry:app`), installs `[project] dependencies` (`fastapi>=0.110`), then runs `[tool.vercel.scripts] build`, which is `python infra/vercel_build.py`. That script runs `npm ci` and `npm run build` in `web/` with `VITE_API_BASE=/.` (the same workaround as in the Dockerfile) and replaces the root `public/` folder with a copy of `web/dist`. It fails with a non-zero exit when `web/dist/index.html` is missing. `public/` is build output and is in `.gitignore`.
+
+**New files.**
+
+| Path | Purpose |
+| --- | --- |
+| `pyproject.toml` (repo root) | Exists only so Vercel can build the public URL. Entrypoint, `fastapi` dependency, build script. Not a package. |
+| `vercel.json` (repo root) | `functions["infra/vercel_entry.py"].excludeFiles`: one brace glob that keeps the web sources, docs, fixtures, pipeline, tests, MCP server and caches out of the function bundle. |
+| `.vercelignore` (repo root) | Keeps `.git`, `.claude`, `.kiro`, `data`, `docs`, `fixtures`, virtual environments, caches, `.env*`, `web/dist` and `services/pipeline` out of the upload. `web/`, `contracts/`, `infra/` and `services/intel/` stay, because the build needs them. |
+| `infra/vercel_entry.py` | Puts `services/intel` on `sys.path`, exposes `app = build_app(web_dist="")`. |
+| `infra/vercel_build.py` | Standard-library build step: web build, then copy `web/dist` to `public/`. |
+| `services/intel/tests/test_vercel_entry.py` | Tests for the entry module and for `pyproject.toml` (entrypoint file exists; the `fastapi` floor equals the one in `requirements-serve.txt`). |
+
+**Deploy.** `npx vercel@latest deploy --temporary` from a clean checkout builds and deploys without an account, and prints a claim link that must not be shared. After the claim: `vercel login`, then `vercel deploy --prod`. Hobby limits that matter here: function duration up to 300 s, Python bundle up to 500 MB.
+
+**What no longer applies in the older sections below.** The "Railway setup" section (project, generated domain, healthcheck path, restart policy, plan), the `railway up` / `railway login` / `railway link` commands, the Railway healthcheck on `/api/meta`, `PORT` set by Railway, and the "Railway plan sleeps" risk. In the Overview, the single container and the Railway box are replaced by the flow above. The Dockerfile, `.dockerignore`, `serve.py` behaviour, `requirements-serve.txt`, `smoke.py`, the tests table and the `/.` workaround are unchanged. Phase 2 on Railway (second service, volume, private network) is replaced by the Vercel version in `requirements.md` requirement 9 and `tasks.md` tasks 11 to 16.
 
 ## Overview
 
@@ -173,7 +209,7 @@ Consequences:
 - The page cannot tell it is on the mock, so the "Sample data" label does not show. That is Open item 1, a Role 1 decision.
 - When Role 1 adds a same-origin base, change the build argument and delete the comment in the Dockerfile.
 
-## Railway setup (what lives outside the repo)
+## Railway setup (what lives outside the repo) — superseded on 2026-11-26 by Vercel, see the update at the top
 
 Written in `infra/README.md`, because these settings are not in a config file (no `railway.json`):
 

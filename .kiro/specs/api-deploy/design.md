@@ -189,7 +189,7 @@ On the first failure it prints `FAIL <url>: <reason>` and exits with 1. A bad ar
 
 | Variable | Where it is set | Phase | Meaning |
 | --- | --- | --- | --- |
-| `PORT` | Railway sets it | 1 | Port to listen on. Default 8000 outside Railway. |
+| `PORT` | Railway sets it (phase 1 container hosts only) | 1 | Port to listen on. Default 8000 outside Railway. |
 | `FLIGHTMIND_API_APP` | Dockerfile default unset; Vercel environment variable in phase 2 | 1, 2 | `module:attribute` of the API app. Default `mock_api.app:app`. |
 | `FLIGHTMIND_WEB_DIST` | Dockerfile `ENV` | 1 | Folder with the built web UI. Unset or no `index.html` means API only. |
 | `VITE_API_BASE` | Dockerfile build argument, `/.` | 1 | Build-time only. See below. |
@@ -224,7 +224,7 @@ Deploy commands, in the order the README lists them: `railway login`; `railway i
 
 A clean checkout matters because `railway up` uploads the working directory. Uncommitted files would ship. `.dockerignore` limits what is sent, and the README says to deploy from a fresh `git clone` of `main` or a worktree with no local changes.
 
-## Phase 2 design (not built now)
+## Phase 2 design (not built now) — superseded on 2026-11-26 by Vercel, see requirement 9
 
 All of this is blocked on SCRUM-37 (real API) and pipeline PR #11.
 

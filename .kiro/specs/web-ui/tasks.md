@@ -39,7 +39,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: map shows the runway layer; legend lists kept, event window, flagged.
   - Reqs: R3.1, R3.3
 
-- [ ] 8. Track points on the map
+- [x] 8. Track points on the map
   - Files: `src/views/MapView.tsx`, `src/domain/format.ts`
   - Check: points draw in three styles; hover shows `ts`, lat, lon, altitude with unit and datum, `raw_ref`; selecting an event zooms to its window.
   - Reqs: R3.2, R3.5, R3.6, R7

@@ -22,6 +22,8 @@ interface Props {
 }
 
 const runway = JSON.parse(runwayText) as FeatureCollection;
+// The first load shows the whole track; later events zoom to their flagged window. Module scope, because the map remounts while a track loads.
+let fittedOnce = false;
 setWorkerUrl(new URL(workerUrl, window.location.href).href);
 const EMPTY: FeatureCollection<Point> = { type: "FeatureCollection", features: [] };
 
@@ -32,7 +34,6 @@ export function MapView({ points, event, scrubTs, onOpenRecord }: Props) {
   const openRef = useRef(onOpenRecord);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
-  const fitted = useRef(false);
   pointsRef.current = points;
   openRef.current = onOpenRecord;
 
@@ -134,8 +135,8 @@ export function MapView({ points, event, scrubTs, onOpenRecord }: Props) {
     if (!m || !ready) return;
     (m.getSource("points") as GeoJSONSource).setData(trackPoints(points, event));
     (m.getSource("line") as GeoJSONSource).setData(trackLine(points));
-    const first = !fitted.current;
-    fitted.current = true;
+    const first = !fittedOnce;
+    fittedOnce = true;
     // First load shows the whole track and the runway; selecting another event zooms to its window.
     const b = first ? trackFitBounds(points, runway) : windowBounds(points, event);
     m.resize();

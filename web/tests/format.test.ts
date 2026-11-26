@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { formatAltitude, formatPoint, formatWindow, formatWindowTitle } from "../src/domain/format";
+﻿import { describe, expect, it } from "vitest";
+import { formatAltitude, formatDegrees, formatPoint, formatTime, formatWindow, formatWindowTitle } from "../src/domain/format";
 
 describe("format", () => {
   it("shows the window with UTC and its length in seconds", () => {
@@ -38,5 +38,18 @@ describe("point text", () => {
       altitude: "900 ft, barometric",
       rawRef: "rec01:3",
     });
+  });
+});
+
+describe("point text details", () => {
+  it("keeps fractions of a second in I021/071 time", () => {
+    expect(formatTime("2026-10-13T08:00:30.250Z")).toBe("08:00:30.250 UTC");
+  });
+  it("writes degrees with four decimals", () => {
+    expect(formatDegrees(106.65)).toBe("106.6500°");
+    expect(formatDegrees(-6.1203)).toBe("-6.1203°");
+  });
+  it("keeps the thousands separator for high altitudes", () => {
+    expect(formatAltitude(35000)).toBe("35,000 ft, barometric");
   });
 });

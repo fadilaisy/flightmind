@@ -18,9 +18,16 @@ inclusion: always
 
 ## Third-party model APIs (Role 3, SCRUM-32)
 
-- **LLM:** `gemini-3-8-flash` (Google Gemini 3.8 Flash) reached through **Coarena**, a
-  gateway/proxy that exposes an OpenAI-compatible endpoint at `https://coarena.ai/api/v1`.
-  Key is supplied via the `COARENA_API_KEY` env var (never committed).
+- **LLM:** Anthropic Claude API, model `claude-opus-5-5` (Claude Opus 5.5), called with the
+  official `anthropic` Python SDK, not an OpenAI-compatible shim. Key via `ANTHROPIC_API_KEY`
+  (never committed; on the deployed site it is a server-side env var, never in the web
+  bundle). The model id is read from `FLIGHTMIND_LLM_MODEL` (default `claude-opus-5-5`) so it
+  can change without a code change. Set effort per route: `low` for event stories,
+  `medium` for cited agent answers. Changed on 2026-11-26 from `gemini-3-8-flash` through
+  the Coarena gateway; no LLM code existed yet.
+- **Public demo guard:** `/api/ask` on the public URL must be rate-limited (SCRUM-36), and the
+  Claude Console keeps a spend limit with auto-reload off, so visitors cannot drain the
+  $100 API credit.
 - **Embeddings:** Google `gemini-embedding-001`, called with `output_dimensionality=1024`
   so vectors fit the existing `event_embeddings.embedding = vector(1024)` without changing
   the contract. Key via `GEMINI_API_KEY`. Embeddings are L2-normalized before storage,

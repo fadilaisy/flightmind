@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import type { Api } from "../api/client";
 import type { EventDetail, FlightEvent } from "../api/types";
+import { Charts } from "../components/Charts";
 import { EventFeed } from "../components/EventFeed";
 import { InvestigationPanel } from "../components/InvestigationPanel";
 import { StateBox } from "../components/StateBox";
@@ -101,7 +102,13 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
           </div>
         </div>
         {mainBox()}
-        {showCharts && <div className="chartbox" aria-label="Charts area" />}
+        {showCharts && (
+          <div className="chartbox">
+            {selected && track.status === "ready" && track.track.points.length > 0 ? (
+              <Charts points={track.track.points} event={selected} scrubTs={scrubTs} />
+            ) : null}
+          </div>
+        )}
         <div className="scrub" aria-label="Scrubber area" />
       </div>
       <aside className="side r" aria-label="Investigation">

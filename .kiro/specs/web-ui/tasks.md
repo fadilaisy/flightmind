@@ -49,7 +49,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: tests with known points give the expected kt and ft/min; null altitude gives null; a step under 0.5 s gives null.
   - Reqs: R4.2, R4.3
 
-- [ ] 10. Charts
+- [x] 10. Charts
   - Files: `src/components/Charts.tsx`
   - Check: three charts share one time axis; null altitude shows a gap; the flagged window is shaded; titles for speed and vertical rate say "computed from positions".
   - Reqs: R4.1, R4.2, R4.3, R4.7

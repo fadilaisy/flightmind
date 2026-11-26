@@ -1,4 +1,4 @@
-export const TAB_LABEL = {
+﻿export const TAB_LABEL = {
   events: "Events",
   trajectory: "Trajectory",
   records: "Records",
@@ -51,6 +51,11 @@ export const STR = {
   loadingTrack: "Loading track.",
   trackError: "Can't load the track",
   noTrack: "No track points for this aircraft.",
+  chartsLabel: "Charts",
+  chartAltitude: "Altitude",
+  chartSpeed: "Ground speed, computed from positions",
+  chartVerticalRate: "Vertical rate, computed from positions",
+  flaggedWindowLower: "flagged window",
   notBuilt: "Not built yet",
   flaggedWindow: "Flagged window",
   recordsInWindow: "Records in the flagged window",

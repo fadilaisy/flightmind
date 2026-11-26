@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import type { Api } from "../api/client";
 import type { Meta } from "../api/types";
 import { STR, TAB_LABEL } from "../strings";
+import { RecordingPicker } from "../components/RecordingPicker";
 import mark from "../assets/figma/mark.svg";
 import optical from "../assets/figma/optical.svg";
 import { navigate } from "./nav";
@@ -24,15 +25,26 @@ export function tabUrl(search: string, tab: Tab): string {
 export function Shell({
   api,
   usingSample,
+  recordingName,
+  selectedId = null,
+  onSelectRecording,
+  onPickFile,
   children,
 }: {
   api: Api;
   usingSample: boolean;
+  /** Filename of the selected recording. null: none loaded. undefined: the server has no recordings API, so use meta. */
+  recordingName?: string | null;
+  selectedId?: string | null;
+  onSelectRecording?: (id: string) => void;
+  onPickFile?: (file: File) => void;
   children: (tab: Tab) => ReactNode;
 }) {
   const [tab, setTab] = useState<Tab>(() => parseTab(window.location.search));
   const [meta, setMeta] = useState<Meta | null>(null);
   const [metaFailed, setMetaFailed] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const closePicker = useCallback(() => setPickerOpen(false), []);
 
   useEffect(() => {
     const onPop = () => setTab(parseTab(window.location.search));
@@ -52,7 +64,7 @@ export function Shell({
     [tab],
   );
 
-  const recording = meta?.recordings?.[0];
+  const recording = recordingName === undefined ? meta?.recordings?.[0] : recordingName;
 
   return (
     <>
@@ -83,15 +95,30 @@ export function Shell({
               <img src={optical} alt="" />
               {meta.mode === "live" ? STR.modeLive : STR.modeReplay}
             </span>
-            <span>{recording ?? STR.noRecording}</span>
+            <span>{recording ?? STR.noRecordingLoaded}</span>
             {usingSample && <span className="muted">{STR.sampleLabel}</span>}
           </div>
         )}
         {metaFailed && <span role="alert">{STR.metaUnavailable}</span>}
-        <button type="button" className="fbtn" disabled title={STR.loadRecordingTitle}>
+        <button type="button" className="fbtn" aria-expanded={pickerOpen} onClick={() => setPickerOpen((o) => !o)}>
           {STR.loadRecording}
         </button>
       </header>
+      {pickerOpen && (
+        <RecordingPicker
+          api={api}
+          selectedId={selectedId}
+          onClose={closePicker}
+          onSelect={(id) => {
+            setPickerOpen(false);
+            onSelectRecording?.(id);
+          }}
+          onFile={(file) => {
+            setPickerOpen(false);
+            onPickFile?.(file);
+          }}
+        />
+      )}
       <div id="tabpanel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
         {children(tab)}
       </div>

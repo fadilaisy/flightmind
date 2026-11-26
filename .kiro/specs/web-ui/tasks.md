@@ -69,7 +69,7 @@ For every task that builds a view or component (3, 6, 7, 8, 10, 11, 12, 14, 15),
   - Check: I021/071 and I021/040 have name, unit, LSB and datum where they apply; unknown items return the raw value only.
   - Reqs: R6.3, R6.7
 
-- [ ] 14. Records tree and header
+- [x] 14. Records tree and header
   - Files: `src/views/RecordsView.tsx`, `src/components/RecordTree.tsx`
   - Check: clicking a map point opens its record; header shows `raw_ref`, `sac`, `sic`; items show unit, LSB, datum.
   - Reqs: R6.1, R6.2, R6.3, R6.6

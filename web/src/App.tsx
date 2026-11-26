@@ -6,6 +6,7 @@ import { StateBox } from "./components/StateBox";
 import { getStore, useStore } from "./state/store";
 import { STR } from "./strings";
 import { EventsView } from "./views/EventsView";
+import { RecordsView } from "./views/RecordsView";
 import { Shell } from "./views/Shell";
 import { TrajectoryView } from "./views/TrajectoryView";
 import mini from "../tests/fixtures/mini.json";
@@ -62,7 +63,7 @@ export function App() {
     if (tab === "trajectory") {
       return <TrajectoryView api={api} events={events} eventId={eventId} states={eventStates} />;
     }
-    return <p style={{ padding: 16 }}>{STR.tabPending}</p>;
+    return <RecordsView api={api} events={events} eventId={eventId} />;
   }
 
   return (

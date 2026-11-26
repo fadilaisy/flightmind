@@ -6,20 +6,22 @@ export interface ItemMeta {
   unit: string | null;
   lsb: string | null;
   datum: string | null;
+  /** One sentence for the Records tab, from the CAT021 item description. */
+  definition?: string;
 }
 
 const ITEMS: ItemMeta[] = [
-  { id: "I021/010", name: "Data source identification", unit: null, lsb: null, datum: null },
-  { id: "I021/040", name: "Target report descriptor", unit: null, lsb: null, datum: null },
-  { id: "I021/070", name: "Mode 3/A code", unit: null, lsb: null, datum: "octal, four digits" },
-  { id: "I021/071", name: "Time of applicability for position", unit: "s", lsb: "1/128 s", datum: "UTC, since midnight" },
-  { id: "I021/080", name: "Target address", unit: null, lsb: null, datum: "24-bit ICAO address" },
-  { id: "I021/130", name: "Position in WGS-84 coordinates", unit: "deg", lsb: "180/2^23 deg", datum: "WGS-84" },
-  { id: "I021/140", name: "Geometric height", unit: "ft", lsb: "6.25 ft", datum: "WGS-84 ellipsoid" },
-  { id: "I021/145", name: "Flight level", unit: "FL", lsb: "1/4 FL (25 ft)", datum: "barometric, standard pressure 1013.25 hPa" },
-  { id: "I021/155", name: "Barometric vertical rate", unit: "ft/min", lsb: "6.25 ft/min", datum: "barometric" },
-  { id: "I021/160", name: "Airborne ground vector", unit: "kt, deg", lsb: "2^-14 NM/s, 360/2^16 deg", datum: "ground speed, track angle" },
-  { id: "I021/170", name: "Target identification", unit: null, lsb: null, datum: "6-bit ICAO characters" },
+  { id: "I021/010", name: "Data source identification", unit: null, lsb: null, datum: null, definition: "Identification of the ground station that sent the report: SAC is the area, SIC the station." },
+  { id: "I021/040", name: "Target report descriptor", unit: null, lsb: null, datum: null, definition: "Characteristics of the target report: address type, altitude reporting capability and flags such as the ground bit." },
+  { id: "I021/070", name: "Mode 3/A code", unit: null, lsb: null, datum: "octal, four digits", definition: "Mode 3/A code (the squawk), four octal digits." },
+  { id: "I021/071", name: "Time of applicability for position", unit: "s", lsb: "1/128 s", datum: "UTC, since midnight", definition: "Time of applicability of the reported position, in seconds since midnight UTC. LSB is 1/128 s." },
+  { id: "I021/080", name: "Target address", unit: null, lsb: null, datum: "24-bit ICAO address", definition: "The 24-bit ICAO aircraft address." },
+  { id: "I021/130", name: "Position in WGS-84 coordinates", unit: "deg", lsb: "180/2^23 deg", datum: "WGS-84", definition: "Latitude and longitude in WGS-84, two's complement. LSB is 180/2^23 degrees." },
+  { id: "I021/140", name: "Geometric height", unit: "ft", lsb: "6.25 ft", datum: "WGS-84 ellipsoid", definition: "Minimum height from a plane tangent to the earth's ellipsoid (WGS-84), two's complement, LSB 6.25 ft. Not height above the runway." },
+  { id: "I021/145", name: "Flight level", unit: "FL", lsb: "1/4 FL (25 ft)", datum: "barometric, standard pressure 1013.25 hPa", definition: "Flight level relative to standard pressure 1013.25 hPa, two's complement, LSB 1/4 FL." },
+  { id: "I021/155", name: "Barometric vertical rate", unit: "ft/min", lsb: "6.25 ft/min", datum: "barometric", definition: "Barometric vertical rate, two's complement, LSB 6.25 ft/min." },
+  { id: "I021/160", name: "Airborne ground vector", unit: "kt, deg", lsb: "2^-14 NM/s, 360/2^16 deg", datum: "ground speed, track angle", definition: "Ground speed and track angle over the ground, from the airborne ground vector." },
+  { id: "I021/170", name: "Target identification", unit: null, lsb: null, datum: "6-bit ICAO characters", definition: "Callsign or registration, 8 characters in 6-bit ICAO coding." },
 ];
 
 const BY_ID = new Map(ITEMS.map((i) => [i.id, i]));

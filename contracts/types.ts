@@ -390,7 +390,7 @@ export interface components {
             raw_bytes: number;
             /** @description Bytes the kept telemetry rows take in storage */
             stored_bytes: number;
-            /** @description stored_bytes divided by raw_bytes, so smaller is better */
+            /** @description stored_bytes divided by raw_bytes, so smaller is better; 0 when raw_bytes is 0, never null */
             ratio: number;
             /** @description Largest horizontal distance in metres between a dropped point and the position interpolated from its kept neighbours */
             max_position_error_m: number;

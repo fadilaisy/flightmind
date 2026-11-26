@@ -166,6 +166,8 @@ EVENTS_BY_ID = {e["id"]: e for e in EVENTS}
 MOCK_MAX_POSITION_ERROR_M = 8.4
 
 
+# Both sizes here are synthetic record bytes; the real report compares the recording file
+# size with the Postgres row size, so its ratio will differ. Do not quote this ratio.
 def _build_compression():
     kept = set()
     for t in TRACKS.values():

@@ -6,6 +6,7 @@ import pytest
 import yaml
 from fastapi.testclient import TestClient
 
+from mock_api import data
 from mock_api.app import app
 
 SPEC = yaml.safe_load((Path(__file__).parents[3] / "contracts" / "openapi.yaml").read_text(encoding="utf-8"))
@@ -94,7 +95,7 @@ def test_compression_report_matches_contract_and_events():
 def test_compression_counts_are_consistent():
     report = get_ok("/api/compression/rec01")
     events = get_ok("/api/events")
-    total_points = sum(len(get_ok(f"/api/tracks/{icao}")["points"]) for icao in {e["icao24"] for e in events})
+    total_points = sum(len(get_ok(f"/api/tracks/{icao}")["points"]) for icao in data.TRACKS)
     assert report["points_in"] == total_points
     assert 0 < report["points_kept"] < report["points_in"]
     assert report["stored_bytes"] < report["raw_bytes"]

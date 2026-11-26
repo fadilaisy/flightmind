@@ -34,7 +34,9 @@ Notes for the UI:
 - `/api/compression/{recording_id}` returns a `CompressionReport`. Counts and byte sizes are
   computed from the synthetic records (kept = event points plus each track's first and last
   point), `/api/tracks` still returns every point, and `max_position_error_m` is an invented
-  constant.
+  constant. The mock measures both sizes in synthetic record bytes, while the real report
+  compares the recording file size with the Postgres row size, so the real ratio will
+  differ. Do not quote the mock ratio (for example in the video).
 
 ## MCP server (SCRUM-34)
 

@@ -46,3 +46,27 @@ describe("track3d", () => {
     expect(formatAltTick(1500)).toBe("1.5k ft");
   });
 });
+
+describe("framing", () => {
+  it("keeps the track and the altitude axis inside the frame", async () => {
+    const { frameTrack, fitDistance } = await import("../src/domain/track3d");
+    const t = buildTrack3D(makeTrack(500), event);
+    const f = frameTrack(t);
+    const inside = (x: number, y: number, z: number) =>
+      Math.hypot(x - f.center[0], y - f.center[1], z - f.center[2]) <= f.radius;
+    for (let i = 0; i < 500; i++) expect(inside(t.world[i * 3], t.world[i * 3 + 1], t.world[i * 3 + 2])).toBe(true);
+    expect(inside(t.axisX, 0, t.axisZ)).toBe(true);
+    expect(inside(t.axisX, t.axisHeight, t.axisZ)).toBe(true);
+    expect(fitDistance(f.radius, 32, 1.6)).toBeGreaterThan(f.radius);
+  });
+
+  it("includes a runway near the track and ignores a far one", async () => {
+    const { frameTrack } = await import("../src/domain/track3d");
+    const t = buildTrack3D(makeTrack(200), event);
+    const base = frameTrack(t);
+    const far = frameTrack(t, [[1e7, 1e7]]);
+    expect(far.radius).toBeCloseTo(base.radius, 5);
+    const near = frameTrack(t, [[t.world[0] + 400, t.world[2] - 400]]);
+    expect(near.radius).toBeGreaterThanOrEqual(base.radius);
+  });
+});

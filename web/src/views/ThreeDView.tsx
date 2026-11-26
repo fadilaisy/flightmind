@@ -24,7 +24,7 @@ import { useEffect, useRef, useState } from "react";
 import type { FlightEvent, Track } from "../api/types";
 import { StateBox } from "../components/StateBox";
 import { formatPoint } from "../domain/format";
-import { buildTrack3D, disposeTrack3D, formatAltTick, LINE_FLAGGED, LINE_KEPT, type Track3D } from "../domain/track3d";
+import { buildTrack3D, disposeTrack3D, fitDistance, formatAltTick, frameTrack, LINE_FLAGGED, LINE_KEPT, type Track3D } from "../domain/track3d";
 import { styleColor } from "../domain/pointStyle";
 import runwayText from "../geo/wiii-runway.geojson?raw";
 import { STR } from "../strings";
@@ -104,13 +104,42 @@ export function ThreeDView({ points, event, scrubTs, onOpenRecord }: Props) {
     const t: Track3D = buildTrack3D(points, event, RUNWAY_ENDS);
     setFactor(t.exaggeration);
     const scene = new Scene();
-    const camera = new PerspectiveCamera(32, 1, 10, t.half * 40);
-    const reach = t.half * 2.6;
-    camera.position.set(reach * 0.55, Math.max(reach * 0.36, t.axisHeight * 1.1), reach * 0.8);
+    const FOV = 32;
+    const camera = new PerspectiveCamera(FOV, 1, 10, t.half * 40);
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(-t.half * 0.3, t.axisHeight * 0.05, t.half * 0.1);
     controls.maxPolarAngle = Math.PI * 0.495;
-    controls.update();
+    // Frame the track, its altitude axis and a nearby runway; refit only on the first real size.
+    const frame = frameTrack(t, RUNWAY_ENDS.map(([lon, lat]) => t.toXZ(lon, lat)));
+    let sized = false;
+    function fitCamera(aspect: number) {
+      camera.aspect = aspect;
+      const dir = new Vector3(0.55, 0.42, 0.8).normalize();
+      const c = new Vector3(...frame.center);
+      let d = fitDistance(frame.radius, FOV, aspect);
+      camera.far = Math.max(t.half * 40, d * 10);
+      controls.target.copy(c);
+      // Tighten with the real projection: every corner of the box inside 90 percent of the view.
+      const corner = new Vector3();
+      for (let pass = 0; pass < 5; pass++) {
+        camera.position.copy(c).addScaledVector(dir, d);
+        camera.lookAt(c);
+        camera.updateProjectionMatrix();
+        camera.updateMatrixWorld(true);
+        let m = 0;
+        for (const x of [frame.min[0], frame.max[0]])
+          for (const y of [frame.min[1], frame.max[1]])
+            for (const z of [frame.min[2], frame.max[2]]) {
+              corner.set(x, y, z).project(camera);
+              m = Math.max(m, Math.abs(corner.x), Math.abs(corner.y));
+            }
+        if (!(m > 0)) break;
+        d *= m / 0.9;
+      }
+      camera.position.copy(c).addScaledVector(dir, d);
+      camera.updateProjectionMatrix();
+      controls.update();
+    }
+    fitCamera(1.6);
 
     const owned: { dispose(): void }[] = [];
     const own = <T extends { dispose(): void }>(o: T): T => {
@@ -144,8 +173,8 @@ export function ThreeDView({ points, event, scrubTs, onOpenRecord }: Props) {
     scene.add(new LineSegments(rwyGeo, rwyMat));
 
     // Altitude axis at the south-west corner, with ticks.
-    const axisX = -t.half;
-    const axisZ = t.half;
+    const axisX = t.axisX;
+    const axisZ = t.axisZ;
     const axisGeo = own(new BufferGeometry());
     const axisPos: number[] = [axisX, 0, axisZ, axisX, t.axisHeight, axisZ];
     const tickLen = t.half * 0.03;
@@ -245,6 +274,10 @@ export function ThreeDView({ points, event, scrubTs, onOpenRecord }: Props) {
       renderer.domElement.style.height = `${h}px`;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      if (!sized) {
+        sized = true;
+        fitCamera(w / h);
+      }
       size.set(w, h);
       lineMat.resolution.set(w, h);
       glowMat.resolution.set(w, h);
@@ -370,7 +403,7 @@ export function ThreeDView({ points, event, scrubTs, onOpenRecord }: Props) {
       <div ref={host} className="tdcanvas" />
       <div ref={labelBox} className="tdlabels" aria-hidden="true" />
       {altLabel && (
-        <span className="tdfactor" style={{ left: altLabel.x + 28, top: altLabel.y - 20 }}>
+        <span className="tdfactor" style={{ left: altLabel.x + 44, top: altLabel.y - 20 }}>
           {STR.altitudeFactor}
           {factor}
         </span>

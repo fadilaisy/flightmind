@@ -388,3 +388,11 @@ tr.sel td { background: var(--primary-soft); }
 .rstate { font-size: 14px; line-height: 20px; margin-right: 12px; }
 .rstate.confirmed { color: var(--green); font-weight: 500; }
 .rstate.dismissed { color: var(--faint); }
+
+/* States (Figma states frame, light tokens). */
+.statebox { border-color: var(--line-ui); border-radius: var(--radius-lg); background: var(--bg-surface); }
+.statebox strong { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+.statebox.loading strong, .statebox.empty strong { color: var(--text-secondary); font-weight: 400; }
+.statebox.error { border-color: var(--alert-red); background: #fff8f8; }
+.statebox.error strong { color: var(--red); }
+.chartbox .listmsg { position: absolute; left: 0; top: 0; }

@@ -25,8 +25,9 @@ type Loaded =
   | { status: "ready"; record: RawRecord };
 
 /** Loads /api/raw/{raw_ref} whenever rawRef changes. */
-function useRecord(api: Api, rawRef: string | null): Loaded {
+function useRecord(api: Api, rawRef: string | null): { loaded: Loaded; retry: () => void } {
   const [state, setState] = useState<Loaded>({ status: "idle" });
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     if (!rawRef) {
       setState({ status: "idle" });
@@ -41,8 +42,8 @@ function useRecord(api: Api, rawRef: string | null): Loaded {
     return () => {
       live = false;
     };
-  }, [api, rawRef]);
-  return state;
+  }, [api, rawRef, attempt]);
+  return { loaded: state, retry: () => setAttempt((n) => n + 1) };
 }
 
 const Muted = ({ children = STR.notInApi }: { children?: string }) => <span className="muted faint">{children}</span>;
@@ -51,7 +52,7 @@ export function RecordsView({ api, events, eventId }: Props) {
   const store = getStore();
   const rawRef = useStore((s) => s.rawRef);
   const event = events.find((e) => e.id === eventId) ?? null;
-  const loaded = useRecord(api, rawRef);
+  const { loaded, retry } = useRecord(api, rawRef);
   const record = loaded.status === "ready" ? loaded.record : null;
   const items = useMemo(() => (record ? recordItems(record) : []), [record]);
   const ranges = useMemo(() => (record ? itemRanges(record) : []), [record]);
@@ -257,7 +258,11 @@ export function RecordsView({ api, events, eventId }: Props) {
                 {record ? `record ${record.record_index} · ${byteCount(record.hex)} bytes · ${STR.itemFieldsMissing}` : ""}
               </span>
             </header>
-            {loaded.status === "error" && <StateBox kind="error" title={STR.recordError} text={loaded.message} />}
+            {loaded.status === "error" && (
+              <StateBox kind="error" title={STR.recordError} text={loaded.message}>
+                <button type="button" className="btn sm" onClick={retry}>{STR.retry}</button>
+              </StateBox>
+            )}
             {loaded.status === "loading" && <p className="muted pad">{STR.recordLoading}</p>}
             {loaded.status === "idle" && <p className="muted pad">{STR.selectRecord}</p>}
             {record && (

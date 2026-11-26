@@ -39,6 +39,7 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
   const store = getStore();
   const [selected, setSelected] = useState<EventDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [detailAttempt, setDetailAttempt] = useState(0);
   const view = useUrlParam("view") === "3d" ? "3d" : "map";
   const showCharts = useUrlParam("profile") !== "off";
   const { state: track, retry } = useTrack(api, selected?.icao24 ?? null);
@@ -58,7 +59,7 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
     return () => {
       current = false;
     };
-  }, [api, eventId]);
+  }, [api, eventId, detailAttempt]);
 
   const scrubTs = useStore((s) => s.scrubTs);
   const [cited, setCited] = useState<string | null>(null);
@@ -95,7 +96,8 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
   }
 
   function mainBox() {
-    if (!selected) return <StateBox kind="empty" title={STR.selectEvent} />;
+    if (!selected && eventId && !error) return <StateBox kind="loading" title={STR.loadingEventDetail} />;
+    if (!selected) return <StateBox kind="empty" title={STR.selectEventTrack} />;
     if (track.status === "loading" || track.status === "idle") {
       return <StateBox kind="loading" title={STR.loadingTrack} />;
     }
@@ -117,7 +119,11 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
     <div className="three">
       <EventFeed events={events} states={states} selectedId={eventId} onSelect={select} />
       <div className="center">
-        {error && <p role="alert">{error}</p>}
+        {error && (
+          <StateBox kind="error" title={STR.eventError} text={error}>
+            <button type="button" className="btn sm" onClick={() => setDetailAttempt((n) => n + 1)}>{STR.retry}</button>
+          </StateBox>
+        )}
         <div className="trackhead">
           <h2>{selected ? (selected.callsign ?? selected.icao24.toUpperCase()) : STR.eventsTitle}</h2>
           {selected && (
@@ -149,7 +155,9 @@ export function TrajectoryView({ api, events, eventId, states }: Props) {
           (selected && track.status === "ready" && track.track.points.length > 0 ? (
             <Charts points={track.track.points} event={selected} scrubTs={scrubTs} onGoTo={(ts) => goTo(track.track.points, ts)} />
           ) : (
-            <div className="chartbox" aria-label={STR.chartsLabel} />
+            <div className="chartbox" aria-label={STR.chartsLabel}>
+              <p className="listmsg">{!selected ? STR.chartsEmpty : track.status === "error" ? STR.trackError : STR.loadingCharts}</p>
+            </div>
           ))}
         {selected && track.status === "ready" ? (
           <Scrubber points={track.track.points} event={selected} events={events.filter((e) => e.icao24 === selected.icao24)} />

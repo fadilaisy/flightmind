@@ -19,9 +19,10 @@ describe("records", () => {
 
   it("lists one item per decoded value with name, unit and LSB from itemMeta", () => {
     const items = recordItems(record);
-    expect(items.map((i) => i.id)).toEqual(["I021/071", "I021/130", "I021/130"]);
+    expect(items.map((i) => i.id)).toEqual(["I021/071", "I021/130"]);
     expect(items[0]).toMatchObject({ name: "Time of applicability for position", lsb: "1/128 s", value: "08:00:30.00Z" });
-    expect(items[1].value).toBe("-6.15000 deg");
+    expect(items[1].value).toBe("\u22126.15000, " + items[1].value.split(", ")[1]);
+    expect(items[1].value).not.toContain("deg");
     expect(items[0].definition).toContain("seconds since midnight UTC");
   });
 
@@ -35,7 +36,7 @@ describe("records", () => {
     const rec = tree.children[0];
     expect(rec.label).toContain("Record 3");
     expect(rec.label).toContain("10 bytes");
-    expect(rec.children).toHaveLength(3);
+    expect(rec.children).toHaveLength(2);
     expect(rec.children[0].children.map((c) => c.label)).toContain("Raw: not in the API response");
   });
 });

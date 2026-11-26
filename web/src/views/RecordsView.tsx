@@ -153,7 +153,7 @@ export function RecordsView({ api, events, eventId }: Props) {
 
       <div className="reccols">
         <div className="reccol">
-          <section className="rcard" aria-label={STR.framesTitle}>
+          <section className="reccard" aria-label={STR.framesTitle}>
             <header>
               <b>{STR.framesTitle}</b> <span className="muted">{refs.length} records in the flagged window</span>
             </header>
@@ -178,9 +178,9 @@ export function RecordsView({ api, events, eventId }: Props) {
           </section>
 
           <div className="recpair">
-            <section className="rcard" aria-label={STR.blocksTitle}>
+            <section className="reccard" aria-label={STR.blocksTitle}>
               <header>
-                <b>{STR.blocksTitle}</b> <span className="muted">in {recordingId ?? "the recording"} · {STR.blocksMissing}</span>
+                <b>{STR.blocksTitle}</b> <span className="muted" title={STR.blocksMissing}>in recording {recordingId ?? "n/a"}</span>
               </header>
               <table>
                 <thead>
@@ -202,9 +202,9 @@ export function RecordsView({ api, events, eventId }: Props) {
               </table>
             </section>
 
-            <section className="rcard" aria-label={STR.recordsTableTitle}>
+            <section className="reccard" aria-label={STR.recordsTableTitle}>
               <header>
-                <b>{STR.recordsTableTitle}</b> <span className="muted">in the flagged window · offset {STR.notInApi}</span>
+                <b>{STR.recordsTableTitle}</b> <span className="muted" title={STR.notInApi}>in block 1</span>
               </header>
               <table>
                 <thead>
@@ -250,7 +250,7 @@ export function RecordsView({ api, events, eventId }: Props) {
             </section>
           </div>
 
-          <section className="rcard" aria-label={STR.itemsTitle}>
+          <section className="reccard" aria-label={STR.itemsTitle}>
             <header>
               <b>{STR.itemsTitle}</b>{" "}
               <span className="muted">
@@ -295,7 +295,7 @@ export function RecordsView({ api, events, eventId }: Props) {
         </div>
 
         <div className="reccol">
-          <section className="rcard itemcard" aria-label="Selected item">
+          <section className="reccard itemcard" aria-label="Selected item">
             {item ? (
               <>
                 <header className="itemhead">
@@ -335,7 +335,7 @@ export function RecordsView({ api, events, eventId }: Props) {
             )}
           </section>
 
-          <section className="rcard bytescard" aria-label={STR.bytesTitle}>
+          <section className="reccard bytescard" aria-label={STR.bytesTitle}>
             <header>
               <b>{STR.bytesTitle}</b>{" "}
               <span className="muted">{record ? `record ${record.record_index} · offset · hex · ASCII` : ""}</span>

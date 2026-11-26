@@ -27,12 +27,9 @@ describe("itemMeta", () => {
 });
 
 describe("describeDecoded", () => {
-  it("shows one row per key with units for nested values", () => {
+  it("merges latitude and longitude into one I021/130 row", () => {
     const rows = describeDecoded({ "I021/130": { lat: -6.15, lon: 106.65 } });
-    expect(rows.map((r) => [r.path, r.value, r.unit])).toEqual([
-      ["I021/130.lat", "-6.15000", "deg"],
-      ["I021/130.lon", "106.65000", "deg"],
-    ]);
+    expect(rows.map((r) => [r.path, r.value])).toEqual([["I021/130", "\u22126.15000, 106.65000"]]);
   });
   it("uses the ft unit for the plain altitude key and keeps unknown keys raw", () => {
     const rows = describeDecoded({ baro_alt_ft: 1250, synthetic: true });

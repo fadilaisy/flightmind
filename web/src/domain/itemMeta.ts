@@ -16,11 +16,11 @@ const ITEMS: ItemMeta[] = [
   { id: "I021/070", name: "Mode 3/A code", unit: null, lsb: null, datum: "octal, four digits", definition: "Mode 3/A code (the squawk), four octal digits." },
   { id: "I021/071", name: "Time of applicability for position", unit: "s", lsb: "1/128 s", datum: "UTC, since midnight", definition: "Time of applicability of the reported position, in seconds since midnight UTC. LSB is 1/128 s." },
   { id: "I021/080", name: "Target address", unit: null, lsb: null, datum: "24-bit ICAO address", definition: "The 24-bit ICAO aircraft address." },
-  { id: "I021/130", name: "Position in WGS-84 coordinates", unit: "deg", lsb: "180/2^23 deg", datum: "WGS-84", definition: "Latitude and longitude in WGS-84, two's complement. LSB is 180/2^23 degrees." },
+  { id: "I021/130", name: "Position in WGS-84 coordinates", unit: "°", lsb: "180/2^23 °", datum: "WGS-84", definition: "Latitude and longitude in WGS-84, two's complement. LSB is 180/2^23 degrees." },
   { id: "I021/140", name: "Geometric height", unit: "ft", lsb: "6.25 ft", datum: "WGS-84 ellipsoid", definition: "Minimum height from a plane tangent to the earth's ellipsoid (WGS-84), two's complement, LSB 6.25 ft. Not height above the runway." },
   { id: "I021/145", name: "Flight level", unit: "FL", lsb: "1/4 FL (25 ft)", datum: "barometric, standard pressure 1013.25 hPa", definition: "Flight level relative to standard pressure 1013.25 hPa, two's complement, LSB 1/4 FL." },
   { id: "I021/155", name: "Barometric vertical rate", unit: "ft/min", lsb: "6.25 ft/min", datum: "barometric", definition: "Barometric vertical rate, two's complement, LSB 6.25 ft/min." },
-  { id: "I021/160", name: "Airborne ground vector", unit: "kt, deg", lsb: "2^-14 NM/s, 360/2^16 deg", datum: "ground speed, track angle", definition: "Ground speed and track angle over the ground, from the airborne ground vector." },
+  { id: "I021/160", name: "Airborne ground vector", unit: "kt, °", lsb: "2^-14 NM/s, 360/2^16 °", datum: "ground speed, track angle", definition: "Ground speed and track angle over the ground, from the airborne ground vector." },
   { id: "I021/170", name: "Target identification", unit: null, lsb: null, datum: "6-bit ICAO characters", definition: "Callsign or registration, 8 characters in 6-bit ICAO coding." },
 ];
 
@@ -44,8 +44,8 @@ const PLAIN_KEY_ITEM: Record<string, string> = {
 
 /** The unit of a plain key, where it differs from the item's own unit. */
 const PLAIN_KEY_UNIT: Record<string, string> = {
-  lat: "deg",
-  lon: "deg",
+  lat: "°",
+  lon: "°",
   baro_alt_ft: "ft",
   geo_alt_ft: "ft",
   vertical_rate_fpm: "ft/min",
@@ -73,9 +73,8 @@ export interface DecodedRow {
 function show(key: string, v: unknown): string {
   if (v === null || v === undefined) return "no value";
   if (typeof v === "number") {
-    return key === "lat" || key === "lon"
-      ? v.toFixed(5)
-      : v.toLocaleString("en-US", { maximumFractionDigits: 6 });
+    const s = key === "lat" || key === "lon" ? v.toFixed(5) : v.toLocaleString("en-US", { maximumFractionDigits: 6 });
+    return s.replace("-", "\u2212");
   }
   return String(v);
 }
@@ -106,7 +105,21 @@ export function describeDecoded(decoded: Record<string, unknown>): DecodedRow[] 
       });
     }
   }
-  return rows;
+  return mergePosition(rows);
+}
+
+/** I021/130 carries latitude and longitude together, so they show as one row. */
+function mergePosition(rows: DecodedRow[]): DecodedRow[] {
+  const lat = rows.find((r) => r.key === "lat");
+  const lon = rows.find((r) => r.key === "lon");
+  if (!lat || !lon) return rows;
+  const merged: DecodedRow = { path: "I021/130", key: "I021/130", item: lat.item, value: `${lat.value}, ${lon.value}`, unit: null };
+  const out: DecodedRow[] = [];
+  for (const r of rows) {
+    if (r === lat) out.push(merged);
+    else if (r !== lon) out.push(r);
+  }
+  return out;
 }
 
 /** Datum word for an altitude in the track (alt_ft comes from I021/145). */

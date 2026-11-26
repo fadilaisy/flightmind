@@ -18,17 +18,18 @@
 .reccol { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .recpair { display: grid; grid-template-columns: 1fr 1.1fr; gap: 12px; }
 
-.rcard { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.rcard > header { padding: 9px 16px; font-size: 12.5px; border-bottom: 1px solid var(--line); background: var(--panel); }
-.rcard > header b { font-weight: 500; color: var(--muted); }
-.rcard table { font-size: 12.5px; }
-.rcard td.mono, .rcard td .mono { font-size: 12px; }
-.rcard th { background: #f4f7fb; padding: 6px 12px; color: var(--ink); font-weight: 500; }
-.rcard td { padding: 6px 12px; border-bottom: 1px solid #edf1f6; }
-.rcard tr:last-child td { border-bottom: 0; }
-.rcard td.sans { font-family: var(--font-text); }
-.rcard .pad { padding: 12px 16px; margin: 0; }
-.rcard tr.sel td { background: #e8f0fe; }
+.reccard { background: var(--panel); border: 1px solid var(--line-ui); border-radius: 8px; overflow: hidden; }
+.reccard > header { padding: 9px 16px; font-size: 12.5px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.reccard > header b { font-weight: 600; color: var(--ink); margin-right: 8px; }
+.reccard > header span { color: var(--muted); }
+.reccard table { font-size: 12.5px; }
+.reccard td.mono, .reccard td .mono { font-size: 12px; }
+.reccard th { background: #f4f7fb; padding: 6px 12px; color: var(--ink); font-weight: 500; }
+.reccard td { padding: 6px 12px; border-bottom: 1px solid #edf1f6; }
+.reccard tr:last-child td { border-bottom: 0; }
+.reccard td.sans { font-family: var(--font-text); }
+.reccard .pad { padding: 12px 16px; margin: 0; }
+.reccard tr.sel td { background: #e8f0fe; }
 
 .itemhead { padding: 14px 16px 10px; border-bottom: 1px solid var(--line); }
 .itemhead h2 { margin: 0; font-size: 15px; }

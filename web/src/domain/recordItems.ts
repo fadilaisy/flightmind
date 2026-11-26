@@ -18,7 +18,8 @@ export interface RecordItem {
 
 function toItem(row: DecodedRow): RecordItem {
   // A unit goes only after a number, so a time string such as 08:00:30.00Z stays as it is.
-  const value = row.unit && /^-?[\d.,]+$/.test(row.value) ? `${row.value} ${row.unit}` : row.value;
+  const numeric = row.unit && /^[-\u2212]?[\d.,]+$/.test(row.value);
+  const value = numeric ? (row.unit === "°" ? `${row.value}°` : `${row.value} ${row.unit}`) : row.value;
   return {
     path: row.path,
     id: row.item?.id ?? row.key,

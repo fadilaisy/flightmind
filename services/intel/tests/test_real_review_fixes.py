@@ -147,3 +147,4 @@ def test_users_never_see_server_paths(env, monkeypatch):
     uploads.run_pending_once()
     rec = get(client, rid)
     assert rec["status"] == "failed" and rec["error"] == uploads.GENERIC_ERROR
+    assert not (env["dir"] / f"{rid}.pcap").exists()  # a failed upload's file is deleted

@@ -334,6 +334,9 @@ def _process(row: dict) -> None:
         except Exception as exc:  # any failure is reported on the row, never raised
             log.exception("processing of %s failed", recording_id)
             _set(conn, recording_id, status="failed", error=one_sentence(exc))
+            stored = conn.execute("SELECT 1 FROM recording_files WHERE id = %s", (recording_id,)).fetchone()
+            if stored is None:  # nothing cites the file, so it only takes disk space
+                Path(row["path"]).unlink(missing_ok=True)
 
 
 def _loop() -> None:

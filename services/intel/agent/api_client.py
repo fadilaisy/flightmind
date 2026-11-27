@@ -46,7 +46,9 @@ class ApiClient:
         *,
         app: Any = None,
         transport: Optional[httpx.AsyncBaseTransport] = None,
+        recording: Optional[str] = None,
     ) -> None:
+        self._recording = (recording or "").strip() or None  # scopes events and tracks to one recording
         self._in_process = app is not None
         if app is not None:
             self._base = IN_PROCESS_BASE
@@ -89,6 +91,8 @@ class ApiClient:
         airport: Optional[str] = None,
     ) -> list:
         params = {k: v for k, v in (("since", since), ("type", type), ("airport", airport)) if v}
+        if self._recording:
+            params["recording"] = self._recording
         body = await self._get("/api/events", params, missing="No events endpoint on the API.")
         if not isinstance(body, list):
             raise ApiError("The API answered 200 but the body was not a JSON list.")
@@ -112,6 +116,8 @@ class ApiClient:
             params["from"] = from_
         if to:
             params["to"] = to
+        if self._recording:
+            params["recording"] = self._recording
         body = await self._get(
             f"/api/tracks/{quote(icao24, safe='')}",
             params,

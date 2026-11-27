@@ -50,7 +50,10 @@ export interface paths {
         /** Server-sent events with positions and new events on the replay clock */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description Only data of this recording: raw_ref (for events, the first entry of raw_refs) starts with "<recording>:". Omitted means the server's default recording. */
+                    recording?: components["parameters"]["RecordingFilter"];
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -90,6 +93,8 @@ export interface paths {
                     since?: string;
                     type?: string;
                     airport?: string;
+                    /** @description Only data of this recording: raw_ref (for events, the first entry of raw_refs) starts with "<recording>:". Omitted means the server's default recording. */
+                    recording?: components["parameters"]["RecordingFilter"];
                 };
                 header?: never;
                 path?: never;
@@ -167,6 +172,8 @@ export interface paths {
                 query?: {
                     from?: string;
                     to?: string;
+                    /** @description Only data of this recording: raw_ref (for events, the first entry of raw_refs) starts with "<recording>:". Omitted means the server's default recording. */
+                    recording?: components["parameters"]["RecordingFilter"];
                 };
                 header?: never;
                 path: {
@@ -208,7 +215,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    /** @description <recording_file_id>:<record_index> */
+                    /** @description <recording_id>:<record_index>. For an upload, recording_id is the Recording id */
                     raw_ref: string;
                 };
                 cookie?: never;
@@ -327,6 +334,532 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/recordings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Uploaded recordings, newest first */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Recording"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Start an upload. The file is then sent with PUT .../parts/{n} */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateRecordingRequest"];
+                };
+            };
+            responses: {
+                /** @description Created, status uploading */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Recording"];
+                    };
+                };
+                /** @description size_bytes is over FLIGHTMIND_MAX_UPLOAD_MB (default 2048) */
+                413: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Extension is not .pcap, .pcapng, .atx, .ast or .bin */
+                415: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One recording. The UI polls this every 2 s while it is scanned or processed */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Server-made recording id, "r" followed by 10 hex digits */
+                    id: components["parameters"]["RecordingId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Recording"];
+                    };
+                };
+                /** @description Unknown recording id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{id}/parts/{n}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Raw bytes of part n (0-based). Every part except the last is part_size_bytes long */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Server-made recording id, "r" followed by 10 hex digits */
+                    id: components["parameters"]["RecordingId"];
+                    n: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            responses: {
+                /** @description Part stored */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unknown recording id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Part out of order (n is not the next part), or the recording is no longer uploading */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** All parts are sent. The server checks the first bytes and starts scanning for streams */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Server-made recording id, "r" followed by 10 hex digits */
+                    id: components["parameters"]["RecordingId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The same file (same sha256) was uploaded before. Returns that recording, and this upload is dropped */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Recording"];
+                    };
+                };
+                /** @description Accepted, status scanning */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Recording"];
+                    };
+                };
+                /** @description Unknown recording id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not uploading, or bytes_received is less than size_bytes */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The first bytes are not pcap, pcapng or an ASTERIX CAT021 block */
+                415: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{id}/process": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decode, clean, detect and store one stream of a scanned recording */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Server-made recording id, "r" followed by 10 hex digits */
+                    id: components["parameters"]["RecordingId"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ProcessRecordingRequest"];
+                };
+            };
+            responses: {
+                /** @description Accepted, status queued */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Recording"];
+                    };
+                };
+                /** @description Unknown recording id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The recording is not scanned, or stream_id is not one of its supported streams */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** First decoded records of one stream, and how often each CAT021 item is present */
+        get: {
+            parameters: {
+                query: {
+                    stream: string;
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    /** @description Server-made recording id, "r" followed by 10 hex digits */
+                    id: components["parameters"]["RecordingId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RecordingPreview"];
+                    };
+                };
+                /** @description Unknown recording id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not scanned yet, or the stream is unknown or not supported */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{id}/recipe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The cleaning steps, what each one sets aside, and the size before and after
+         * @description Available from status scanned on, so the UI can show it before "Apply and find events".
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Server-made recording id, "r" followed by 10 hex digits */
+                    id: components["parameters"]["RecordingId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Recipe"];
+                    };
+                };
+                /** @description Unknown recording id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not scanned yet, or failed */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{id}/quarantine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Records the cleaning set aside, one page at a time
+         * @description Available from status scanned on, like the recipe.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    offset?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    /** @description Server-made recording id, "r" followed by 10 hex digits */
+                    id: components["parameters"]["RecordingId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["QuarantinePage"];
+                    };
+                };
+                /** @description Unknown recording id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not scanned yet, or failed */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/recordings/{id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Zip with cleaned.csv, events.csv, quarantine.csv and recipe.json */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Server-made recording id, "r" followed by 10 hex digits */
+                    id: components["parameters"]["RecordingId"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/zip": string;
+                    };
+                };
+                /** @description Unknown recording id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not ready yet */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -336,6 +869,7 @@ export interface components {
             mode: "replay" | "live";
             /** Format: date-time */
             sim_time: string;
+            /** @description Ids of recordings that are ready */
             recordings?: string[];
             airports?: string[];
         };
@@ -405,6 +939,8 @@ export interface components {
         };
         AskRequest: {
             question: string;
+            /** @description Answer from this recording only. Omitted means the default recording */
+            recording_id?: string;
         };
         Citation: {
             /** @enum {string} */
@@ -422,9 +958,113 @@ export interface components {
             /** @enum {string} */
             status: "ok" | "not_enough_evidence";
         };
+        RecordingStream: {
+            /** @description Stream id within the recording. A raw ASTERIX file has one stream, "raw" */
+            id: string;
+            /** @description Source ip:port; empty for a raw file */
+            src: string;
+            /** @description Destination ip:port; empty for a raw file */
+            dst: string;
+            /** @description ASTERIX category, for example 21 */
+            category: number;
+            sac: number;
+            sic: number;
+            /** @description UDP frames; 0 for a raw file */
+            frames: number;
+            /** @description Records of a supported category; 0 otherwise */
+            records: number;
+            /** @description True only for CAT021 */
+            supported: boolean;
+        };
+        RecordingProgress: {
+            records_done: number;
+            records_total: number;
+        };
+        Recording: {
+            /** @description "r" followed by 10 random hex digits. Used as the recording part of raw_ref */
+            id: string;
+            filename: string;
+            size_bytes: number;
+            bytes_received: number;
+            /** @description Size of every part except the last: 52428800 (50 MB) */
+            part_size_bytes: number;
+            /** @enum {string} */
+            format: "pcap" | "pcapng" | "asterix_raw";
+            /** @enum {string} */
+            status: "uploading" | "scanning" | "scanned" | "queued" | "decoding" | "filtering" | "detecting" | "storing" | "ready" | "failed";
+            /** @description Empty until scanned */
+            streams: components["schemas"]["RecordingStream"][];
+            progress: components["schemas"]["RecordingProgress"] | null;
+            /** @description One plain sentence when status is failed */
+            error: string | null;
+            record_count: number | null;
+            event_count: number | null;
+            /** Format: date-time */
+            first_ts: string | null;
+            /** Format: date-time */
+            last_ts: string | null;
+            /** Format: date-time */
+            created_at: string;
+        };
+        CreateRecordingRequest: {
+            filename: string;
+            size_bytes: number;
+            /**
+             * Format: date
+             * @description Only for raw .atx, .ast and .bin files, which carry the time of day but no date
+             */
+            recording_date?: string;
+        };
+        ProcessRecordingRequest: {
+            stream_id: string;
+        };
+        FieldQuality: {
+            /** @description CAT021 data item, for example I021/130 */
+            item: string;
+            label: string;
+            /** @description 0 to 100 */
+            present_pct: number;
+        };
+        RecordingPreview: {
+            records: components["schemas"]["RawRecord"][];
+            field_quality: components["schemas"]["FieldQuality"][];
+            /** @description Set when field_quality comes from a sample, not every record */
+            sample_size?: number;
+        };
+        RecipeStep: {
+            /** @description For example duplicates, position_jumps, altitude_spikes, fragments */
+            code: string;
+            label: string;
+            records_in: number;
+            set_aside: number;
+            reason: string;
+        };
+        Recipe: {
+            input_sha256: string;
+            steps: components["schemas"]["RecipeStep"][];
+            tolerance_note: string;
+            raw_bytes: number;
+            stored_bytes: number;
+            /** @description stored_bytes divided by raw_bytes */
+            ratio: number;
+        };
+        QuarantineItem: {
+            raw_ref: string;
+            step_code: string;
+            reason: string;
+        };
+        QuarantinePage: {
+            total: number;
+            items: components["schemas"]["QuarantineItem"][];
+        };
     };
     responses: never;
-    parameters: never;
+    parameters: {
+        /** @description Only data of this recording: raw_ref (for events, the first entry of raw_refs) starts with "<recording>:". Omitted means the server's default recording. */
+        RecordingFilter: string;
+        /** @description Server-made recording id, "r" followed by 10 hex digits */
+        RecordingId: string;
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;

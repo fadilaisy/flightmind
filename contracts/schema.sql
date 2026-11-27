@@ -1,6 +1,7 @@
 -- FlightMind contracts v1.1 (2026-11-12): recorded CAT021 pivot.
+-- v1.2 (2026-11-27, SCRUM-62): uploads and quarantine tables, additive only.
 -- Change only through a PR that also edits .kiro/steering/data-contracts.md.
--- raw_ref format: '<recording_file_id>:<record_index>'
+-- raw_ref format: '<recording_file_id>:<record_index>'. For an upload, recording_file_id is uploads.id.
 
 CREATE EXTENSION IF NOT EXISTS timescaledb;
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -87,4 +88,37 @@ CREATE TABLE event_embeddings (
   story       text NOT NULL,
   model       text NOT NULL,
   embedding   vector(1024) NOT NULL        -- gemini-embedding-001 @ 1024
+);
+
+-- C7 (v1.2, Role 3): one row per uploaded recording, from POST /api/recordings to ready.
+-- Mirrors the Recording schema in openapi.yaml. Events stay keyed by raw_ref prefix
+-- ('<id>:'), so the events table does not change.
+CREATE TABLE uploads (
+  id              text PRIMARY KEY,          -- 'r' + 10 random hex digits
+  filename        text NOT NULL,
+  sha256          text UNIQUE,               -- set at complete; same file twice returns the first upload
+  size_bytes      bigint NOT NULL,
+  bytes_received  bigint NOT NULL DEFAULT 0,
+  format          text NOT NULL,             -- pcap | pcapng | asterix_raw
+  recording_date  date,                      -- only for raw .atx/.ast/.bin files
+  path            text NOT NULL,             -- where the bytes are kept on disk
+  status          text NOT NULL DEFAULT 'uploading',
+                  -- uploading | scanning | scanned | queued | decoding | filtering | detecting | storing | ready | failed
+  streams         jsonb,                     -- RecordingStream[], set when scanned
+  stream_id       text,                      -- the stream chosen in POST .../process
+  records_done    integer,
+  records_total   integer,
+  error           text,                      -- one plain sentence when failed
+  report          jsonb,                     -- recipe and counts when ready
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  updated_at      timestamptz NOT NULL DEFAULT now()
+);
+
+-- C8 (v1.2, Role 2): records the cleaning set aside, with the step and reason.
+CREATE TABLE quarantine (
+  recording_id  text NOT NULL,
+  raw_ref       text NOT NULL,
+  step_code     text NOT NULL,             -- duplicates | position_jumps | altitude_spikes | fragments
+  reason        text NOT NULL,
+  PRIMARY KEY (recording_id, raw_ref)
 );

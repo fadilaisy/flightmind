@@ -1,8 +1,12 @@
 openapi: 3.0.3
 info:
   title: FlightMind API (contract C5)
-  version: 1.1.0
-  description: Changed 2026-11-12 for the recorded CAT021 pivot.
+  version: 1.2.0
+  description: >-
+    Changed 2026-11-12 for the recorded CAT021 pivot. 1.2.0 (2026-11-27, SCRUM-62) adds
+    recording upload (in 50 MB parts, for the Cloudflare tunnel limit), stream pick, decoded
+    preview, cleaning recipe, quarantine and export, and an optional `recording` filter on
+    the existing endpoints. Additive only.
 paths:
   /api/meta:
     get:
@@ -16,6 +20,8 @@ paths:
   /api/stream:
     get:
       summary: Server-sent events with positions and new events on the replay clock
+      parameters:
+        - $ref: '#/components/parameters/RecordingFilter'
       responses:
         '200':
           description: text/event-stream
@@ -29,6 +35,7 @@ paths:
         - { in: query, name: since, schema: { type: string, format: date-time } }
         - { in: query, name: type, schema: { type: string } }
         - { in: query, name: airport, schema: { type: string } }
+        - $ref: '#/components/parameters/RecordingFilter'
       responses:
         '200':
           description: OK
@@ -55,6 +62,7 @@ paths:
         - { in: path, name: icao24, required: true, schema: { type: string } }
         - { in: query, name: from, schema: { type: string, format: date-time } }
         - { in: query, name: to, schema: { type: string, format: date-time } }
+        - $ref: '#/components/parameters/RecordingFilter'
       responses:
         '200':
           description: OK
@@ -65,7 +73,7 @@ paths:
     get:
       summary: One CAT021 record, decoded, with its original bytes as hex
       parameters:
-        - { in: path, name: raw_ref, required: true, schema: { type: string }, description: '<recording_file_id>:<record_index>' }
+        - { in: path, name: raw_ref, required: true, schema: { type: string }, description: '<recording_id>:<record_index>. For an upload, recording_id is the Recording id' }
       responses:
         '200':
           description: OK
@@ -101,7 +109,189 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AskResponse' }
+  /api/recordings:
+    get:
+      summary: Uploaded recordings, newest first
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Recording' }
+    post:
+      summary: Start an upload. The file is then sent with PUT .../parts/{n}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateRecordingRequest' }
+      responses:
+        '201':
+          description: Created, status uploading
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Recording' }
+        '413':
+          description: size_bytes is over FLIGHTMIND_MAX_UPLOAD_MB (default 2048)
+        '415':
+          description: Extension is not .pcap, .pcapng, .atx, .ast or .bin
+  /api/recordings/{id}:
+    get:
+      summary: One recording. The UI polls this every 2 s while it is scanned or processed
+      parameters:
+        - $ref: '#/components/parameters/RecordingId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Recording' }
+        '404':
+          description: Unknown recording id
+  /api/recordings/{id}/parts/{n}:
+    put:
+      summary: Raw bytes of part n (0-based). Every part except the last is part_size_bytes long
+      parameters:
+        - $ref: '#/components/parameters/RecordingId'
+        - { in: path, name: n, required: true, schema: { type: integer, minimum: 0 } }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        '204':
+          description: Part stored
+        '404':
+          description: Unknown recording id
+        '409':
+          description: Part out of order (n is not the next part), or the recording is no longer uploading
+  /api/recordings/{id}/complete:
+    post:
+      summary: All parts are sent. The server checks the first bytes and starts scanning for streams
+      parameters:
+        - $ref: '#/components/parameters/RecordingId'
+      responses:
+        '200':
+          description: The same file (same sha256) was uploaded before. Returns that recording, and this upload is dropped
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Recording' }
+        '202':
+          description: Accepted, status scanning
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Recording' }
+        '404':
+          description: Unknown recording id
+        '409':
+          description: Not uploading, or bytes_received is less than size_bytes
+        '415':
+          description: The first bytes are not pcap, pcapng or an ASTERIX CAT021 block
+  /api/recordings/{id}/process:
+    post:
+      summary: Decode, clean, detect and store one stream of a scanned recording
+      parameters:
+        - $ref: '#/components/parameters/RecordingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProcessRecordingRequest' }
+      responses:
+        '202':
+          description: Accepted, status queued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Recording' }
+        '404':
+          description: Unknown recording id
+        '409':
+          description: The recording is not scanned, or stream_id is not one of its supported streams
+  /api/recordings/{id}/preview:
+    get:
+      summary: First decoded records of one stream, and how often each CAT021 item is present
+      parameters:
+        - $ref: '#/components/parameters/RecordingId'
+        - { in: query, name: stream, required: true, schema: { type: string } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 200, default: 8 } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RecordingPreview' }
+        '404':
+          description: Unknown recording id
+        '409':
+          description: Not scanned yet, or the stream is unknown or not supported
+  /api/recordings/{id}/recipe:
+    get:
+      summary: The cleaning steps, what each one sets aside, and the size before and after
+      description: Available from status scanned on, so the UI can show it before "Apply and find events".
+      parameters:
+        - $ref: '#/components/parameters/RecordingId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Recipe' }
+        '404':
+          description: Unknown recording id
+        '409':
+          description: Not scanned yet, or failed
+  /api/recordings/{id}/quarantine:
+    get:
+      summary: Records the cleaning set aside, one page at a time
+      description: Available from status scanned on, like the recipe.
+      parameters:
+        - $ref: '#/components/parameters/RecordingId'
+        - { in: query, name: offset, schema: { type: integer, minimum: 0, default: 0 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 500, default: 50 } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuarantinePage' }
+        '404':
+          description: Unknown recording id
+        '409':
+          description: Not scanned yet, or failed
+  /api/recordings/{id}/export:
+    get:
+      summary: Zip with cleaned.csv, events.csv, quarantine.csv and recipe.json
+      parameters:
+        - $ref: '#/components/parameters/RecordingId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/zip:
+              schema: { type: string, format: binary }
+        '404':
+          description: Unknown recording id
+        '409':
+          description: Not ready yet
 components:
+  parameters:
+    RecordingFilter:
+      in: query
+      name: recording
+      required: false
+      schema: { type: string }
+      description: >-
+        Only data of this recording: raw_ref (for events, the first entry of raw_refs) starts
+        with "<recording>:". Omitted means the server's default recording.
+    RecordingId:
+      in: path
+      name: id
+      required: true
+      schema: { type: string }
+      description: 'Server-made recording id, "r" followed by 10 hex digits'
   schemas:
     Meta:
       type: object
@@ -109,7 +299,7 @@ components:
       properties:
         mode: { type: string, enum: [replay, live] }
         sim_time: { type: string, format: date-time }
-        recordings: { type: array, items: { type: string } }
+        recordings: { type: array, items: { type: string }, description: 'Ids of recordings that are ready' }
         airports: { type: array, items: { type: string } }
     TrackPoint:
       type: object
@@ -177,6 +367,7 @@ components:
       required: [question]
       properties:
         question: { type: string }
+        recording_id: { type: string, description: 'Answer from this recording only. Omitted means the default recording' }
     Citation:
       type: object
       required: [kind, id, label]
@@ -192,3 +383,99 @@ components:
         citations: { type: array, items: { $ref: '#/components/schemas/Citation' } }
         tool_calls: { type: array, items: { type: object, additionalProperties: true } }
         status: { type: string, enum: [ok, not_enough_evidence] }
+    RecordingStream:
+      type: object
+      required: [id, src, dst, category, sac, sic, frames, records, supported]
+      properties:
+        id: { type: string, description: 'Stream id within the recording. A raw ASTERIX file has one stream, "raw"' }
+        src: { type: string, description: 'Source ip:port; empty for a raw file' }
+        dst: { type: string, description: 'Destination ip:port; empty for a raw file' }
+        category: { type: integer, description: 'ASTERIX category, for example 21' }
+        sac: { type: integer }
+        sic: { type: integer }
+        frames: { type: integer, description: 'UDP frames; 0 for a raw file' }
+        records: { type: integer, description: 'Records of a supported category; 0 otherwise' }
+        supported: { type: boolean, description: 'True only for CAT021' }
+    RecordingProgress:
+      type: object
+      required: [records_done, records_total]
+      properties:
+        records_done: { type: integer }
+        records_total: { type: integer }
+    Recording:
+      type: object
+      required: [id, filename, size_bytes, bytes_received, part_size_bytes, format, status, streams, progress, error, record_count, event_count, first_ts, last_ts, created_at]
+      properties:
+        id: { type: string, description: '"r" followed by 10 random hex digits. Used as the recording part of raw_ref' }
+        filename: { type: string }
+        size_bytes: { type: integer }
+        bytes_received: { type: integer }
+        part_size_bytes: { type: integer, description: 'Size of every part except the last: 52428800 (50 MB)' }
+        format: { type: string, enum: [pcap, pcapng, asterix_raw] }
+        status: { type: string, enum: [uploading, scanning, scanned, queued, decoding, filtering, detecting, storing, ready, failed] }
+        streams: { type: array, items: { $ref: '#/components/schemas/RecordingStream' }, description: 'Empty until scanned' }
+        progress: { allOf: [{ $ref: '#/components/schemas/RecordingProgress' }], nullable: true }
+        error: { type: string, nullable: true, description: 'One plain sentence when status is failed' }
+        record_count: { type: integer, nullable: true }
+        event_count: { type: integer, nullable: true }
+        first_ts: { type: string, format: date-time, nullable: true }
+        last_ts: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    CreateRecordingRequest:
+      type: object
+      required: [filename, size_bytes]
+      properties:
+        filename: { type: string }
+        size_bytes: { type: integer, minimum: 1 }
+        recording_date: { type: string, format: date, description: 'Only for raw .atx, .ast and .bin files, which carry the time of day but no date' }
+    ProcessRecordingRequest:
+      type: object
+      required: [stream_id]
+      properties:
+        stream_id: { type: string }
+    FieldQuality:
+      type: object
+      required: [item, label, present_pct]
+      properties:
+        item: { type: string, description: 'CAT021 data item, for example I021/130' }
+        label: { type: string }
+        present_pct: { type: number, description: '0 to 100' }
+    RecordingPreview:
+      type: object
+      required: [records, field_quality]
+      properties:
+        records: { type: array, items: { $ref: '#/components/schemas/RawRecord' } }
+        field_quality: { type: array, items: { $ref: '#/components/schemas/FieldQuality' } }
+        sample_size: { type: integer, description: 'Set when field_quality comes from a sample, not every record' }
+    RecipeStep:
+      type: object
+      required: [code, label, records_in, set_aside, reason]
+      properties:
+        code: { type: string, description: 'For example duplicates, position_jumps, altitude_spikes, fragments' }
+        label: { type: string }
+        records_in: { type: integer }
+        set_aside: { type: integer }
+        reason: { type: string }
+    Recipe:
+      type: object
+      required: [input_sha256, steps, tolerance_note, raw_bytes, stored_bytes, ratio]
+      properties:
+        input_sha256: { type: string }
+        steps: { type: array, items: { $ref: '#/components/schemas/RecipeStep' } }
+        tolerance_note: { type: string }
+        raw_bytes: { type: integer }
+        stored_bytes: { type: integer }
+        ratio: { type: number, description: 'stored_bytes divided by raw_bytes' }
+    QuarantineItem:
+      type: object
+      required: [raw_ref, step_code, reason]
+      properties:
+        raw_ref: { type: string }
+        step_code: { type: string }
+        reason: { type: string }
+    QuarantinePage:
+      type: object
+      required: [total, items]
+      properties:
+        total: { type: integer }
+        items: { type: array, items: { $ref: '#/components/schemas/QuarantineItem' } }

@@ -48,6 +48,7 @@ The spec/task column takes a spec and task (`ingest/2.3`) or a Jira key plus `(c
 2026-11-22 | Role 2 | compression/6 | NACp-gated Douglas-Peucker with SED, 15 tests; commits d964575, 780edac | fixed by hand: gate found the property test read tolerances from the code under test; table moved to literals; speed fix for quadratic scan (531 s to 29 s on hour 00, identical output)
 2026-11-22 | Role 2 | storage/7 | transactional writer and CLI, 65 tests with database; commit 11b4835 | fixed by hand: re-run delete range widened to stored and new range; accuracy statement wording
 2026-11-22 | Role 2 | storage/9-10 | storage benchmark, rowstore vs columnstore vs DuckDB; commit 7ca8cc2 | fixed by hand: DuckDB Q2 moved to Postgres bench.events; Q3 uses all 20 refs; results file rewritten per run
+2026-11-27 | Role 3 | SCRUM-62 (chat) upload contract | nothing | by hand, outside Kiro: Claude Code wrote contract 1.2.0 (9 recording paths with 10 operations, the recording filter, uploads and quarantine tables, data-contracts.md), regenerated types.ts with openapi-typescript, the mock upload flow in services/intel/mock_api/uploads.py and 25 tests against openapi.yaml; checked that the generated types equal web/src/api/uploadTypes.ts with tsc
 
 ## Trailer corrections
 

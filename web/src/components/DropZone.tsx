@@ -20,7 +20,7 @@ export function DropZone({ onFile, compact = false }: Props) {
 
   return (
     <div
-      className={`dropzone${over ? " over" : ""}${compact ? " compact" : ""}`}
+      className={`dropzone${over ? " over" : ""}${compact ? " compact" : " oneline"}`}
       onDragOver={(e) => {
         e.preventDefault();
         setOver(true);
@@ -38,9 +38,11 @@ export function DropZone({ onFile, compact = false }: Props) {
         <circle cx="23" cy="24" r="6" fill="#00b4d8" stroke="#03045e" strokeWidth="1.6" />
         <path d="M23 21v6M20 24h6" stroke="#03045e" strokeWidth="1.6" strokeLinecap="round" />
       </svg>
-      <h2>{STR.dropTitle}</h2>
-      <p className="dropnote">{STR.dropAccepts}</p>
-      <button type="button" className="fbtn lg" onClick={() => input.current?.click()}>
+      <div className="droptext">
+        <h2>{STR.dropTitle}</h2>
+        <p className="dropnote">{STR.dropAccepts}</p>
+      </div>
+      <button type="button" className={`fbtn lg${compact ? "" : " solid"}`} onClick={() => input.current?.click()}>
         {STR.chooseFile}
       </button>
       <input

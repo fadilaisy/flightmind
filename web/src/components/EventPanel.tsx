@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Api } from "../api/client";
 import type { AskResponse, EventDetail, Track } from "../api/types";
 import { buildAskQuestion } from "../domain/askContext";
+import { readParam } from "../views/nav";
 import { rawRefCitation } from "../domain/citations";
 import { derive } from "../domain/derive";
 import { phrase } from "../domain/eventLabels";
@@ -96,7 +97,9 @@ export function EventPanel({ api, event, state, points, onSetState, onOpenRecord
     setError(null);
     try {
       // The API takes only `question`; the event goes in as a prefix the user never sees.
-      setAnswer(await api.ask(buildAskQuestion(event, typed)));
+      const recording = readParam("recording");
+      const q = buildAskQuestion(event, typed);
+      setAnswer(await (recording ? api.ask(q, recording) : api.ask(q)));
     } catch (err) {
       setAnswer(null);
       setError((err as Error).message);

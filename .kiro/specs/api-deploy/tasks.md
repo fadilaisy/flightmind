@@ -135,7 +135,7 @@ All of phase 2 is blocked on SCRUM-37 (the real API) and, for the data, on pipel
   - _Requirements: 9.6_
 
 - [ ] 14. Switch the function to the real API (blocked on SCRUM-37)
-  - Set `FLIGHTMIND_API_APP` to the real API's `module:attribute` as a Vercel environment variable. Add any runtime packages to `pyproject.toml` and `services/intel/requirements-serve.txt`, and check `vercel.json` does not exclude the real API's files. Set `DATABASE_URL`, `COARENA_API_KEY` and `GEMINI_API_KEY` as Vercel environment variables only.
+  - Set `FLIGHTMIND_API_APP` to the real API's `module:attribute` as a Vercel environment variable. Add any runtime packages to `pyproject.toml` and `services/intel/requirements-serve.txt`, and check `vercel.json` does not exclude the real API's files. Set `DATABASE_URL`, `ANTHROPIC_API_KEY` and `GEMINI_API_KEY` as Vercel environment variables only.
   - Done when `python infra/smoke.py <public url>` exits 0 with real data and `git grep` finds no key value in the repo.
   - _Requirements: 9.1, 9.3, 9.4_
 

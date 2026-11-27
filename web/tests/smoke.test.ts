@@ -61,7 +61,14 @@ afterEach(() => {
 });
 
 async function open(search: string): Promise<HTMLElement> {
-  window.history.replaceState(null, "", `/${search}`);
+  // The app opens a recording first. Seed one that finished processing long ago, so each tab shows the sample data.
+  localStorage.setItem(
+    "flightmind.mockRecordings",
+    JSON.stringify([
+      { id: "rsmoke", filename: "sample.pcap", size: 1, format: "pcap", createdMs: 0, received: 1, nextPart: 1, completedMs: 1, processedMs: 2 },
+    ]),
+  );
+  window.history.replaceState(null, "", `/${search}&recording=rsmoke`);
   const host = document.createElement("div");
   document.body.appendChild(host);
   root = createRoot(host);

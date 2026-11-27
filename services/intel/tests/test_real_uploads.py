@@ -189,7 +189,10 @@ def test_parts_must_be_in_order_and_full_size(env):
     assert client.put(f"/api/recordings/{rid}/parts/1", content=b"x" * PART).status_code == 409
     assert client.put(f"/api/recordings/{rid}/parts/0", content=b"x" * 100).status_code == 409  # short, not last
     assert client.put(f"/api/recordings/{rid}/parts/0", content=b"x" * PART).status_code == 204
-    assert client.put(f"/api/recordings/{rid}/parts/0", content=b"x" * PART).status_code == 409  # again
+    assert client.put(f"/api/recordings/{rid}/parts/0", content=b"x" * PART).status_code == 204  # retry: no-op
+    assert get(client, rid)["bytes_received"] == PART
+    assert client.put(f"/api/recordings/{rid}/parts/0", content=b"x" * (PART + 1)).status_code == 413
+    assert client.put(f"/api/recordings/{rid}/parts/-1", content=b"x").status_code == 422
     assert client.put(f"/api/recordings/{rid}/parts/1", content=b"x" * PART).status_code == 204
     assert client.put(f"/api/recordings/{rid}/parts/2", content=b"x" * 10_001).status_code == 409  # past size
     r = client.post(f"/api/recordings/{rid}/complete")

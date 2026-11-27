@@ -13,9 +13,16 @@ on_progress(stage, done, total) moves the row through decoding, filtering, detec
 storing; the report it returns is saved and the row becomes ready, or failed with one
 sentence on any exception.
 
-One worker thread per process handles one job at a time. It starts with the app (and, when
-serve.py hides the app's startup, on the first upload request). On start, rows left in
-decoding..storing become failed and uploads stuck in uploading for over an hour are deleted.
+One worker thread handles one job at a time. It starts with the app (uvicorn, or serve.py,
+which passes the app its startup); if the database is not up yet it starts on the first upload
+request instead. On start, rows left in decoding..storing become failed, and every 10 minutes
+uploads idle in uploading for over an hour are deleted with their file. Run a single server
+process (no `--workers 2`): each process has its own worker and would fail the other's job on
+start. A long job delays the scan of newer uploads until it ends.
+
+Errors shown to users come only from ValueError and RuntimeError (our own and the pipeline's
+messages), with file paths reduced to file names; anything else shows a generic sentence and
+the traceback goes to the log.
 
 Preview, recipe, quarantine and export are SCRUM-68 and answer 501 until then.
 
@@ -29,15 +36,20 @@ import hashlib
 import importlib
 import logging
 import os
+import re
 import secrets
+import shutil
 import struct
 import threading
+import time
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Optional
 
 from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import Path as PathParam
 from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
 
 from . import raw_file
 from .db import connect, dsn
@@ -49,7 +61,15 @@ FORMATS = {".pcap": "pcap", ".pcapng": "pcapng", ".atx": "asterix_raw", ".ast": 
 PROCESSING = ("decoding", "filtering", "detecting", "storing")
 RESTART_ERROR = "Server restarted during processing. Upload again."
 STALE_UPLOAD = timedelta(hours=1)
+STALE_SWEEP_SECONDS = 600
+PROGRESS_EVERY_SECONDS = 0.5
+DISK_HEADROOM_BYTES = 512 * 1024 * 1024
 CAT021 = 21
+GENERIC_ERROR = "Processing failed on the server. Try again, or upload the file again."
+MISMATCH = {
+    True: "This is a raw ASTERIX file; name it .atx, .ast or .bin so its recording date can be given.",
+    False: "This is a pcap or pcapng capture; name it .pcap or .pcapng.",
+}
 
 
 def upload_dir() -> Path:
@@ -79,8 +99,16 @@ def _runner() -> Runner:
         raise RuntimeError("The pipeline job (run_recording, SCRUM-63) is not installed on this server.") from None
 
 
+_WINDOWS_PATH = re.compile(r"[A-Za-z]:\\[^\s:]*\\([^\s\\:]+)")
+_POSIX_PATH = re.compile(r"(?<![\w.])/(?:[^\s/:]+/)+([^\s/:]+)")
+
+
 def one_sentence(exc: BaseException) -> str:
+    """The message users see. Only our own kinds of error keep their text, and paths lose their folders."""
+    if not isinstance(exc, (ValueError, RuntimeError)):
+        return GENERIC_ERROR
     text = " ".join(str(exc).split()) or type(exc).__name__
+    text = _POSIX_PATH.sub(r"\1", _WINDOWS_PATH.sub(r"\1", text))
     text = text[:300].rstrip()
     return text if text.endswith((".", "!", "?")) else text + "."
 
@@ -146,13 +174,13 @@ def _set(conn, recording_id: str, **fields: Any) -> None:
 
 # ---------- file checks and stream scan ----------
 
-def sniff(head: bytes) -> Optional[str]:
+def sniff(head: bytes, size: int) -> Optional[str]:
     """pcap, pcapng or asterix_raw from the first bytes; None when it is none of them."""
     if head[:4] in raw_file.PCAP_MAGICS:
         return "pcap"
     if head[:4] == raw_file.PCAPNG_SHB:
         return "pcapng"
-    if len(head) >= 3 and head[0] == CAT021 and struct.unpack(">H", head[1:3])[0] >= 3:
+    if len(head) >= 3 and head[0] == CAT021 and 3 <= struct.unpack(">H", head[1:3])[0] <= size:
         return "asterix_raw"
     return None
 
@@ -173,28 +201,37 @@ def scan_streams(path: str) -> list:
     found: dict = {}
     with open(path, "rb") as f:
         kind, order, link_type = raw_file._format(f)
-        for _index, offset in raw_file.iter_offsets(f, kind, order):
-            packet = raw_file._packet_at(f, kind, order, offset)
+        offsets = raw_file.iter_offsets(f, kind, order)
+        while True:
+            try:
+                _index, offset = next(offsets)
+                packet = raw_file._packet_at(f, kind, order, offset)
+            except StopIteration:
+                break
+            except (struct.error, IndexError, raw_file.RawFileError):
+                break  # the file ends inside a record: keep what was read
             if kind == "raw":
                 key, block = ("", ""), packet
             else:
                 try:
                     block, key = _udp_with_ends(packet, link_type)
-                except raw_file.RawFileError:
-                    continue
+                except (raw_file.RawFileError, struct.error, IndexError):
+                    continue  # other traffic or a truncated frame
             if len(block) < 3:
                 continue
             entry = found.setdefault(key + (block[0],), {"frames": 0, "sac_sic": _sac_sic(block)})
             entry["frames"] += 1
     streams = []
-    for (src, dst, category), entry in sorted(found.items(), key=lambda kv: -kv[1]["frames"]):
+    # Most frames first; in a raw file, which is one stream, CAT021 wins over a bigger other category.
+    ordered = sorted(found.items(), key=lambda kv: (kind == "raw" and kv[0][2] != CAT021, -kv[1]["frames"]))
+    for (src, dst, category), entry in ordered:
         sac, sic = entry["sac_sic"]
         supported = category == CAT021
         streams.append({
             "id": "raw" if kind == "raw" else f"s{len(streams) + 1}",
             "src": src, "dst": dst, "category": category, "sac": sac, "sic": sic,
             "frames": 0 if kind == "raw" else entry["frames"],
-            "records": entry["frames"] if supported else 0,
+            "records": entry["frames"] if supported else 0,  # one record per frame, as the pipeline assumes
             "supported": supported,
         })
         if kind == "raw":
@@ -204,7 +241,7 @@ def scan_streams(path: str) -> list:
 
 def _udp_with_ends(packet: bytes, link_type: int) -> tuple:
     """(ASTERIX payload, (src ip:port, dst ip:port)) of one UDP packet."""
-    ip = raw_file.udp_ipv4(packet, link_type)
+    ip = raw_file.udp_ipv4(packet, link_type)  # checks that ip holds the full UDP header
     ihl = (ip[0] & 0x0F) * 4
     sport, dport = struct.unpack(">HH", ip[ihl:ihl + 4])
     src = ".".join(str(b) for b in ip[12:16]) + f":{sport}"
@@ -227,6 +264,12 @@ def recover() -> None:
             "UPDATE uploads SET status = 'failed', error = %s, updated_at = now() WHERE status = ANY(%s)",
             (RESTART_ERROR, list(PROCESSING)),
         )
+    sweep_stale()
+
+
+def sweep_stale() -> None:
+    """Delete uploads idle in uploading for over an hour, with their files."""
+    with connect() as conn:
         stale = conn.execute(
             "DELETE FROM uploads WHERE status = 'uploading' AND updated_at < now() - %s RETURNING path",
             (STALE_UPLOAD,),
@@ -262,35 +305,44 @@ def _scan(row: dict) -> None:
         with connect() as conn:
             _set(conn, row["id"], status="scanned", streams=streams, error=None)
     except Exception as exc:  # any failure is reported on the row, never raised
-        log.warning("scan of %s failed: %s", row["id"], type(exc).__name__)
+        log.exception("scan of %s failed", row["id"])
         with connect() as conn:
             _set(conn, row["id"], status="failed", error=one_sentence(exc))
+        Path(row["path"]).unlink(missing_ok=True)  # nothing can use the file now
 
 
 def _process(row: dict) -> None:
     recording_id = row["id"]
+    last = {"stage": None, "at": 0.0}
 
-    def on_progress(stage: str, done: int, total: int) -> None:
-        if stage not in PROCESSING:
-            return
-        with connect() as conn:
+    with connect() as conn:  # one connection for every progress update of this job
+
+        def on_progress(stage: str, done: int, total: int) -> None:
+            if stage not in PROCESSING:
+                return
+            now = time.monotonic()
+            if stage == last["stage"] and now - last["at"] < PROGRESS_EVERY_SECONDS and done < total:
+                return  # SCRUM-63 reports every 1000 records; the UI polls every 2 s
+            last.update(stage=stage, at=now)
             _set(conn, recording_id, status=stage, records_done=done, records_total=total)
 
-    try:
-        report = _runner()(row["path"], recording_id, dsn(), on_progress, row["recording_date"])
-        records = int(report.get("raw_records") or 0)
-        with connect() as conn:
+        try:
+            report = _runner()(row["path"], recording_id, dsn(), on_progress, row["recording_date"])
+            records = int(report.get("raw_records") or 0)
             _set(conn, recording_id, status="ready", report=report, error=None,
                  records_done=records, records_total=records)
-    except Exception as exc:  # any failure is reported on the row, never raised
-        log.warning("processing of %s failed: %s", recording_id, type(exc).__name__)
-        with connect() as conn:
+        except Exception as exc:  # any failure is reported on the row, never raised
+            log.exception("processing of %s failed", recording_id)
             _set(conn, recording_id, status="failed", error=one_sentence(exc))
 
 
 def _loop() -> None:
+    swept = time.monotonic()
     while not _stop.is_set():
         try:
+            if time.monotonic() - swept > STALE_SWEEP_SECONDS:
+                swept = time.monotonic()
+                sweep_stale()
             busy = run_pending_once()
         except Exception:  # database down: wait and try again
             log.exception("upload worker step failed")
@@ -373,6 +425,8 @@ def create_recording(body: CreateRecordingRequest):
         raise HTTPException(status_code=413, detail=f"The file is larger than {max_upload_bytes() // (1024 * 1024)} MB.")
     folder = upload_dir()
     folder.mkdir(parents=True, exist_ok=True)
+    if shutil.disk_usage(folder).free < body.size_bytes + DISK_HEADROOM_BYTES:
+        raise HTTPException(status_code=413, detail="The server does not have enough free disk space for this file.")
     recording_id = "r" + secrets.token_hex(5)
     path = folder / f"{recording_id}{ext}"
     path.write_bytes(b"")
@@ -391,14 +445,29 @@ def get_recording(recording_id: str):
         return _view_of(conn, recording_id)
 
 
+async def read_part(request: Request, limit: int) -> bytes:
+    """The request body, refused with 413 as soon as it is longer than limit."""
+    declared = request.headers.get("content-length")
+    if declared is not None and declared.isdigit() and int(declared) > limit:
+        raise HTTPException(status_code=413, detail=f"A part can be at most {limit} bytes.")
+    chunks, total = [], 0
+    async for piece in request.stream():
+        total += len(piece)
+        if total > limit:
+            raise HTTPException(status_code=413, detail=f"A part can be at most {limit} bytes.")
+        chunks.append(piece)
+    return b"".join(chunks)
+
+
 @router.put("/api/recordings/{recording_id}/parts/{n}", status_code=204)
-async def upload_part(recording_id: str, n: int, request: Request):
-    chunk = await request.body()
-    _append(recording_id, n, chunk)
+async def upload_part(recording_id: str, request: Request, n: int = PathParam(..., ge=0)):
+    chunk = await read_part(request, part_size())
+    await run_in_threadpool(_append, recording_id, n, chunk)  # database and disk work off the event loop
     return Response(status_code=204)
 
 
 def _append(recording_id: str, n: int, chunk: bytes) -> None:
+    """Write part n whole, or not at all. A repeat of the last stored part is a no-op."""
     size = part_size()
     with connect() as conn:
         with conn.transaction():
@@ -406,6 +475,9 @@ def _append(recording_id: str, n: int, chunk: bytes) -> None:
             if row["status"] != "uploading":
                 raise HTTPException(status_code=409, detail=f"Recording '{recording_id}' is no longer uploading.")
             received = row["bytes_received"]
+            stored_parts = -(-received // size)
+            if received and n == stored_parts - 1 and len(chunk) == received - n * size:
+                return  # the response to this part was lost and the client sent it again
             if n * size != received:
                 raise HTTPException(status_code=409, detail=f"Part {n} is out of order; send part {received // size} next.")
             after = received + len(chunk)
@@ -429,31 +501,49 @@ def complete_recording(recording_id: str, response: Response):
                 raise HTTPException(status_code=409, detail=f"Recording '{recording_id}' is no longer uploading.")
             path = Path(row["path"])
             on_disk = path.stat().st_size if path.exists() else 0
-            if row["bytes_received"] < row["size_bytes"] or on_disk != row["size_bytes"]:
+            if row["bytes_received"] < row["size_bytes"]:
                 raise HTTPException(
                     status_code=409,
                     detail=f"Only {row['bytes_received']} of {row['size_bytes']} bytes arrived; send the missing parts first.",
                 )
+            if on_disk != row["size_bytes"]:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"The stored file has {on_disk} bytes, not {row['size_bytes']}; upload the file again.",
+                )
             with path.open("rb") as f:
-                fmt = sniff(f.read(8))
+                fmt = sniff(f.read(8), on_disk)
             if fmt is None:
                 raise HTTPException(status_code=415, detail="The file does not start like pcap, pcapng or an ASTERIX CAT021 block.")
+            if (fmt == "asterix_raw") != (row["format"] == "asterix_raw"):
+                raise HTTPException(status_code=415, detail=MISMATCH[fmt == "asterix_raw"])
             sha = _sha256(path)
-            earlier = conn.execute("SELECT * FROM uploads WHERE sha256 = %s FOR UPDATE", (sha,)).fetchone()
-            if earlier is not None and earlier["status"] != "failed":
+            earlier = conn.execute(
+                "SELECT id FROM uploads WHERE sha256 = %s AND status <> 'failed' AND id <> %s", (sha, recording_id)
+            ).fetchone()
+            if earlier is None:
+                try:
+                    with conn.transaction():  # savepoint: a concurrent complete of the same bytes may win
+                        _set(conn, recording_id, sha256=sha, format=fmt, status="scanning")
+                except _unique_violation():
+                    earlier = conn.execute(
+                        "SELECT id FROM uploads WHERE sha256 = %s AND status <> 'failed' AND id <> %s", (sha, recording_id)
+                    ).fetchone()
+            if earlier is not None:
                 conn.execute("DELETE FROM uploads WHERE id = %s", (recording_id,))
                 path.unlink(missing_ok=True)
                 response.status_code = 200
                 return _view_of(conn, earlier["id"])
-            if earlier is not None:  # a failed upload of the same file: this one replaces it
-                conn.execute("DELETE FROM uploads WHERE id = %s", (earlier["id"],))
-                if earlier["path"] != str(path):
-                    Path(earlier["path"]).unlink(missing_ok=True)
-            _set(conn, recording_id, sha256=sha, format=fmt, status="scanning")
             result = _view_of(conn, recording_id)
     wake()
     response.status_code = 202
     return result
+
+
+def _unique_violation():
+    from psycopg import errors
+
+    return errors.UniqueViolation
 
 
 def _sha256(path: Path) -> str:
@@ -471,8 +561,14 @@ def process_recording(recording_id: str, body: ProcessRecordingRequest):
             row = _get(conn, recording_id, lock=True)
             if row["status"] != "scanned":
                 raise HTTPException(status_code=409, detail=f"Recording '{recording_id}' is {row['status']}, not scanned.")
-            if not any(s["id"] == body.stream_id and s["supported"] for s in row["streams"] or []):
+            supported = [s for s in row["streams"] or [] if s["supported"]]
+            if not any(s["id"] == body.stream_id for s in supported):
                 raise HTTPException(status_code=409, detail=f"Stream '{body.stream_id}' is not a supported CAT021 stream.")
+            if len(supported) > 1:  # run_recording (SCRUM-63) cannot be told which stream yet
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"This file has {len(supported)} CAT021 streams; processing one of several is not supported yet.",
+                )
             _set(conn, recording_id, status="queued", stream_id=body.stream_id)
             result = _view_of(conn, recording_id)
     _started()

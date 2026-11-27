@@ -96,7 +96,21 @@ Upload (contract 1.2.0):
   with one sentence. On start, rows left in decoding..storing become failed ("Server restarted
   during processing. Upload again.") and uploads idle in `uploading` for over an hour are
   deleted with their file.
-- The worker starts with the app under uvicorn; behind serve.py, on the first upload request.
+- The worker starts with the server (uvicorn, or serve.py, which passes the app its startup).
+  If Postgres is not up yet, startup goes on and the worker starts on the first upload request.
+  Run **one server process only** (no `--workers 2`): each process has its own worker, and its
+  restart cleanup would fail the other's running job. A long job delays the scan of newer
+  uploads until it ends.
+- Re-sending the last stored part is a no-op (204), a part over the part size is 413, a
+  negative part number is 422, and create answers 413 when the disk lacks room for the file
+  plus 512 MB. Uploads idle for over an hour are deleted every 10 minutes, and a failed scan
+  deletes its file. A failed upload does not block the same file again.
+- A file with more than one CAT021 stream answers 409 at process until `run_recording` can
+  be told which stream to use (open question on SCRUM-63).
+- `error` shows the message of our own `ValueError`/`RuntimeError` only, with paths reduced
+  to file names; other failures show a generic sentence. The traceback goes to the log.
+- `/api/meta.recordings` and the default recording list only ready recordings (CLI loads, and
+  uploads whose status is ready). Pin `FLIGHTMIND_DEFAULT_RECORDING` for a demo.
 - Preview, recipe, quarantine and export answer 501 until SCRUM-68.
 - Until SCRUM-63 merges, `run_recording` does not exist and processing fails with "The
   pipeline job (run_recording, SCRUM-63) is not installed on this server."

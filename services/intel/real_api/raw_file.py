@@ -35,11 +35,16 @@ def _format(f: BinaryIO) -> Tuple[str, str, int]:
     """(kind, byte order, link type) from the first bytes. kind is pcap, pcapng or raw."""
     head = f.read(24)
     if head[:4] in PCAP_MAGICS:
+        if len(head) < 24:
+            raise RawFileError("The pcap file header is cut short.")
         order = PCAP_MAGICS[head[:4]]
-        return "pcap", order, struct.unpack(order + "I", head[20:24])[0]
+        return "pcap", order, struct.unpack(order + "I", head[20:24])[0] & 0xFFFF  # upper bits are FCS flags
     if head[:4] == PCAPNG_SHB:
         order = "<" if head[8:12] == b"\x4d\x3c\x2b\x1a" else ">"
-        return "pcapng", order, _pcapng_link_type(f, order)
+        try:
+            return "pcapng", order, _pcapng_link_type(f, order)
+        except struct.error:
+            raise RawFileError("The pcapng file has a broken block.") from None
     if head[:1] and len(head) >= 3:
         return "raw", ">", 0
     raise RawFileError("The recording file is empty.")
@@ -119,24 +124,38 @@ def _packet_at(f: BinaryIO, kind: str, order: str, offset: int) -> bytes:
 
 
 def udp_ipv4(packet: bytes, link_type: int) -> bytes:
-    """The IPv4 datagram inside a link-layer frame. Raise RawFileError when it is not UDP over IPv4."""
+    """The IPv4 datagram inside a link-layer frame. Raise RawFileError when it is not UDP over IPv4.
+
+    Every length is checked first, so a truncated frame (short snaplen) or other traffic is a
+    RawFileError, never a struct.error.
+    """
+    not_udp = RawFileError("The packet is not UDP over IPv4.")
     if link_type == LINK_ETHERNET:
-        pos, ether_type = 12, None
+        pos = 12
         while True:
+            if len(packet) < pos + 2:
+                raise not_udp
             ether_type = struct.unpack(">H", packet[pos:pos + 2])[0]
             if ether_type in (0x8100, 0x88A8):  # VLAN tags
                 pos += 4
                 continue
             break
+        if ether_type != 0x0800:
+            raise not_udp
         ip = packet[pos + 2:]
     elif link_type == LINK_LINUX_SLL:
+        if len(packet) < 16:
+            raise not_udp
         ip = packet[16:]
     elif link_type in (LINK_RAW, LINK_RAW_IP):
         ip = packet
     else:
         raise RawFileError(f"Link type {link_type} is not supported.")
-    if len(ip) < 28 or ip[0] >> 4 != 4 or ip[9] != 17:
-        raise RawFileError("The packet is not UDP over IPv4.")
+    if len(ip) < 20 or ip[0] >> 4 != 4 or ip[9] != 17:
+        raise not_udp
+    ihl = (ip[0] & 0x0F) * 4
+    if ihl < 20 or len(ip) < ihl + 8:
+        raise not_udp
     return ip
 
 
@@ -150,11 +169,14 @@ def read_block(path: str, record_index: int, offset: Optional[int]) -> bytes:
     """The ASTERIX bytes of one record. offset may be None; the file is then walked."""
     if not os.path.isfile(path):
         raise RawFileError("The recording file is no longer on this server.")
-    with open(path, "rb") as f:
-        kind, order, link_type = _format(f)
-        if offset is None:
-            offset = next((o for i, o in iter_offsets(f, kind, order) if i == record_index), None)
+    try:
+        with open(path, "rb") as f:
+            kind, order, link_type = _format(f)
             if offset is None:
-                raise LookupError(record_index)
-        packet = _packet_at(f, kind, order, offset)
+                offset = next((o for i, o in iter_offsets(f, kind, order) if i == record_index), None)
+                if offset is None:
+                    raise LookupError(record_index)
+            packet = _packet_at(f, kind, order, offset)
+    except (struct.error, IndexError):
+        raise RawFileError("That record is cut short in the recording file.") from None
     return packet if kind == "raw" else _udp_payload(packet, link_type)

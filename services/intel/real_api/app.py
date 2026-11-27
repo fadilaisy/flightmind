@@ -19,7 +19,9 @@ Environment:
 """
 import asyncio
 import json
+import logging
 import os
+import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -40,9 +42,16 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 @asynccontextmanager
 async def _lifespan(_app):
-    """Start the upload worker when a server runs this app directly (serve.py starts it on first use)."""
+    """Start the upload worker with the server (uvicorn, or serve.py, which passes startup on).
+
+    When Postgres is not up yet (Docker Desktop still starting), startup goes on and the worker
+    starts on the first upload request instead.
+    """
     if os.environ.get("FLIGHTMIND_DSN", "").strip():
-        uploads.ensure_worker()
+        try:
+            uploads.ensure_worker()
+        except Exception:
+            logging.getLogger("flightmind.uploads").exception("upload worker not started; retrying on first upload")
     yield
 
 
@@ -73,11 +82,22 @@ def report_dir() -> Path:
     return Path(os.environ.get("FLIGHTMIND_REPORT_DIR") or REPO_ROOT / "data" / "reports")
 
 
+def ready_files_sql(conn) -> str:
+    """SELECT of recording_files rows that are ready: CLI loads, and uploads whose status is ready."""
+    has_uploads = conn.execute("SELECT to_regclass('public.uploads') IS NOT NULL AS ok").fetchone()["ok"]
+    if not has_uploads:
+        return "SELECT f.* FROM recording_files f"
+    return (
+        "SELECT f.* FROM recording_files f LEFT JOIN uploads u ON u.id = f.id "
+        "WHERE u.id IS NULL OR u.status = 'ready'"
+    )
+
+
 def default_recording(conn) -> Optional[str]:
     configured = os.environ.get("FLIGHTMIND_DEFAULT_RECORDING", "").strip()
     if configured:
         return configured
-    row = conn.execute("SELECT id FROM recording_files ORDER BY ingested_at DESC, id LIMIT 1").fetchone()
+    row = conn.execute(f"SELECT id FROM ({ready_files_sql(conn)}) r ORDER BY ingested_at DESC, id LIMIT 1").fetchone()
     return row["id"] if row else None
 
 
@@ -164,7 +184,7 @@ def load_report(conn, recording_id: str) -> Optional[dict]:
 @app.get("/api/meta")
 def meta():
     with connect() as conn:
-        recordings = [r["id"] for r in conn.execute("SELECT id FROM recording_files ORDER BY ingested_at, id")]
+        recordings = [r["id"] for r in conn.execute(f"SELECT id FROM ({ready_files_sql(conn)}) r ORDER BY ingested_at, id")]
         current = default_recording(conn)
         last = None
         if current:
@@ -209,8 +229,6 @@ def events(
 
 @app.get("/api/events/{event_id}")
 def event_detail(event_id: str):
-    import uuid
-
     try:
         uuid.UUID(event_id)
     except ValueError:
@@ -296,6 +314,13 @@ def compression(recording_id: str):
         raise HTTPException(status_code=404, detail=f"Recording '{recording_id}' has no data yet.")
     stored = int(report.get("stored_bytes") or 0)
     events_total = sum(int(v) for v in (report.get("events_by_type") or {}).values())
+    with connect() as conn:  # an event is kept when every record it cites is still stored
+        kept_row = conn.execute(
+            f"SELECT count(*) AS n FROM events e WHERE {EVENT_SCOPE} AND NOT EXISTS ("
+            "SELECT 1 FROM unnest(e.raw_refs) r WHERE NOT EXISTS (SELECT 1 FROM telemetry t WHERE t.raw_ref = r))",
+            (recording_id, recording_id),
+        ).fetchone()
+    events_kept = min(int(kept_row["n"]), events_total)
     return {
         "recording_id": recording_id,
         "raw_bytes": raw_bytes,
@@ -305,12 +330,12 @@ def compression(recording_id: str):
         "points_in": int(report.get("decoded_points") or 0),
         "points_kept": int(report.get("rows_stored") or 0),
         "events_total": events_total,
-        "events_kept": events_total,  # every record an event uses is pinned, so all events are kept
+        "events_kept": events_kept,
     }
 
 
 @app.get("/api/stream")
-async def stream(recording: Optional[str] = None):
+def stream(recording: Optional[str] = None):  # plain def: the queries run in the threadpool
     """Finite replay of one recording as server-sent events, same payload as the mock (not in the contract)."""
     delay = float(os.environ.get("FLIGHTMIND_STREAM_DELAY", "0.05"))
     with connect() as conn:

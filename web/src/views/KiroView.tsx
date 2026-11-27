@@ -50,12 +50,16 @@ export function KiroView({ data = GENERATED }: { data?: Timeline }) {
   const countOf = (k: KindKey): number => (k === "missing" ? data.unclassified : data.mix[k]);
 
   const shown = data.commits.filter((c) => filter === "all" || c.kind === filter);
-  const days: { date: string; items: TimelineCommit[] }[] = [];
+  // One group per date (git log order does not keep dates together), newest day first.
+  const byDate = new Map<string, TimelineCommit[]>();
   for (const c of shown) {
-    const last = days[days.length - 1];
-    if (last && last.date === c.date) last.items.push(c);
-    else days.push({ date: c.date, items: [c] });
+    const items = byDate.get(c.date);
+    if (items) items.push(c);
+    else byDate.set(c.date, [c]);
   }
+  const days = [...byDate.entries()]
+    .map(([date, items]) => ({ date, items }))
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
   function showKind(k: KindKey) {
     setFilter(k);
@@ -181,8 +185,8 @@ export function KiroView({ data = GENERATED }: { data?: Timeline }) {
           </div>
         </div>
         {days.length === 0 && <p className="khint">{STR.kiroNoCommits}</p>}
-        {days.map((d, i) => (
-          <div key={`${d.date}:${i}`} className="kday">
+        {days.map((d) => (
+          <div key={d.date} className="kday">
             <h3>{d.date}</h3>
             <ul>
               {d.items.map((c) => (

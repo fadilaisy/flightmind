@@ -117,6 +117,25 @@ describe("Built with Kiro page", () => {
     expect(a.getAttribute("href")).toBe(`${REPO}/commit/${SHA(3)}`);
   });
 
+  it("shows one heading per date even when dates are not consecutive", async () => {
+    const mk = (n: number, date: string) => ({ sha: SHA(n), short: SHA(n).slice(0, 7), date, author: "a", subject: `c${n}`, kind: "vibe" as const });
+    const data: Timeline = {
+      ...fixture,
+      mix: { spec: 0, vibe: 3, hook: 0, none: 0 },
+      specs: [],
+      commits: [mk(5, "2026-11-26"), mk(6, "2026-11-25"), mk(7, "2026-11-26")],
+    };
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const host = await mount(createElement(KiroView, { data }));
+    const tl = host.querySelector("#kiro-timeline") as HTMLElement;
+    expect([...tl.querySelectorAll(".kday h3")].map((h) => h.textContent)).toEqual(["2026-11-26", "2026-11-25"]);
+    const first = tl.querySelectorAll(".kday")[0];
+    expect(first.querySelectorAll("li[data-kind]").length).toBe(2);
+    expect(tl.querySelectorAll(".kday")[1].querySelectorAll("li[data-kind]").length).toBe(1);
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
+  });
+
   it("shows 'classified in KIRO.md' with a link on corrected commits only", async () => {
     const host = await mount(createElement(KiroView, { data: fixture }));
     const corr = links(host).filter((a) => a.textContent === "classified in KIRO.md");

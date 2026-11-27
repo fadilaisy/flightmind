@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-11-27T23:10:36.144Z",
-  "head": "a9cc224032248838a5dfb1cf8b9f54f306f73f02",
+  "generatedAt": "2026-11-27T23:12:37.745Z",
+  "head": "164f564ee6b0d01b49b03d0e07bb5e6cbf5bb40c",
   "repo": "https://github.com/fadilaisy/flightmind",
   "mix": {
-    "spec": 51,
-    "vibe": 41,
+    "spec": 59,
+    "vibe": 43,
     "hook": 0,
-    "none": 34
+    "none": 39
   },
   "unclassified": 0,
   "specs": [
@@ -136,7 +136,16 @@
         "design": ".kiro/specs/upload-ui/design.md",
         "tasks": ".kiro/specs/upload-ui/tasks.md"
       },
-      "commits": []
+      "commits": [
+        "326878f3cdbd22e7e08b95efdb47b2a3126e1a59",
+        "54b8429d912f6696217e262b4303f165bd9441f1",
+        "13831726689c650d84f59c52f05a54355951cfc0",
+        "398087af9f99f6972efe1f516fbd4fdfe47a0e4c",
+        "8fb0cf2d8af0dbafc38d234bf81bbf7716cda485",
+        "864a5c9517db99e4a7c8c56f3b388c34114c2779",
+        "79b89a162496c89af87f7f85492f3c9d1a02ad8e",
+        "f02191cafd12fb4df5cb3471195dc2f32074706a"
+      ]
     },
     {
       "name": "web-ui",
@@ -189,6 +198,56 @@
     }
   ],
   "commits": [
+    {
+      "sha": "164f564ee6b0d01b49b03d0e07bb5e6cbf5bb40c",
+      "short": "164f564",
+      "date": "2026-11-28",
+      "author": "fadilaisy",
+      "subject": "kiro-proof/7: merge main, Kiro tab skips the recording gate, refresh timeline",
+      "kind": "vibe"
+    },
+    {
+      "sha": "7ff03cd8b82ce789a04d57112ec74b8158daafa1",
+      "short": "7ff03cd",
+      "date": "2026-11-27",
+      "author": "fadilaisy",
+      "subject": "Load page: capability panel and recent recordings",
+      "kind": "vibe"
+    },
+    {
+      "sha": "326878f3cdbd22e7e08b95efdb47b2a3126e1a59",
+      "short": "326878f",
+      "date": "2026-11-27",
+      "author": "fadilaisy",
+      "subject": "upload-ui/review: PR 26 review fixes",
+      "kind": "spec",
+      "spec": "upload-ui",
+      "task": "review"
+    },
+    {
+      "sha": "da01dc68638536a60e66160ec10ff581f2c9b2f8",
+      "short": "da01dc6",
+      "date": "2026-11-27",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-36): link the requirement 9 pointers",
+      "kind": "none"
+    },
+    {
+      "sha": "60d28b21dad3cdb01b90f8857b90c20aa7f07ebc",
+      "short": "60d28b2",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-36): same superseded pointer everywhere in the deploy design",
+      "kind": "none"
+    },
+    {
+      "sha": "9ac101fb7bc0e5d60ba0ea8700bf13d2c3d247b2",
+      "short": "9ac101f",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-36): mark phase 2 superseded and scope the PORT row",
+      "kind": "none"
+    },
     {
       "sha": "a9cc224032248838a5dfb1cf8b9f54f306f73f02",
       "short": "a9cc224",
@@ -267,6 +326,76 @@
       "subject": "kiro-proof/0: spec for verifiable Kiro usage (SCRUM-70)",
       "kind": "spec",
       "spec": "kiro-proof",
+      "task": "0"
+    },
+    {
+      "sha": "54b8429d912f6696217e262b4303f165bd9441f1",
+      "short": "54b8429",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "upload-ui/12: tests and screenshots against Figma frames 1 to 3, 8 and 8b",
+      "kind": "spec",
+      "spec": "upload-ui",
+      "task": "12"
+    },
+    {
+      "sha": "13831726689c650d84f59c52f05a54355951cfc0",
+      "short": "1383172",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "upload-ui/8-11: stream pick, decoded preview, clean and reduce, export, tab flow",
+      "kind": "spec",
+      "spec": "upload-ui",
+      "task": "8-11"
+    },
+    {
+      "sha": "398087af9f99f6972efe1f516fbd4fdfe47a0e4c",
+      "short": "398087a",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "upload-ui/7: preview, recipe, quarantine and export in types, client and mock",
+      "kind": "spec",
+      "spec": "upload-ui",
+      "task": "7"
+    },
+    {
+      "sha": "8fb0cf2d8af0dbafc38d234bf81bbf7716cda485",
+      "short": "8fb0cf2",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "upload-ui/6: tests for upload, polling and errors; screenshots against Figma frame 1",
+      "kind": "spec",
+      "spec": "upload-ui",
+      "task": "6"
+    },
+    {
+      "sha": "864a5c9517db99e4a7c8c56f3b388c34114c2779",
+      "short": "864a5c9",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "upload-ui/2-5: load screen, chunked upload, progress, failed state, recording picker",
+      "kind": "spec",
+      "spec": "upload-ui",
+      "task": "2-5"
+    },
+    {
+      "sha": "79b89a162496c89af87f7f85492f3c9d1a02ad8e",
+      "short": "79b89a1",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "upload-ui/1: recording types, client calls and mock for the upload flow",
+      "kind": "spec",
+      "spec": "upload-ui",
+      "task": "1"
+    },
+    {
+      "sha": "f02191cafd12fb4df5cb3471195dc2f32074706a",
+      "short": "f02191c",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "upload-ui/0: spec for the load recording screen",
+      "kind": "spec",
+      "spec": "upload-ui",
       "task": "0"
     },
     {
@@ -400,6 +529,14 @@
       "kind": "none"
     },
     {
+      "sha": "157c2336f9c4734482547aa0be7a2252a378182e",
+      "short": "157c233",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-36): name Vercel, not Railway, for the deploy variables",
+      "kind": "none"
+    },
+    {
       "sha": "e6d457e851207acd5a0f8c41ef5afed87e2a82e9",
       "short": "e6d457e",
       "date": "2026-11-26",
@@ -446,6 +583,14 @@
       "kind": "spec",
       "spec": "web-ui",
       "task": "17"
+    },
+    {
+      "sha": "3b46aa59efaf7a441de9e711bfcacec701b74854",
+      "short": "3b46aa5",
+      "date": "2026-11-26",
+      "author": "ZahranTnc",
+      "subject": "docs(SCRUM-36): rename COARENA_API_KEY to ANTHROPIC_API_KEY in the deploy docs",
+      "kind": "none"
     },
     {
       "sha": "cfaa83bad268f11575e64125b8e726f4e1473fd9",

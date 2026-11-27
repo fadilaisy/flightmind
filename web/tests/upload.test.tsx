@@ -114,7 +114,7 @@ describe("polling", () => {
     expect(nextAction(rec({ status: "scanned", streams: [stream("b", false)] })).kind).toBe("scanned");
   });
   it("returns the error text of a failed recording as written", async () => {
-    const api = { getRecording: async () => rec({ status: "failed", error: "No CAT021 records found in bad.pcap" }) } as unknown as Api;
+    const api = { listRecordings: async () => [], getRecording: async () => rec({ status: "failed", error: "No CAT021 records found in bad.pcap" }) } as unknown as Api;
     const out = await followRecording(api, "r0123456789", { onUpdate: () => {}, sleep: noDelay });
     expect(out).toMatchObject({ kind: "failed", error: "No CAT021 records found in bad.pcap" });
   });
@@ -137,7 +137,7 @@ function mount(node: React.ReactNode) {
 
 describe("LoadView", () => {
   it("shows the drop zone with Choose file and the accepted types", () => {
-    const { host, done } = mount(<LoadView api={{} as Api} onScanned={() => {}} onReady={() => {}} onReset={() => {}} />);
+    const { host, done } = mount(<LoadView api={{ listRecordings: async () => [] } as unknown as Api} onScanned={() => {}} onReady={() => {}} onReset={() => {}} />);
     expect(host.textContent).toContain("Choose file");
     expect(host.textContent).toContain("up to 2 GB");
     expect(host.querySelector("input[type=file]")?.getAttribute("accept")).toBe(".pcap,.pcapng,.atx,.ast,.bin");
@@ -153,7 +153,7 @@ describe("LoadView", () => {
   });
 
   it("shows a failed recording's error and Try another file, which calls onReset", async () => {
-    const api = { getRecording: async () => rec({ status: "failed", error: "No CAT021 records found in bad.pcap" }) } as unknown as Api;
+    const api = { listRecordings: async () => [], getRecording: async () => rec({ status: "failed", error: "No CAT021 records found in bad.pcap" }) } as unknown as Api;
     const onReset = vi.fn();
     const { host, done } = mount(<LoadView api={api} follow="r0123456789" onScanned={() => {}} onReady={() => {}} onReset={onReset} />);
     await flush();
@@ -168,7 +168,7 @@ describe("LoadView", () => {
   it("fails a recording left in uploading instead of polling forever", async () => {
     const getRecording = vi.fn(async () => rec({ status: "uploading", bytes_received: 4 }));
     const onReset = vi.fn();
-    const { host, done } = mount(<LoadView api={{ getRecording } as unknown as Api} follow="r0123456789" onScanned={() => {}} onReady={() => {}} onReset={onReset} />);
+    const { host, done } = mount(<LoadView api={{ listRecordings: async () => [], getRecording } as unknown as Api} follow="r0123456789" onScanned={() => {}} onReady={() => {}} onReset={onReset} />);
     await flush();
     expect(getRecording).toHaveBeenCalledTimes(1);
     expect(host.querySelector(".statebox.error")?.textContent).toContain("This upload did not finish. Try another file.");

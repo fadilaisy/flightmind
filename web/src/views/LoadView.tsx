@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError, type Api } from "../api/client";
 import type { Recording } from "../api/uploadTypes";
 import { DropZone } from "../components/DropZone";
+import { RecentRecordings } from "../components/RecentRecordings";
 import { StateBox } from "../components/StateBox";
 import {
   STAGES,
@@ -41,6 +42,13 @@ type Phase =
   | { name: "date"; file: File; date: string }
   | { name: "working"; filename: string; size: number; sent: number; recording: Recording | null }
   | { name: "failed"; message: string };
+
+const CAPABILITIES: [string, string][] = [
+  [STR.capTracksTitle, STR.capTracksText],
+  [STR.capEventsTitle, STR.capEventsText],
+  [STR.cap4dTitle, STR.cap4dText],
+  [STR.capRawTitle, STR.capRawText],
+];
 
 const nf = (n: number) => n.toLocaleString("en-US");
 
@@ -96,6 +104,11 @@ export function LoadView({ api, follow = null, start = null, onReady, onScanned,
     }
   }
 
+  function followHere(id: string) {
+    setPhase({ name: "working", filename: "", size: 0, sent: 0, recording: null });
+    void track(id, true);
+  }
+
   function pick(file: File) {
     if (isRawFormat(file.name) && !checkFile(file.name, file.size)) {
       setPhase({ name: "date", file, date: defaultRecordingDate(file.lastModified) });
@@ -126,8 +139,25 @@ export function LoadView({ api, follow = null, start = null, onReady, onScanned,
     <div className="loadpage">
       <div className="loadbox">
         <h1>{STR.loadTitle}</h1>
-        <p className="loadintro">{STR.loadIntro}</p>
-        {phase.name === "choose" && <DropZone onFile={pick} />}
+        {phase.name === "choose" && (
+          <>
+            <DropZone onFile={pick} />
+            <section className="loadsec" aria-label={STR.analyzeTitle}>
+              <div className="loadsec-head">
+                <h2>{STR.analyzeTitle}</h2>
+              </div>
+              <div className="capgrid">
+                {CAPABILITIES.map(([title, text]) => (
+                  <div className="capcard" key={title}>
+                    <b>{title}</b>
+                    <p>{text}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+            <RecentRecordings api={api} onOpen={onReady} onFollow={followHere} />
+          </>
+        )}
         {phase.name === "date" && (
           <DateStep
             file={phase.file}
@@ -152,14 +182,6 @@ export function LoadView({ api, follow = null, start = null, onReady, onScanned,
             </button>
           </StateBox>
         )}
-        <div className="loadsteps">
-          <Step n={1} title={STR.step1Title} text={STR.step1Text} />
-          <Step n={2} title={STR.step2Title} text={STR.step2Text} />
-          <Step n={3} title={STR.step3Title} text={STR.step3Text} />
-        </div>
-        <p className="loadfoot">
-          <b>{STR.whatIsCat021}</b> {STR.whatIsCat021Text}
-        </p>
       </div>
     </div>
   );
@@ -168,18 +190,6 @@ export function LoadView({ api, follow = null, start = null, onReady, onScanned,
 function describe(e: unknown): string {
   if (e instanceof UploadError && e.cause instanceof ApiError && e.cause.status === 404) return STR.recordingNotFound;
   return e instanceof Error ? e.message : String(e);
-}
-
-function Step({ n, title, text }: { n: number; title: string; text: string }) {
-  return (
-    <div className="loadstep">
-      <div className="loadstep-head">
-        <span>{n}</span>
-        <b>{title}</b>
-      </div>
-      <p>{text}</p>
-    </div>
-  );
 }
 
 function DateStep(props: {

@@ -37,7 +37,11 @@ Recording upload (SCRUM-62, contract 1.2.0, `mock_api/uploads.py`):
 - `POST /api/recordings`, `PUT .../parts/{n}`, `POST .../complete`, `POST .../process`,
   then preview, recipe, quarantine and export. The order checks, the sha256 (same file twice
   returns the first upload) and the first-bytes check (pcap, pcapng or a CAT021 block) are
-  real. The bytes are then dropped.
+  real. The bytes are then dropped. A failed upload does not block the same file again,
+  re-sending the last stored part is a no-op (204), a part over the part size is 413, and
+  raw ASTERIX bytes in a `.pcap` (or a capture in a `.atx`) are 415. Set
+  `FLIGHTMIND_PART_SIZE_BYTES` to use smaller parts locally.
+- The recipe's `stored_bytes` and `ratio` are null until the recording is ready.
 - Status after complete: `scanning` for 1.5 s, then `scanned` with one CAT021 stream (`s1`)
   and one CAT062 stream (`s2`, not supported); a raw `.atx`/`.ast`/`.bin` file has one
   stream, `raw`. After process: queued, decoding, filtering, detecting, storing, then

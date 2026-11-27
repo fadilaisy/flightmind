@@ -51,7 +51,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    /** @description Only data of this recording: raw_ref (for events, the first entry of raw_refs) starts with "<recording>:". Omitted means the server's default recording. */
+                    /** @description Only data of this recording: raw_ref (for events, the first entry of raw_refs) starts with "<recording>:". Omitted means the server's default recording: the one set in FLIGHTMIND_DEFAULT_RECORDING, else the newest ready recording. An unknown or not-ready recording has no data: events and stream are empty, tracks answer 404. */
                     recording?: components["parameters"]["RecordingFilter"];
                 };
                 header?: never;
@@ -93,7 +93,7 @@ export interface paths {
                     since?: string;
                     type?: string;
                     airport?: string;
-                    /** @description Only data of this recording: raw_ref (for events, the first entry of raw_refs) starts with "<recording>:". Omitted means the server's default recording. */
+                    /** @description Only data of this recording: raw_ref (for events, the first entry of raw_refs) starts with "<recording>:". Omitted means the server's default recording: the one set in FLIGHTMIND_DEFAULT_RECORDING, else the newest ready recording. An unknown or not-ready recording has no data: events and stream are empty, tracks answer 404. */
                     recording?: components["parameters"]["RecordingFilter"];
                 };
                 header?: never;
@@ -172,7 +172,7 @@ export interface paths {
                 query?: {
                     from?: string;
                     to?: string;
-                    /** @description Only data of this recording: raw_ref (for events, the first entry of raw_refs) starts with "<recording>:". Omitted means the server's default recording. */
+                    /** @description Only data of this recording: raw_ref (for events, the first entry of raw_refs) starts with "<recording>:". Omitted means the server's default recording: the one set in FLIGHTMIND_DEFAULT_RECORDING, else the newest ready recording. An unknown or not-ready recording has no data: events and stream are empty, tracks answer 404. */
                     recording?: components["parameters"]["RecordingFilter"];
                 };
                 header?: never;
@@ -462,7 +462,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Raw bytes of part n (0-based). Every part except the last is part_size_bytes long */
+        /**
+         * Raw bytes of part n (0-based). Every part except the last is part_size_bytes long
+         * @description A part is stored whole or not at all. Sending the last stored part again with the same length is a no-op that answers 204, so a client can retry a part whose response was lost.
+         */
         put: {
             parameters: {
                 query?: never;
@@ -480,7 +483,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Part stored */
+                /** @description Part stored, or the same part was already stored (retry) */
                 204: {
                     headers: {
                         [name: string]: unknown;
@@ -494,8 +497,15 @@ export interface paths {
                     };
                     content?: never;
                 };
-                /** @description Part out of order (n is not the next part), or the recording is no longer uploading */
+                /** @description Part out of order (n is neither the next part nor a retry of the last one), an empty or short part that is not the last, the parts would pass size_bytes, or the recording is no longer uploading */
                 409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description The part is larger than part_size_bytes */
+                413: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -532,7 +542,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description The same file (same sha256) was uploaded before. Returns that recording, and this upload is dropped */
+                /** @description The same file (same sha256) was uploaded before and that upload did not fail. Returns that recording, and this upload is dropped. A failed earlier upload of the same file does not count, so the file can be uploaded again */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -564,7 +574,7 @@ export interface paths {
                     };
                     content?: never;
                 };
-                /** @description The first bytes are not pcap, pcapng or an ASTERIX CAT021 block */
+                /** @description The first bytes are not pcap, pcapng or an ASTERIX CAT021 block, or they do not match the extension (raw ASTERIX bytes in a .pcap/.pcapng file, or a capture in a .atx/.ast/.bin file), since only raw files are given a recording_date */
                 415: {
                     headers: {
                         [name: string]: unknown;
@@ -701,7 +711,7 @@ export interface paths {
         };
         /**
          * The cleaning steps, what each one sets aside, and the size before and after
-         * @description Available from status scanned on, so the UI can show it before "Apply and find events".
+         * @description Available from status scanned on, so the UI can show it before "Apply and find events". Before ready, the step counts come from the scan (a dry run) and stored_bytes and ratio are null, because the stored size is only known after processing.
          */
         get: {
             parameters: {
@@ -1044,9 +1054,10 @@ export interface components {
             steps: components["schemas"]["RecipeStep"][];
             tolerance_note: string;
             raw_bytes: number;
-            stored_bytes: number;
-            /** @description stored_bytes divided by raw_bytes */
-            ratio: number;
+            /** @description Bytes the kept telemetry rows take in storage. Null until ready */
+            stored_bytes: number | null;
+            /** @description stored_bytes divided by raw_bytes. Null until ready */
+            ratio: number | null;
         };
         QuarantineItem: {
             raw_ref: string;
@@ -1060,7 +1071,7 @@ export interface components {
     };
     responses: never;
     parameters: {
-        /** @description Only data of this recording: raw_ref (for events, the first entry of raw_refs) starts with "<recording>:". Omitted means the server's default recording. */
+        /** @description Only data of this recording: raw_ref (for events, the first entry of raw_refs) starts with "<recording>:". Omitted means the server's default recording: the one set in FLIGHTMIND_DEFAULT_RECORDING, else the newest ready recording. An unknown or not-ready recording has no data: events and stream are empty, tracks answer 404. */
         RecordingFilter: string;
         /** @description Server-made recording id, "r" followed by 10 hex digits */
         RecordingId: string;

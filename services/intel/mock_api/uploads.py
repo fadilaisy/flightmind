@@ -36,6 +36,11 @@ from pydantic import BaseModel
 from . import data
 
 PART_SIZE_BYTES = 52_428_800  # 50 MB: the Cloudflare tunnel refuses requests over 100 MB
+
+
+def part_size() -> int:
+    """FLIGHTMIND_PART_SIZE_BYTES, else 50 MB. Tests lower it, as for the real API."""
+    return int(os.environ.get("FLIGHTMIND_PART_SIZE_BYTES", str(PART_SIZE_BYTES)))
 FORMATS = {".pcap": "pcap", ".pcapng": "pcapng", ".atx": "asterix_raw", ".ast": "asterix_raw", ".bin": "asterix_raw"}
 PCAP_MAGICS = {bytes.fromhex(h) for h in ("a1b2c3d4", "d4c3b2a1", "a1b23c4d", "4d3cb2a1")}
 PCAPNG_MAGIC = bytes.fromhex("0a0d0d0a")
@@ -85,6 +90,7 @@ class _Upload:
     created_mono: float
     bytes_received: int = 0
     next_part: int = 0
+    last_part_len: int = 0
     head: bytes = b""
     hasher: Any = field(default_factory=hashlib.sha256)
     sha256: Optional[str] = None
@@ -150,7 +156,7 @@ def _view(u: _Upload) -> dict:
         "filename": u.filename,
         "size_bytes": u.size_bytes,
         "bytes_received": u.bytes_received,
-        "part_size_bytes": PART_SIZE_BYTES,
+        "part_size_bytes": part_size(),
         "format": u.format,
         "status": status,
         "streams": _streams(u.format) if status not in ("uploading", "scanning", "failed") else [],
@@ -206,19 +212,27 @@ def _require_scanned(u: _Upload) -> str:
     return status
 
 
+MISMATCH = {
+    True: "This is a raw ASTERIX file; name it .atx, .ast or .bin so its recording date can be given.",
+    False: "This is a pcap or pcapng capture; name it .pcap or .pcapng.",
+}
+
+
 def _recipe(u: _Upload) -> dict:
     left, steps = MOCK_RECORDS, []
     for code, label, set_aside, reason in RECIPE_STEPS:
         steps.append({"code": code, "label": label, "records_in": left, "set_aside": set_aside, "reason": reason})
         left -= set_aside
-    stored = round(u.size_bytes / 7.6)
+    # The stored size is only known after processing; before ready the counts are the scan's dry run.
+    ready = _status(u, clock()) == "ready"
+    stored = round(u.size_bytes / 7.6) if ready else None
     return {
         "input_sha256": u.sha256,
         "steps": steps,
         "tolerance_note": TOLERANCE_NOTE,
         "raw_bytes": u.size_bytes,
         "stored_bytes": stored,
-        "ratio": stored / u.size_bytes,
+        "ratio": stored / u.size_bytes if ready else None,
     }
 
 
@@ -288,22 +302,42 @@ def get_recording(recording_id: str):
         return _view(_get(recording_id))
 
 
+async def read_part(request: Request, limit: int) -> bytes:
+    """The request body, refused with 413 as soon as it is longer than limit."""
+    declared = request.headers.get("content-length")
+    if declared is not None and declared.isdigit() and int(declared) > limit:
+        raise HTTPException(status_code=413, detail=f"A part can be at most {limit} bytes.")
+    chunks, total = [], 0
+    async for piece in request.stream():
+        total += len(piece)
+        if total > limit:
+            raise HTTPException(status_code=413, detail=f"A part can be at most {limit} bytes.")
+        chunks.append(piece)
+    return b"".join(chunks)
+
+
 @router.put("/api/recordings/{recording_id}/parts/{n}", status_code=204)
 async def upload_part(recording_id: str, n: int, request: Request):
-    chunk = await request.body()
+    size = part_size()
+    chunk = await read_part(request, size)
     with _lock:
         u = _get(recording_id)
         if u.completed_at is not None:
             raise HTTPException(status_code=409, detail=f"Recording '{recording_id}' is no longer uploading.")
+        if n == u.next_part - 1 and len(chunk) == u.last_part_len:
+            return Response(status_code=204)  # a retry of the last stored part: nothing to do
         if n != u.next_part:
             raise HTTPException(status_code=409, detail=f"Part {n} is out of order; send part {u.next_part} next.")
         if u.bytes_received + len(chunk) > u.size_bytes:
             raise HTTPException(status_code=409, detail="The parts are larger than size_bytes.")
+        if u.bytes_received + len(chunk) < u.size_bytes and len(chunk) != size:
+            raise HTTPException(status_code=409, detail=f"Every part but the last must be {size} bytes.")
         if len(u.head) < 8:
             u.head += chunk[: 8 - len(u.head)]
         u.hasher.update(chunk)  # the bytes are hashed, then dropped
         u.bytes_received += len(chunk)
         u.next_part += 1
+        u.last_part_len = len(chunk)
     return Response(status_code=204)
 
 
@@ -321,8 +355,13 @@ def complete_recording(recording_id: str, response: Response):
         fmt = _looks_like_capture(u.head)
         if fmt is None:
             raise HTTPException(status_code=415, detail="The file does not start like pcap, pcapng or an ASTERIX CAT021 block.")
+        if (fmt == "asterix_raw") != (u.format == "asterix_raw"):
+            raise HTTPException(status_code=415, detail=MISMATCH[fmt == "asterix_raw"])
         sha = u.hasher.hexdigest()
-        earlier = next((o for o in _uploads.values() if o.sha256 == sha and o.id != u.id), None)
+        t = clock()
+        earlier = next(
+            (o for o in _uploads.values() if o.sha256 == sha and o.id != u.id and _status(o, t) != "failed"), None
+        )
         if earlier is not None:
             del _uploads[u.id]
             response.status_code = 200

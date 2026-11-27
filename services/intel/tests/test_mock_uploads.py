@@ -53,8 +53,12 @@ class Clock:
         self.t += seconds
 
 
+PART = 128  # small parts for the tests (FLIGHTMIND_PART_SIZE_BYTES); PCAP is 208 bytes, so two parts
+
+
 @pytest.fixture(autouse=True)
 def clock(monkeypatch):
+    monkeypatch.setenv("FLIGHTMIND_PART_SIZE_BYTES", str(PART))
     uploads.reset()
     c = Clock()
     monkeypatch.setattr(uploads, "clock", c)
@@ -69,13 +73,16 @@ def create(filename="flight.pcap", size=len(PCAP), **extra):
     return r.json()
 
 
-def upload(content, filename="flight.pcap", parts=2, **extra):
-    """Create, send the bytes in `parts` parts, complete. Returns the complete response."""
-    rec = create(filename, len(content), **extra)
-    step = -(-len(content) // parts)
-    for n in range(parts):
-        r = client.put(f"/api/recordings/{rec['id']}/parts/{n}", content=content[n * step:(n + 1) * step])
+def send(rid, content):
+    for n in range(-(-len(content) // PART)):
+        r = client.put(f"/api/recordings/{rid}/parts/{n}", content=content[n * PART:(n + 1) * PART])
         assert r.status_code == 204, r.text
+
+
+def upload(content, filename="flight.pcap", **extra):
+    """Create, send the bytes in PART-sized parts, complete. Returns the complete response."""
+    rec = create(filename, len(content), **extra)
+    send(rec["id"], content)
     return client.post(f"/api/recordings/{rec['id']}/complete")
 
 
@@ -95,12 +102,11 @@ def get(rid):
 
 def test_full_flow_from_create_to_export(clock):
     rec = create()
-    assert rec["status"] == "uploading" and rec["part_size_bytes"] == 52_428_800
+    assert rec["status"] == "uploading" and rec["part_size_bytes"] == PART
     assert rec["id"].startswith("r") and len(rec["id"]) == 11
     assert rec["streams"] == [] and rec["progress"] is None
 
-    for n, chunk in enumerate((PCAP[:100], PCAP[100:])):
-        assert client.put(f"/api/recordings/{rec['id']}/parts/{n}", content=chunk).status_code == 204
+    send(rec["id"], PCAP)
     assert get(rec["id"])["bytes_received"] == len(PCAP)
 
     r = client.post(f"/api/recordings/{rec['id']}/complete")
@@ -161,7 +167,7 @@ def test_preview_recipe_and_quarantine_once_scanned(clock):
     recipe = r.json()
     assert recipe["input_sha256"] == hashlib.sha256(PCAP).hexdigest()
     assert recipe["raw_bytes"] == len(PCAP)
-    assert recipe["ratio"] == pytest.approx(recipe["stored_bytes"] / recipe["raw_bytes"])
+    assert recipe["stored_bytes"] is None and recipe["ratio"] is None  # only known after processing
     for a, b in zip(recipe["steps"], recipe["steps"][1:]):
         assert b["records_in"] == a["records_in"] - a["set_aside"]
 
@@ -232,19 +238,44 @@ def test_create_refuses_files_over_the_limit(monkeypatch):
 
 
 def test_parts_must_come_in_order_and_fit_the_size():
-    rid = create(size=10)["id"]
-    assert client.put(f"/api/recordings/{rid}/parts/1", content=b"12345").status_code == 409
-    assert client.put(f"/api/recordings/{rid}/parts/0", content=b"12345").status_code == 204
-    assert client.put(f"/api/recordings/{rid}/parts/0", content=b"12345").status_code == 409
-    assert client.put(f"/api/recordings/{rid}/parts/1", content=b"123456").status_code == 409
+    rid = create(size=2 * PART + 10)["id"]
+    full = b"x" * PART
+    assert client.put(f"/api/recordings/{rid}/parts/1", content=full).status_code == 409  # out of order
+    assert client.put(f"/api/recordings/{rid}/parts/0", content=b"x" * 5).status_code == 409  # short, not last
+    assert client.put(f"/api/recordings/{rid}/parts/0", content=b"").status_code == 409  # empty
+    assert client.put(f"/api/recordings/{rid}/parts/0", content=b"x" * (PART + 1)).status_code == 413
+    assert client.put(f"/api/recordings/{rid}/parts/0", content=full).status_code == 204
+    assert client.put(f"/api/recordings/{rid}/parts/1", content=full).status_code == 204
+    assert client.put(f"/api/recordings/{rid}/parts/2", content=b"x" * 11).status_code == 409  # past size_bytes
+    assert client.put(f"/api/recordings/{rid}/parts/0", content=full).status_code == 409  # not the last part
+
+
+def test_resending_the_last_part_is_a_no_op():
+    rid = create(size=len(PCAP))["id"]
+    assert client.put(f"/api/recordings/{rid}/parts/0", content=PCAP[:PART]).status_code == 204
+    assert client.put(f"/api/recordings/{rid}/parts/0", content=PCAP[:PART]).status_code == 204  # lost response
+    assert get(rid)["bytes_received"] == PART
+    assert client.put(f"/api/recordings/{rid}/parts/1", content=PCAP[PART:]).status_code == 204
+    assert client.put(f"/api/recordings/{rid}/parts/1", content=PCAP[PART:]).status_code == 204
+    r = client.post(f"/api/recordings/{rid}/complete")
+    assert r.status_code == 202
+    assert client.get(f"/api/recordings/{rid}/recipe").status_code == 409  # still scanning
+    assert r.json()["bytes_received"] == len(PCAP)
 
 
 def test_complete_needs_every_byte():
     rid = create(size=len(PCAP))["id"]
-    client.put(f"/api/recordings/{rid}/parts/0", content=PCAP[:50])
+    client.put(f"/api/recordings/{rid}/parts/0", content=PCAP[:PART])
     r = client.post(f"/api/recordings/{rid}/complete")
     assert r.status_code == 409
-    assert "50 of" in r.json()["detail"]
+    assert f"{PART} of" in r.json()["detail"]
+
+
+@pytest.mark.parametrize("content,filename", [(RAW_CAT021, "day1.pcap"), (PCAP, "capture.atx")])
+def test_complete_refuses_content_that_does_not_match_the_extension(content, filename):
+    r = upload(content, filename=filename)
+    assert r.status_code == 415
+    assert "name it" in r.json()["detail"]
 
 
 def test_complete_refuses_bytes_that_are_not_a_capture():
@@ -264,7 +295,7 @@ def test_same_file_twice_returns_the_first_upload(clock):
     first = upload(PCAP).json()
     assert first["status"] == "scanning"
     second_created = create(size=len(PCAP))
-    client.put(f"/api/recordings/{second_created['id']}/parts/0", content=PCAP)
+    send(second_created["id"], PCAP)
     r = client.post(f"/api/recordings/{second_created['id']}/complete")
     assert r.status_code == 200
     check(r.json(), "/api/recordings/{id}/complete", "post", "200")
@@ -309,3 +340,21 @@ def test_unknown_recording_is_404(method, path):
         kwargs = {"content": b"x"}
     r = getattr(client, method)(f"/api/recordings/rnope000000{path}", **kwargs)
     assert r.status_code == 404
+
+
+def test_a_failed_upload_does_not_block_the_same_file(clock):
+    bad = scanned(clock, filename="bad.pcap")
+    assert get(bad)["status"] == "failed"
+    r = upload(PCAP, filename="good.pcap")
+    assert r.status_code == 202
+    assert r.json()["id"] != bad and r.json()["filename"] == "good.pcap"
+
+
+def test_recipe_sizes_are_set_once_ready(clock):
+    rid = scanned(clock)
+    client.post(f"/api/recordings/{rid}/process", json={"stream_id": "s1"})
+    clock.advance(uploads.PROCESS_S)
+    recipe = client.get(f"/api/recordings/{rid}/recipe").json()
+    check(recipe, "/api/recordings/{id}/recipe")
+    assert recipe["stored_bytes"] > 0
+    assert recipe["ratio"] == pytest.approx(recipe["stored_bytes"] / recipe["raw_bytes"])

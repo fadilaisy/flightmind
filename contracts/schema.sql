@@ -96,7 +96,7 @@ CREATE TABLE event_embeddings (
 CREATE TABLE uploads (
   id              text PRIMARY KEY,          -- 'r' + 10 random hex digits
   filename        text NOT NULL,
-  sha256          text UNIQUE,               -- set at complete; same file twice returns the first upload
+  sha256          text,                      -- set at complete; see uploads_sha256_ok below
   size_bytes      bigint NOT NULL,
   bytes_received  bigint NOT NULL DEFAULT 0,
   format          text NOT NULL,             -- pcap | pcapng | asterix_raw
@@ -113,6 +113,10 @@ CREATE TABLE uploads (
   created_at      timestamptz NOT NULL DEFAULT now(),
   updated_at      timestamptz NOT NULL DEFAULT now()
 );
+
+-- The same file twice returns the first upload, unless that one failed (then it can be retried).
+CREATE UNIQUE INDEX uploads_sha256_ok ON uploads (sha256) WHERE status <> 'failed';
+CREATE INDEX uploads_created_idx ON uploads (created_at);
 
 -- C8 (v1.2, Role 2): records the cleaning set aside, with the step and reason.
 CREATE TABLE quarantine (

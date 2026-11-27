@@ -21,9 +21,16 @@ the same pull request.
   `POST .../complete`, `POST .../process` with the chosen CAT021 stream. Status runs
   `uploading → scanning → scanned → queued → decoding → filtering → detecting → storing →
   ready`, or `failed` with a one-sentence `error`. Preview, recipe and quarantine work from
-  `scanned` on; export only when `ready`. The same file twice (same sha256) returns the
-  first upload. `/api/events`, `/api/tracks`, `/api/stream` take an optional `recording`
-  filter (raw_ref starts with `<recording>:`), and `AskRequest` an optional `recording_id`.
+  `scanned` on; export only when `ready`. Before `ready` the recipe's step counts come from
+  the scan (a dry run) and its `stored_bytes` and `ratio` are null. The same file twice (same
+  sha256) returns the first upload, unless that one failed. A part is stored whole or not at
+  all; re-sending the last stored part is a no-op (204), so lost responses can be retried; a
+  part over `part_size_bytes` is 413. Raw ASTERIX bytes must come in a `.atx`/`.ast`/`.bin`
+  file (only those get a `recording_date`), else complete is 415.
+  `/api/events`, `/api/tracks`, `/api/stream` take an optional `recording` filter (raw_ref
+  starts with `<recording>:`), and `AskRequest` an optional `recording_id`. With no
+  `recording`, the default is `FLIGHTMIND_DEFAULT_RECORDING`, else the newest ready
+  recording; an unknown or not-ready one has no data (empty lists, 404 for tracks).
 - **C6 clock:** `clock.now()` everywhere; replay is the only required mode.
 - **C7 `uploads` (Role 3):** one row per uploaded recording; mirrors the `Recording` schema.
 - **C8 `quarantine` (Role 2):** records the cleaning set aside, with step and reason.

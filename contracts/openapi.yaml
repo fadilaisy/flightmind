@@ -153,6 +153,9 @@ paths:
   /api/recordings/{id}/parts/{n}:
     put:
       summary: Raw bytes of part n (0-based). Every part except the last is part_size_bytes long
+      description: >-
+        A part is stored whole or not at all. Sending the last stored part again with the same
+        length is a no-op that answers 204, so a client can retry a part whose response was lost.
       parameters:
         - $ref: '#/components/parameters/RecordingId'
         - { in: path, name: n, required: true, schema: { type: integer, minimum: 0 } }
@@ -163,11 +166,16 @@ paths:
             schema: { type: string, format: binary }
       responses:
         '204':
-          description: Part stored
+          description: Part stored, or the same part was already stored (retry)
         '404':
           description: Unknown recording id
         '409':
-          description: Part out of order (n is not the next part), or the recording is no longer uploading
+          description: >-
+            Part out of order (n is neither the next part nor a retry of the last one), an empty
+            or short part that is not the last, the parts would pass size_bytes, or the recording
+            is no longer uploading
+        '413':
+          description: The part is larger than part_size_bytes
   /api/recordings/{id}/complete:
     post:
       summary: All parts are sent. The server checks the first bytes and starts scanning for streams
@@ -175,7 +183,10 @@ paths:
         - $ref: '#/components/parameters/RecordingId'
       responses:
         '200':
-          description: The same file (same sha256) was uploaded before. Returns that recording, and this upload is dropped
+          description: >-
+            The same file (same sha256) was uploaded before and that upload did not fail. Returns
+            that recording, and this upload is dropped. A failed earlier upload of the same file
+            does not count, so the file can be uploaded again
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Recording' }
@@ -189,7 +200,10 @@ paths:
         '409':
           description: Not uploading, or bytes_received is less than size_bytes
         '415':
-          description: The first bytes are not pcap, pcapng or an ASTERIX CAT021 block
+          description: >-
+            The first bytes are not pcap, pcapng or an ASTERIX CAT021 block, or they do not match
+            the extension (raw ASTERIX bytes in a .pcap/.pcapng file, or a capture in a
+            .atx/.ast/.bin file), since only raw files are given a recording_date
   /api/recordings/{id}/process:
     post:
       summary: Decode, clean, detect and store one stream of a scanned recording
@@ -230,7 +244,10 @@ paths:
   /api/recordings/{id}/recipe:
     get:
       summary: The cleaning steps, what each one sets aside, and the size before and after
-      description: Available from status scanned on, so the UI can show it before "Apply and find events".
+      description: >-
+        Available from status scanned on, so the UI can show it before "Apply and find events".
+        Before ready, the step counts come from the scan (a dry run) and stored_bytes and ratio
+        are null, because the stored size is only known after processing.
       parameters:
         - $ref: '#/components/parameters/RecordingId'
       responses:
@@ -285,7 +302,9 @@ components:
       schema: { type: string }
       description: >-
         Only data of this recording: raw_ref (for events, the first entry of raw_refs) starts
-        with "<recording>:". Omitted means the server's default recording.
+        with "<recording>:". Omitted means the server's default recording: the one set in
+        FLIGHTMIND_DEFAULT_RECORDING, else the newest ready recording. An unknown or not-ready
+        recording has no data: events and stream are empty, tracks answer 404.
     RecordingId:
       in: path
       name: id
@@ -464,8 +483,8 @@ components:
         steps: { type: array, items: { $ref: '#/components/schemas/RecipeStep' } }
         tolerance_note: { type: string }
         raw_bytes: { type: integer }
-        stored_bytes: { type: integer }
-        ratio: { type: number, description: 'stored_bytes divided by raw_bytes' }
+        stored_bytes: { type: integer, nullable: true, description: 'Bytes the kept telemetry rows take in storage. Null until ready' }
+        ratio: { type: number, nullable: true, description: 'stored_bytes divided by raw_bytes. Null until ready' }
     QuarantineItem:
       type: object
       required: [raw_ref, step_code, reason]

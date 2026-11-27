@@ -54,7 +54,7 @@ uvicorn serve:app  (one container, non-root)
       '-- any other path          --> static files from FLIGHTMIND_WEB_DIST
 ```
 
-Phase 2 changes two things and no code: `FLIGHTMIND_API_APP` points at the real API, and the real API reads a second Railway service running Postgres.
+Phase 2 changes two things and no code: `FLIGHTMIND_API_APP` points at the real API, and the real API reads a second Railway service running Postgres (superseded on 2026-11-26 by Vercel, see [requirement 9](requirements.md#9-phase-2-real-api-and-recorded-data-not-built-now)).
 
 ```
 web service (serve.py + real API) --private network--> db service (timescaledb-ha:pg16 + volume)
@@ -189,13 +189,13 @@ On the first failure it prints `FAIL <url>: <reason>` and exits with 1. A bad ar
 
 | Variable | Where it is set | Phase | Meaning |
 | --- | --- | --- | --- |
-| `PORT` | Railway sets it | 1 | Port to listen on. Default 8000 outside Railway. |
-| `FLIGHTMIND_API_APP` | Dockerfile default unset; Railway variable in phase 2 | 1, 2 | `module:attribute` of the API app. Default `mock_api.app:app`. |
+| `PORT` | Railway sets it (phase 1 container hosts only) | 1 | Port to listen on. Default 8000 outside Railway. |
+| `FLIGHTMIND_API_APP` | Dockerfile default unset; Vercel environment variable in phase 2 | 1, 2 | `module:attribute` of the API app. Default `mock_api.app:app`. |
 | `FLIGHTMIND_WEB_DIST` | Dockerfile `ENV` | 1 | Folder with the built web UI. Unset or no `index.html` means API only. |
 | `VITE_API_BASE` | Dockerfile build argument, `/.` | 1 | Build-time only. See below. |
-| `DATABASE_URL` | Railway variable only | 2 | Postgres connection for the real API. Never in the repo. |
-| `COARENA_API_KEY` | Railway variable only | 2 | LLM gateway key (agent). Never in the repo. |
-| `GEMINI_API_KEY` | Railway variable only | 2 | Embeddings key. Never in the repo. |
+| `DATABASE_URL` | Vercel environment variable only | 2 | Postgres connection for the real API. Never in the repo. |
+| `ANTHROPIC_API_KEY` | Vercel environment variable only | 2 | Claude API key (agent). Never in the repo. |
+| `GEMINI_API_KEY` | Vercel environment variable only | 2 | Embeddings key. Never in the repo. |
 
 ## The same-origin workaround
 
@@ -209,7 +209,7 @@ Consequences:
 - The page cannot tell it is on the mock, so the "Sample data" label does not show. That is Open item 1, a Role 1 decision.
 - When Role 1 adds a same-origin base, change the build argument and delete the comment in the Dockerfile.
 
-## Railway setup (what lives outside the repo) — superseded on 2026-11-26 by Vercel, see the update at the top
+## Railway setup (what lives outside the repo) — superseded on 2026-11-26 by Vercel, see [requirement 9](requirements.md#9-phase-2-real-api-and-recorded-data-not-built-now)
 
 Written in `infra/README.md`, because these settings are not in a config file (no `railway.json`):
 
@@ -224,14 +224,14 @@ Deploy commands, in the order the README lists them: `railway login`; `railway i
 
 A clean checkout matters because `railway up` uploads the working directory. Uncommitted files would ship. `.dockerignore` limits what is sent, and the README says to deploy from a fresh `git clone` of `main` or a worktree with no local changes.
 
-## Phase 2 design (not built now)
+## Phase 2 design (not built now) — superseded on 2026-11-26 by Vercel, see [requirement 9](requirements.md#9-phase-2-real-api-and-recorded-data-not-built-now)
 
 All of this is blocked on SCRUM-37 (real API) and pipeline PR #11.
 
 1. **Database service.** A second Railway service from the image `timescale/timescaledb-ha:pg16` with a volume mounted at the Postgres data path. It has no public domain. The web service connects over the private network address. The `POSTGRES_*` variables are set in Railway, not in the repo.
 2. **Schema and data.** `contracts/schema.sql` is applied once to the empty database, then the recorded CAT021 data is loaded by the pipeline's loader (PR #11). The method (one-off `psql` from a laptop through a temporary TCP proxy, or a one-off job) is chosen when the loader exists. The temporary proxy is closed afterwards.
 3. **Real API on the web service.** Set `FLIGHTMIND_API_APP` to the real API's `module:attribute`. If the real API needs more runtime packages, they are added to `requirements-serve.txt`. If it is not under `services/intel/mock_api/`, the Dockerfile copy line for the API package is extended. These are the only edits, and they are in files this spec names.
-4. **Secrets.** `DATABASE_URL`, `COARENA_API_KEY` and `GEMINI_API_KEY` are Railway variables on the web service. Not in the repo, the image, logs or README. The real API must not log them.
+4. **Secrets.** `DATABASE_URL`, `ANTHROPIC_API_KEY` and `GEMINI_API_KEY` are Vercel environment variables on the project. Not in the repo, the image, logs or README. The real API must not log them.
 5. **CORS.** The real API restricts origins to the public origin. Because the UI and API share an origin, it may allow none at all. This is a change in the real API (SCRUM-37), checked here.
 6. **Raw file.** `/api/raw/{raw_ref}` reads bytes from the recording file on demand (`tech.md`). The file must be reachable by the web service: either on a volume mounted on the web service, or fetched into the image at build time from a private location. The choice depends on file size and the plan's volume limit (Open item 5).
 7. **Fallback.** If phase 2 does not work by 2026-12-02, leave the service on phase 1 and say in the README and Devpost text that the public demo uses sample data.

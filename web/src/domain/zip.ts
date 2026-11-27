@@ -80,7 +80,7 @@ export function zipStore(files: ZipFile[]): Uint8Array {
 /** Quote a CSV cell when it holds a comma, quote or line break. */
 export function csvCell(v: string | number | null | undefined): string {
   const s = v === null || v === undefined ? "" : String(v);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
 export function csvRows(rows: (string | number | null | undefined)[][]): string {

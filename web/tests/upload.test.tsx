@@ -69,6 +69,14 @@ describe("part upload", () => {
     expect(uploadPart).toHaveBeenCalledTimes(1);
   });
 
+  it.each([408, 429, 503])("retries a %i", async (status) => {
+    const uploadPart = vi.fn()
+      .mockRejectedValueOnce(new ApiError(status, "u", `Request failed: ${status} u`))
+      .mockResolvedValue(undefined);
+    const api = { createRecording: async () => rec(), uploadPart, completeRecording: async () => rec({ status: "scanning" }) } as unknown as Api;
+    await uploadRecording(api, file("a.pcap", 4), { delay: noDelay });
+    expect(uploadPart).toHaveBeenCalledTimes(2);
+  });
   it("turns 413 and 415 into their own sentences", async () => {
     const mk = (status: number) => ({ createRecording: async () => Promise.reject(new ApiError(status, "u", "x")) }) as unknown as Api;
     await expect(uploadRecording(mk(413), file("a.pcap", 1))).rejects.toThrow(MSG.tooLarge);
@@ -157,6 +165,18 @@ describe("LoadView", () => {
     done();
   });
 
+  it("fails a recording left in uploading instead of polling forever", async () => {
+    const getRecording = vi.fn(async () => rec({ status: "uploading", bytes_received: 4 }));
+    const onReset = vi.fn();
+    const { host, done } = mount(<LoadView api={{ getRecording } as unknown as Api} follow="r0123456789" onScanned={() => {}} onReady={() => {}} onReset={onReset} />);
+    await flush();
+    expect(getRecording).toHaveBeenCalledTimes(1);
+    expect(host.querySelector(".statebox.error")?.textContent).toContain("This upload did not finish. Try another file.");
+    const btn = [...host.querySelectorAll("button")].find((b) => b.textContent === "Try another file")!;
+    act(() => btn.click());
+    expect(onReset).toHaveBeenCalled();
+    done();
+  });
   it("says the file is larger than 2 GB for a 413 and names the types for a 415", async () => {
     const big = file("a.pcap", 1);
     Object.defineProperty(big, "size", { value: 3 * 1024 ** 3 });

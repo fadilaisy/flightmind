@@ -53,9 +53,10 @@ export function LoadView({ api, follow = null, start = null, onReady, onScanned,
   const started = useRef(false);
   const live = () => alive.current;
 
-  async function track(id: string) {
+  async function track(id: string, abandonUploading = false) {
     try {
       const result = await followRecording(api, id, {
+        abandonUploading,
         shouldStop: () => !live(),
         onUpdate: (r) =>
           live() &&
@@ -111,7 +112,7 @@ export function LoadView({ api, follow = null, start = null, onReady, onScanned,
         if (isRawFormat(start.file.name) && !start.date) pick(start.file);
         else void submit(start.file, start.date);
       } else if (follow) {
-        void track(follow);
+        void track(follow, true);
       }
     }
     return () => {

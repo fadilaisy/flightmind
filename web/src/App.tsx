@@ -34,7 +34,16 @@ const SAMPLE_TABS = ["events", "trajectory", "records"];
 export function App() {
   // VITE_API_BASE set: real or SCRUM-33 mock API. Otherwise the sample fixture.
   const api: Api = useMemo(
-    () => createApi(() => mockApi(mini as unknown as MockData, { storage: localStorage })),
+    () =>
+      createApi(() => {
+        let storage: Storage | undefined;
+        try {
+          storage = localStorage;
+        } catch {
+          storage = undefined; // blocked storage: the mock keeps its data in memory
+        }
+        return mockApi(mini as unknown as MockData, { storage });
+      }),
     [],
   );
   const usingSample = !import.meta.env.VITE_API_BASE;

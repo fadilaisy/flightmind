@@ -40,6 +40,7 @@ export function stageLabel(status: RecordingStatus): string {
 export const MSG = {
   tooLarge: "This file is larger than 2 GB.",
   badType: "FlightMind reads .pcap, .pcapng, .atx, .ast and .bin files.",
+  uploadUnfinished: "This upload did not finish. Try another file.",
   notCat021: "The start of this file is not pcap, pcapng or ASTERIX CAT021 data.",
 } as const;
 
@@ -104,9 +105,9 @@ export interface UploadOptions {
 
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-/** True for errors a retry cannot fix (the server understood and refused). */
+/** True for errors a retry cannot fix (the server understood and refused). 408, 429, 5xx and network errors are retried. */
 function permanent(e: unknown): boolean {
-  return e instanceof ApiError && e.status >= 400 && e.status < 500;
+  return e instanceof ApiError && e.status >= 400 && e.status < 500 && e.status !== 408 && e.status !== 429;
 }
 
 /** Create the recording, send each part in order, retry a failed part up to 3 times, then complete. */
@@ -183,6 +184,8 @@ export interface FollowOptions {
   shouldStop?: () => boolean;
   /** Wait between polls. Tests pass a recorder. */
   sleep?: (ms: number) => Promise<void>;
+  /** True when this tab is not sending the parts: an `uploading` recording will never finish, so fail instead of polling. */
+  abandonUploading?: boolean;
 }
 
 export type FollowResult =
@@ -203,6 +206,9 @@ export async function followRecording(api: Api, id: string, options: FollowOptio
       throw new UploadError(errorText(e, "poll"), e);
     }
     options.onUpdate(r);
+    if (options.abandonUploading && r.status === "uploading") {
+      return { kind: "failed", recording: r, error: MSG.uploadUnfinished };
+    }
     const action = nextAction(r);
     if (action.kind === "ready") return { kind: "ready", recording: r };
     if (action.kind === "scanned") return { kind: "scanned", recording: r };

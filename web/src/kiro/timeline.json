@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-11-26T08:16:21.968Z",
-  "head": "cf5f0639a9124cf78b76199f497d425d2531443d",
+  "generatedAt": "2026-11-27T23:10:36.144Z",
+  "head": "a9cc224032248838a5dfb1cf8b9f54f306f73f02",
   "repo": "https://github.com/fadilaisy/flightmind",
   "mix": {
-    "spec": 50,
+    "spec": 51,
     "vibe": 41,
     "hook": 0,
     "none": 34
@@ -75,6 +75,7 @@
         "tasks": ".kiro/specs/kiro-proof/tasks.md"
       },
       "commits": [
+        "a9cc224032248838a5dfb1cf8b9f54f306f73f02",
         "cf5f0639a9124cf78b76199f497d425d2531443d",
         "37d398b7813539497ba4b98b8edd8d431c6c5eda",
         "b1ff3f6662f3aaa744d2ab47bcf26b5febe0c297",
@@ -122,6 +123,18 @@
         "requirements": ".kiro/specs/storage/requirements.md",
         "design": ".kiro/specs/storage/design.md",
         "tasks": ".kiro/specs/storage/tasks.md"
+      },
+      "commits": []
+    },
+    {
+      "name": "upload-ui",
+      "title": "Requirements: upload-ui (SCRUM-66)",
+      "tasksDone": 13,
+      "tasksTotal": 13,
+      "files": {
+        "requirements": ".kiro/specs/upload-ui/requirements.md",
+        "design": ".kiro/specs/upload-ui/design.md",
+        "tasks": ".kiro/specs/upload-ui/tasks.md"
       },
       "commits": []
     },
@@ -176,6 +189,16 @@
     }
   ],
   "commits": [
+    {
+      "sha": "a9cc224032248838a5dfb1cf8b9f54f306f73f02",
+      "short": "a9cc224",
+      "date": "2026-11-26",
+      "author": "fadilaisy",
+      "subject": "kiro-proof/3: redact the bare user name in session logs, refresh logs and timeline",
+      "kind": "spec",
+      "spec": "kiro-proof",
+      "task": "3"
+    },
     {
       "sha": "cf5f0639a9124cf78b76199f497d425d2531443d",
       "short": "cf5f063",

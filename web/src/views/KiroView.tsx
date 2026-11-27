@@ -181,8 +181,8 @@ export function KiroView({ data = GENERATED }: { data?: Timeline }) {
           </div>
         </div>
         {days.length === 0 && <p className="khint">{STR.kiroNoCommits}</p>}
-        {days.map((d) => (
-          <div key={d.date} className="kday">
+        {days.map((d, i) => (
+          <div key={`${d.date}:${i}`} className="kday">
             <h3>{d.date}</h3>
             <ul>
               {d.items.map((c) => (

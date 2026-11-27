@@ -194,10 +194,10 @@ describe("Shell tabs", () => {
   const api = { meta: async () => ({ mode: "replay", sim_time: "2026-10-13T08:00:00Z", recordings: ["rec01"], airports: [] }) } as unknown as Api;
   it("shows Load, Events, Trajectory and Records without a recording, and adds Preview, Clean and Export with one", () => {
     const a = mount(<Shell api={api} usingSample={false} hasRecording={false}>{() => null}</Shell>);
-    expect([...a.host.querySelectorAll("[role=tab]")].map((t) => t.textContent)).toEqual(["Load", "Events", "Trajectory", "Records"]);
+    expect([...a.host.querySelectorAll("[role=tab]")].map((t) => t.textContent)).toEqual(["Load", "Events", "Trajectory", "Records", "Built with Kiro"]);
     a.done();
     const b = mount(<Shell api={api} usingSample={false} hasRecording>{() => null}</Shell>);
-    expect([...b.host.querySelectorAll("[role=tab]")].map((t) => t.textContent)).toEqual(["Load", "Preview", "Clean", "Events", "Trajectory", "Records", "Export"]);
+    expect([...b.host.querySelectorAll("[role=tab]")].map((t) => t.textContent)).toEqual(["Load", "Preview", "Clean", "Events", "Trajectory", "Records", "Export", "Built with Kiro"]);
     b.done();
   });
 

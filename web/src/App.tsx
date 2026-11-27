@@ -7,6 +7,7 @@ import { StateBox } from "./components/StateBox";
 import { getStore, useStore } from "./state/store";
 import { STR } from "./strings";
 import { EventsView } from "./views/EventsView";
+import { KiroView } from "./views/KiroView";
 import { CleanView } from "./views/CleanView";
 import { ExportView } from "./views/ExportView";
 import { LoadView, type StartUpload } from "./views/LoadView";
@@ -226,6 +227,8 @@ export function App() {
   }
 
   function body(tab: string) {
+    // The Built with Kiro page reads only its generated JSON, so it needs neither a recording nor the API.
+    if (tab === "kiro") return <KiroView />;
     if (gate.kind === "checking") {
       return (
         <div className="wrap">
@@ -277,7 +280,7 @@ export function App() {
       api={api}
       usingSample={usingSample && gate.kind === "ready" && SAMPLE_TABS.includes(tabParam ?? "trajectory")}
       hasRecording={recordingId !== null}
-      activeTab={gate.kind === "load" ? "load" : null}
+      activeTab={gate.kind === "load" && tabParam !== "kiro" ? "load" : null}
       recordingName={recordingName}
       selectedId={recordingId}
       onSelectRecording={chooseRecording}

@@ -7,7 +7,8 @@ Run from services/intel:
     uvicorn serve:app --port 8000
 
 Environment:
-    FLIGHTMIND_API_APP   'module:attribute' of the API app (default mock_api.app:app)
+    FLIGHTMIND_API_APP   'module:attribute' of the API app (default mock_api.app:app;
+                         real_api.app:app is the Postgres-backed API, SCRUM-37)
     FLIGHTMIND_WEB_DIST  folder with the built web UI (needs index.html); unset = API only
 """
 import importlib

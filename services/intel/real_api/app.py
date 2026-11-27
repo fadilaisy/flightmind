@@ -20,6 +20,7 @@ Environment:
 import asyncio
 import json
 import os
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -32,12 +33,21 @@ from pydantic import BaseModel
 from agent.endpoint import agent_enabled, answer_question
 from agent.guard import AskGuard, client_key
 
-from . import raw_file
+from . import raw_file, uploads
 from .db import connect, prefix_clause
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
-app = FastAPI(title="FlightMind API", version="1.2.0")
+@asynccontextmanager
+async def _lifespan(_app):
+    """Start the upload worker when a server runs this app directly (serve.py starts it on first use)."""
+    if os.environ.get("FLIGHTMIND_DSN", "").strip():
+        uploads.ensure_worker()
+    yield
+
+
+app = FastAPI(title="FlightMind API", version="1.2.0", lifespan=_lifespan)
+app.include_router(uploads.router)  # recording upload and the worker (SCRUM-64)
 _guard = AskGuard()
 
 _origins = [o.strip() for o in os.environ.get("FLIGHTMIND_CORS_ORIGINS", "").split(",") if o.strip()]
@@ -96,13 +106,15 @@ EVENT_SCOPE = "cardinality(raw_refs) > 0 AND " + prefix_clause("raw_refs[1]")
 
 
 def _track(conn, recording: str, icao24: str, start: Optional[datetime], end: Optional[datetime]) -> dict:
-    icao = icao24.strip().upper()
+    # The pipeline keeps the decoder's spelling, which mixes upper and lower case, so match either.
     scope = prefix_clause("raw_ref")
-    exists = conn.execute(
-        f"SELECT 1 FROM telemetry WHERE icao24 = %s AND {scope} LIMIT 1", (icao, recording, recording)
+    found = conn.execute(
+        f"SELECT icao24 FROM telemetry WHERE upper(icao24) = upper(%s) AND {scope} LIMIT 1",
+        (icao24.strip(), recording, recording),
     ).fetchone()
-    if exists is None:
+    if found is None:
         raise HTTPException(status_code=404, detail="Unknown icao24")
+    icao = found["icao24"]
     sql = (
         "SELECT ts, lat, lon, coalesce(baro_alt_ft, geo_alt_ft) AS alt_ft, raw_ref, callsign, "
         "'kept_for_event' = ANY(flags) AS kept "

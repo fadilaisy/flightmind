@@ -118,8 +118,8 @@ def _packet_at(f: BinaryIO, kind: str, order: str, offset: int) -> bytes:
     return head + f.read(struct.unpack(">H", head[1:3])[0] - 3)
 
 
-def _udp_payload(packet: bytes, link_type: int) -> bytes:
-    """Strip link, IPv4 and UDP headers. Raise RawFileError when the packet is not UDP over IPv4."""
+def udp_ipv4(packet: bytes, link_type: int) -> bytes:
+    """The IPv4 datagram inside a link-layer frame. Raise RawFileError when it is not UDP over IPv4."""
     if link_type == LINK_ETHERNET:
         pos, ether_type = 12, None
         while True:
@@ -135,10 +135,15 @@ def _udp_payload(packet: bytes, link_type: int) -> bytes:
         ip = packet
     else:
         raise RawFileError(f"Link type {link_type} is not supported.")
-    if not ip or ip[0] >> 4 != 4 or ip[9] != 17:
+    if len(ip) < 28 or ip[0] >> 4 != 4 or ip[9] != 17:
         raise RawFileError("The packet is not UDP over IPv4.")
-    ihl = (ip[0] & 0x0F) * 4
-    return ip[ihl + 8:]
+    return ip
+
+
+def _udp_payload(packet: bytes, link_type: int) -> bytes:
+    """Strip link, IPv4 and UDP headers."""
+    ip = udp_ipv4(packet, link_type)
+    return ip[(ip[0] & 0x0F) * 4 + 8:]
 
 
 def read_block(path: str, record_index: int, offset: Optional[int]) -> bytes:

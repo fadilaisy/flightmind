@@ -1,6 +1,6 @@
 # Example: a Kiro CLI prompt (SCRUM-66 upload screen)
 
-Fadil wrote this prompt and ran it with `kiro-cli chat --no-interactive`; Kiro wrote the upload-ui spec and implemented its tasks, committing one step at a time (see the upload-ui lines in KIRO.md). `<temp>` stands for a local temp folder.
+Fadil ran this prompt with `kiro-cli chat --no-interactive` (the prompt was drafted with Claude Code); Kiro wrote the upload-ui spec and implemented its tasks, committing one step at a time (see the upload-ui lines in KIRO.md). `<temp>` stands for a local temp folder.
 
 # Kiro prompt U: SCRUM-66 load recording screen, chunked upload, recording picker
 

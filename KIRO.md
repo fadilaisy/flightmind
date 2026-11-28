@@ -28,7 +28,7 @@ Kiro:
 
 By hand:
 - Product and design decisions, and the Figma design.
-- Writing the prompts.
+- Writing the prompts (some drafted with Claude Code).
 - Reviews.
 - The deploys themselves.
 - Every fix in the "fixed by hand" column of the log.

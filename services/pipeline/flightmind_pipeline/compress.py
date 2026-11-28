@@ -51,6 +51,18 @@ def tolerance_m(nacp: int | None) -> float | None:
     return EPU_M.get(nacp)
 
 
+def tolerance_note() -> str:
+    """Return the per-point tolerance rule in words, built from the numbers this module uses."""
+    return (
+        "Tracks are reduced within the position error each point reports: "
+        f"{EPU_M[8]:g} m for NACp 8 or lower, {EPU_M[9]:g} m for NACp 9, "
+        f"{EPU_M[10]:g} m for NACp 10 and {EPU_M[11]:g} m for NACp 11, "
+        f"and within {VERTICAL_TOL_FT} ft of altitude error. "
+        "Points with an unknown NACp, track endpoints, changes of squawk, callsign or "
+        "on-ground state, and every record an event cites are always kept."
+    )
+
+
 def compress_track(track: Sequence[Point], pinned: set[str]) -> TrackCompression:
     """Return the kept points of track in track order, with the reason each one was kept.
 

@@ -1,7 +1,8 @@
-"""Write one recording's kept telemetry and detected events to Postgres, in one transaction.
+"""Write one recording's kept telemetry, detected events and quarantined records to Postgres, in one transaction.
 
-Rows are matched to a recording by the prefix of their raw_ref, '<recording_id>:'. Re-running
-the same recording replaces its rows, so the counts and event ids stay the same.
+Rows are matched to a recording by the prefix of their raw_ref, '<recording_id>:' (quarantine rows
+by recording_id). Re-running the same recording replaces its rows, so the counts and event ids stay
+the same.
 """
 
 from collections.abc import Sequence
@@ -95,6 +96,9 @@ ON CONFLICT (id) DO UPDATE SET
     raw_refs = EXCLUDED.raw_refs
 """
 
+_DELETE_QUARANTINE = "DELETE FROM quarantine WHERE recording_id = %s"
+_COPY_QUARANTINE = "COPY quarantine (recording_id, raw_ref, step_code, reason) FROM STDIN"
+
 _STORED_BYTES = "SELECT coalesce(sum(pg_column_size(t.*)), 0) FROM telemetry t WHERE {scope}"
 
 
@@ -129,9 +133,11 @@ def write_recording(
     rows: Sequence[Point],
     kept_for_event: AbstractSet[str],
     events: Sequence[DetectedEvent],
+    quarantine: Sequence[tuple[str, str, str]] = (),
 ) -> int:
-    """Replace this recording's telemetry and events, and return the bytes they now take.
+    """Replace this recording's telemetry, events and quarantine, and return the bytes they now take.
 
+    quarantine holds (raw_ref, step_code, reason) for every record a cleaning step set aside.
     Runs in one transaction on conn, which must not have an open transaction. Any exception
     rolls the transaction back, so the previous state stays in place. The return value is
     the sum of pg_column_size over the recording's telemetry rows.
@@ -143,6 +149,9 @@ def write_recording(
     for event in events:
         if not event.raw_refs or not event.raw_refs[0].startswith(prefix):
             raise ValueError(f"event {event.type} for {event.icao24} is not in recording {rec.id!r}")
+    for raw_ref, _step_code, _reason in quarantine:
+        if not raw_ref.startswith(prefix):
+            raise ValueError(f"quarantine raw_ref {raw_ref!r} is not in recording {rec.id!r}")
 
     try:
         with conn.cursor() as cur:
@@ -165,6 +174,7 @@ def write_recording(
             cur.execute(f"DELETE FROM telemetry WHERE {scope_sql}", scope_args)
             produced_ids = [str(event_id(e)) for e in events]
             cur.execute(_DELETE_STALE_EVENTS, (rec.id, rec.id, produced_ids))
+            cur.execute(_DELETE_QUARANTINE, (rec.id,))
 
             copy_sql = f"COPY telemetry ({', '.join(TELEMETRY_COLUMNS)}) FROM STDIN"
             with cur.copy(copy_sql) as copy:
@@ -191,6 +201,10 @@ def write_recording(
                             _flags(p.raw_ref, kept_for_event),
                         )
                     )
+
+            with cur.copy(_COPY_QUARANTINE) as copy:
+                for raw_ref, step_code, reason in quarantine:
+                    copy.write_row((rec.id, raw_ref, step_code, reason))
 
             cur.executemany(
                 _INSERT_EVENT,

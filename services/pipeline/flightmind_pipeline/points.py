@@ -4,6 +4,8 @@ import string
 from dataclasses import dataclass
 from datetime import datetime
 
+from flightmind_pipeline.cleaning import CleanInput
+
 # Spec sentinel: a geometric height of 150000 ft or more means "greater than", not a value.
 GEO_ALT_SENTINEL_FT = 150000
 
@@ -28,6 +30,21 @@ class Point:
     nacp: int | None = None
     sac: int | None = None
     sic: int | None = None
+
+
+def clean_input_of(point: Point | None, raw_ref: str, ts: datetime) -> CleanInput:
+    """Return the record the cleaning rules read. point is None when the block has no usable address."""
+    if point is None:
+        return CleanInput(raw_ref=raw_ref, icao24=None, ts=ts, lat=None, lon=None)
+    alt = point.baro_alt_ft if point.baro_alt_ft is not None else point.geo_alt_ft
+    return CleanInput(
+        raw_ref=point.raw_ref,
+        icao24=point.icao24,
+        ts=point.ts,
+        lat=point.lat,
+        lon=point.lon,
+        alt_ft=alt,
+    )
 
 
 def point_from_block(

@@ -85,6 +85,7 @@ def _delete_test_rows(conn: psycopg.Connection) -> None:
         "AND left(raw_refs[1], length(%s) + 1) = %s || ':'",
         (TEST_REC, TEST_REC),
     )
+    conn.execute("DELETE FROM quarantine WHERE recording_id = %s", (TEST_REC,))
     conn.execute("DELETE FROM recording_files WHERE id = %s", (TEST_REC,))
     conn.commit()
 
@@ -253,3 +254,32 @@ def test_rerun_does_not_announce_existing_events_again(conn: psycopg.Connection)
     write_recording(conn, _recording(points), points, {f"{TEST_REC}:1"}, [event])
 
     assert _notified_ids(conn) == []
+
+
+def _quarantine_rows(conn: psycopg.Connection) -> list[tuple[str, str, str]]:
+    return [
+        tuple(r)
+        for r in conn.execute(
+            "SELECT raw_ref, step_code, reason FROM quarantine WHERE recording_id = %s "
+            "ORDER BY raw_ref",
+            (TEST_REC,),
+        ).fetchall()
+    ]
+
+
+def test_rewriting_keeps_the_same_quarantine_rows(conn: psycopg.Connection):
+    points = _points()
+    quarantine = [
+        (f"{TEST_REC}:7", "no_address", "The record has no usable aircraft address."),
+        (f"{TEST_REC}:9", "duplicates", "Same target address, time and position as an earlier record."),
+    ]
+
+    write_recording(conn, _recording(points), points, set(), [], quarantine)
+    first = _quarantine_rows(conn)
+    write_recording(conn, _recording(points), points, set(), [], quarantine)
+
+    assert len(first) == 2
+    assert _quarantine_rows(conn) == first
+
+    write_recording(conn, _recording(points), points, set(), [], quarantine[:1])
+    assert _quarantine_rows(conn) == first[:1]  # replaced, not appended

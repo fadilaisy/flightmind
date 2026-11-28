@@ -36,6 +36,79 @@ def walk_pcap(path: str | os.PathLike[str]) -> Iterator[tuple[int, int, datetime
             f.seek(cap_len, os.SEEK_CUR)
 
 
+LINK_ETHERNET, LINK_RAW, LINK_RAW_IP, LINK_LINUX_SLL = 1, 101, 228, 113
+
+
+def udp_endpoints(packet: bytes, link_type: int) -> tuple[str, str] | None:
+    """Return ("src ip:port", "dst ip:port") of a UDP-over-IPv4 frame, or None for anything else."""
+    found = udp_datagram(packet, link_type)
+    return None if found is None else found[0]
+
+
+def udp_datagram(packet: bytes, link_type: int) -> tuple[tuple[str, str], bytes] | None:
+    """Return (("src ip:port", "dst ip:port"), UDP payload) of a UDP-over-IPv4 frame, else None.
+
+    Same endpoint strings as the upload API's stream scan, so a stream id can be matched by
+    its endpoints. Every length is checked, so a truncated frame gives None.
+    """
+    if link_type == LINK_ETHERNET:
+        pos = 12
+        while True:
+            if len(packet) < pos + 2:
+                return None
+            ether_type = struct.unpack(">H", packet[pos : pos + 2])[0]
+            if ether_type in (0x8100, 0x88A8):  # VLAN tags
+                pos += 4
+                continue
+            break
+        if ether_type != 0x0800:
+            return None
+        ip = packet[pos + 2 :]
+    elif link_type == LINK_LINUX_SLL:
+        ip = packet[16:]
+    elif link_type in (LINK_RAW, LINK_RAW_IP):
+        ip = packet
+    else:
+        return None
+    if len(ip) < 20 or ip[0] >> 4 != 4 or ip[9] != 17:
+        return None
+    ihl = (ip[0] & 0x0F) * 4
+    if ihl < 20 or len(ip) < ihl + 8:
+        return None
+    sport, dport = struct.unpack(">HH", ip[ihl : ihl + 4])
+    src = ".".join(str(b) for b in ip[12:16]) + f":{sport}"
+    dst = ".".join(str(b) for b in ip[16:20]) + f":{dport}"
+    return (src, dst), ip[ihl + 8 :]
+
+
+def walk_pcap_streams(
+    path: str | os.PathLike[str],
+) -> Iterator[tuple[int, int, datetime, tuple[str, str] | None]]:
+    """Like walk_pcap, plus each packet's UDP endpoints, or None when it is not UDP over IPv4.
+
+    record_index is still the packet number in the whole file, so a raw_ref built from it finds
+    the same bytes whichever stream was chosen.
+    """
+    with open(path, "rb") as f:
+        header = f.read(PCAP_FILE_HEADER_LEN)
+        if header[:4] != PCAP_LE_MAGIC:
+            raise ValueError(
+                f"{os.fspath(path)}: only little-endian classic pcap is supported, "
+                f"found magic bytes {header[:4].hex(' ')}"
+            )
+        link_type = struct.unpack("<I", header[20:24])[0] & 0xFFFF if len(header) >= 24 else 0
+        record_index = 0
+        while True:
+            offset = f.tell()
+            rec = f.read(PCAP_RECORD_HEADER_LEN)
+            if len(rec) < PCAP_RECORD_HEADER_LEN:
+                return
+            ts_sec, ts_usec, cap_len, _orig_len = struct.unpack("<IIII", rec)
+            record_index += 1
+            ts = datetime.fromtimestamp(ts_sec, UTC) + timedelta(microseconds=ts_usec)
+            yield record_index, offset, ts, udp_endpoints(f.read(cap_len), link_type)
+
+
 def _require_env(name: str) -> str:
     value = os.environ.get(name)
     if value is None:

@@ -186,6 +186,8 @@ and the tunnel. Options:
 - `-NoTunnel` serves only `http://localhost:8000`.
 - `-SkipBuild` reuses the last web build.
 - `-DbPort 55432` moves the database when another Postgres uses port 5432.
+- `-UploadDir <folder>` stores uploads there. The default is `%LOCALAPPDATA%lightmind\uploads`,
+  outside the repo, so OneDrive does not sync them. Pick a drive with room for the recordings.
 - `-DefaultRecording <id>` pins the recording the app opens first. Use it for a demo: without
   it, the app opens the recording uploaded last, so any upload changes what everyone sees.
 

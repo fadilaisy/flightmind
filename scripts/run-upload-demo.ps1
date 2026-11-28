@@ -27,6 +27,8 @@ param(
     [int]$Port = 8000,
     [int]$DbPort = $(if ($env:FLIGHTMIND_DB_PORT) { [int]$env:FLIGHTMIND_DB_PORT } else { 5432 }),
     [string]$DefaultRecording = $env:FLIGHTMIND_DEFAULT_RECORDING,
+    # Outside the repo by default: a repo in OneDrive would sync, and may lock, every upload.
+    [string]$UploadDir = $(if ($env:FLIGHTMIND_UPLOAD_DIR) { $env:FLIGHTMIND_UPLOAD_DIR } else { Join-Path $env:LOCALAPPDATA 'flightmind\uploads' }),
     [switch]$SkipBuild,
     [switch]$NoTunnel
 )
@@ -163,11 +165,11 @@ if ($SkipBuild) {
 
 # ---------- 4. API and tunnel ----------
 
-New-Item -ItemType Directory -Force -ErrorAction Stop $Logs, (Join-Path $Root 'data\uploads') | Out-Null
+New-Item -ItemType Directory -Force -ErrorAction Stop $Logs, $UploadDir | Out-Null
 $env:FLIGHTMIND_API_APP = 'real_api.app:app'
 $env:FLIGHTMIND_DSN = $Dsn
 $env:FLIGHTMIND_WEB_DIST = Join-Path $Web 'dist'
-$env:FLIGHTMIND_UPLOAD_DIR = Join-Path $Root 'data\uploads'
+$env:FLIGHTMIND_UPLOAD_DIR = $UploadDir
 $env:FLIGHTMIND_ASTERIX_DIR = $AsterixDir
 $env:FLIGHTMIND_CYGWIN_BIN = $CygwinBin
 if ($DefaultRecording) { $env:FLIGHTMIND_DEFAULT_RECORDING = $DefaultRecording }

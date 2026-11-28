@@ -188,7 +188,9 @@ What it does, in order:
    - `FLIGHTMIND_API_APP=real_api.app:app`;
    - the compose DSN;
    - `FLIGHTMIND_WEB_DIST=web\dist`;
-   - `FLIGHTMIND_UPLOAD_DIR=data\uploads`;
+   - `FLIGHTMIND_UPLOAD_DIR`: `-UploadDir`, else `FLIGHTMIND_UPLOAD_DIR`, else
+     `%LOCALAPPDATA%lightmind\uploads`. That is outside the repo, so OneDrive does not sync or lock
+     the uploads when the repo is in OneDrive;
    - the decoder variables.
 
    It runs as **one process**, because the upload worker lives inside it.

@@ -152,7 +152,8 @@ def test_users_never_see_server_paths(env, monkeypatch):
 
 
 @pytest.mark.db
-def test_a_dropped_job_connection_still_marks_the_upload_failed(env, monkeypatch):
+def _run_dropping_the_job_connection(env, monkeypatch, then):
+    """Process one upload with a runner that closes the job's own connection, then calls then(on_progress)."""
     client, uploads = env["client"], env["uploads"]
     opened, real_connect = [], uploads.connect
 
@@ -162,14 +163,25 @@ def test_a_dropped_job_connection_still_marks_the_upload_failed(env, monkeypatch
             opened.append(conn)
             yield conn
 
-    def drops_mid_run(path, recording_id, dsn, on_progress=None, recording_date=None):
+    def runner(path, recording_id, dsn, on_progress=None, recording_date=None):
         opened[-1].close()  # the job's own connection, as if Postgres dropped it
-        on_progress("decoding", 1000, 5000)
+        return then(on_progress)
 
     rid, _ = upload(client, drop_first(9))
     uploads.run_pending_once()
     client.post(f"/api/recordings/{rid}/process", json={"stream_id": "s1"})
     monkeypatch.setattr(uploads, "connect", tracking_connect)
-    monkeypatch.setattr(uploads, "runner", drops_mid_run)
+    monkeypatch.setattr(uploads, "runner", runner)
     uploads.run_pending_once()
-    assert get(client, rid)["status"] == "failed"
+    return get(client, rid)
+
+
+def test_a_dropped_job_connection_still_marks_the_upload_failed(env, monkeypatch):
+    rec = _run_dropping_the_job_connection(env, monkeypatch, lambda on_progress: on_progress("decoding", 1000, 5000))
+    assert rec["status"] == "failed"
+
+
+def test_a_run_that_finished_stays_ready_when_its_connection_drops(env, monkeypatch):
+    rec = _run_dropping_the_job_connection(env, monkeypatch, lambda on_progress: {"raw_records": 7})
+    assert rec["status"] == "ready"
+    assert rec["error"] is None

@@ -1,5 +1,66 @@
 # How we built FlightMind with Kiro
 
+FlightMind turns ASTERIX CAT021 surveillance recordings into flagged events that an analyst can check against the raw records. A team of three built it in November 2026, with Kiro as the main tool for planning and writing code.
+
+## How we worked
+
+1. **Spec first.** Kiro wrote requirements, design and numbered tasks in `.kiro/specs/<name>/`. We read and corrected the spec, then Kiro implemented the tasks one by one and ticked each box. The specs:
+   [agent-mcp](.kiro/specs/agent-mcp/), [api-deploy](.kiro/specs/api-deploy/),
+   [compression](.kiro/specs/compression/), [detectors](.kiro/specs/detectors/),
+   [scrum-19](.kiro/specs/scrum-19/), [scrum-40](.kiro/specs/scrum-40/),
+   [storage](.kiro/specs/storage/), [upload-ui](.kiro/specs/upload-ui/),
+   [web-ui](.kiro/specs/web-ui/).
+2. **Steering.** [.kiro/steering/](.kiro/steering/) holds six files that Kiro reads every time: product, tech stack, structure, data contracts, aviation glossary and UI wording.
+3. **Hooks and an agent.** [.kiro/hooks/](.kiro/hooks/) has four hooks: log a ticked task into this file, guard `raw_ref`, run the pipeline property tests and regenerate the contract types. [.kiro/agents/data-quality-reviewer.json](.kiro/agents/data-quality-reviewer.json) is a reviewer agent for the pipeline. We build in Kiro Crew for part of the work, and Crew does not read `.kiro/hooks/`, so the contract-types guard also exists as a Crew Stop hook (see the SCRUM-19 lines in the log).
+4. **MCP.** Kiro read the Figma file through the Figma MCP to get colour and type tokens. Our own `get_track` MCP server was called from Kiro chat; the recordings are in [docs/kiro/scrum-34/](docs/kiro/scrum-34/).
+5. **Kiro CLI for long runs.** We wrote a prompt file and ran `kiro-cli chat --no-interactive`. Kiro built, tested and committed step by step. One example is [docs/kiro/example-prompt-upload-ui.md](docs/kiro/example-prompt-upload-ui.md).
+6. **Review by a person.** We ran the build and tests, compared screenshots with Figma ([docs/kiro/figma-check/](docs/kiro/figma-check/)) and read the diff before merging. Fixes went back to Kiro or were done by hand and logged.
+
+## What Kiro did and what we did by hand
+
+Kiro:
+- Wrote the specs.
+- Wrote most of the web UI (web-ui, upload-ui, scrum-40).
+- Wrote the mock API, validated against `openapi.yaml` (SCRUM-33).
+- Wrote the agent and the MCP server (agent-mcp).
+- Wrote the container and the Vercel build (api-deploy).
+- Did the detectors, compression and storage work with Kiro-assisted workers (the Role 2 lines in the log).
+
+By hand:
+- Product and design decisions, and the Figma design.
+- Writing the prompts.
+- Reviews.
+- The deploys themselves.
+- Every fix in the "fixed by hand" column of the log.
+- Screen recordings.
+
+Some reviews, prompt drafts, screenshot checks and recordings were done with Claude Code; the log lines say so where it happened. To read the log, look at the last column of each line: it says what a person fixed, or "nothing".
+
+## Problems Kiro helped us solve
+
+- **Building the UI before the pipeline existed (SCRUM-33).** Kiro wrote a mock API for all seven paths of `openapi.yaml`, with tests that validate every response against the contract.
+- **Turning Figma frames into the web UI (SCRUM-39, web-ui).** Kiro read colour and type tokens through the Figma MCP, then built the screens task by task.
+- **A local database stack in one session (SCRUM-31).** Kiro wrote the Docker Compose file for Timescale and pgvector and checked live that both extensions load and all tables build.
+- **The upload flow (SCRUM-66, upload-ui).** Kiro built chunked upload, retries and status polling, with tests for each.
+- **A deploy that kept failing (api-deploy).** After Railway, Render and Azure for Students each refused, Kiro added the Vercel build and the project is live.
+- **Citations that cannot be invented (agent-mcp).** The agent drops any claim whose citation no tool returned.
+
+## Where Kiro got it wrong
+
+- **SCRUM-31:** it mounted a subfolder into `/docker-entrypoint-initdb.d`, which Postgres does not scan. We switched to per-file mounts.
+- **SCRUM-32:** it switched the contract to `vector(768)` on its own and picked the retired `text-embedding-004`. Review caught both.
+- **SCRUM-33:** it guessed the `/api/stream` payload. The UI does not use that endpoint.
+- **upload-ui/8-11:** a PowerShell edit double-encoded characters in `strings.ts`. `tests/wording.test.ts` caught it and the text was repaired.
+
+## See it
+
+- [docs/kiro/figma-check/](docs/kiro/figma-check/): screens Kiro built, next to the Figma references in `ref/`.
+- [docs/kiro/scrum-34/](docs/kiro/scrum-34/): recordings of Kiro calling our MCP server.
+- [docs/kiro/clips.md](docs/kiro/clips.md): the list of screen recordings.
+- The live app: https://flightmind.vercel.app
+
+## The log
+
 One line per finished spec task or Jira ticket (spec tasks are written by the "log ticked
 task" hook), plus a short review every Sunday. This file is the source for the Devpost Kiro
 write-up, the README section and the Kiro part of the video.
@@ -9,49 +70,6 @@ Line format:
 
 The spec/task column takes a spec and task (`ingest/2.3`) or a Jira key plus `(chat)` or
 `(spec)`, for example `SCRUM-32 (chat)`.
-
-## Evidence
-
-You can check what is claimed below from the repository itself.
-
-- Specs, one folder each with requirements, design and tasks (ticked boxes are the progress):
-  [agent-mcp](.kiro/specs/agent-mcp/), [api-deploy](.kiro/specs/api-deploy/),
-  [compression](.kiro/specs/compression/), [detectors](.kiro/specs/detectors/),
-  [kiro-proof](.kiro/specs/kiro-proof/), [scrum-19](.kiro/specs/scrum-19/),
-  [scrum-40](.kiro/specs/scrum-40/), [storage](.kiro/specs/storage/), [web-ui](.kiro/specs/web-ui/)
-- Hooks: [.kiro/hooks/](.kiro/hooks/). Steering files: [.kiro/steering/](.kiro/steering/).
-- Trailer check: every commit ends with a `Kiro:` trailer. [.githooks/commit-msg](.githooks/commit-msg)
-  refuses a commit without one; install it with [scripts/install-hooks](scripts/install-hooks).
-  Rules and the correction mechanism: [docs/kiro/README.md](docs/kiro/README.md).
-- Counts: [scripts/kiro-stats](scripts/kiro-stats). Output when this section was written (run it
-  for the current numbers):
-
-```
-specs=9
-tasks_done=106
-tasks_open=13
-hooks=5
-steering_files=6
-custom_agents=1
-kiro_md_entries=63
-commits_total=155
-commits_non_merge=124
-commits_kiro_spec=49
-commits_kiro_vibe=41
-commits_kiro_hook=0
-commits_kiro_none=34
-trailer_corrections_applied=9
-commits_unclassified=0
-share_spec_pct=39.5
-share_vibe_pct=33.1
-share_hook_pct=0.0
-share_none_pct=27.4
-```
-
-- Kiro CLI session logs, redacted: [docs/kiro/sessions/cli/README.md](docs/kiro/sessions/cli/README.md)
-- Screen recordings: [docs/kiro/clips.md](docs/kiro/clips.md)
-- The page that links every number to its commit or spec file: https://flightmind.vercel.app/?tab=kiro
-  (source: [web/src/views/KiroView.tsx](web/src/views/KiroView.tsx))
 
 ## Week of 2026-11-09
 
@@ -81,13 +99,7 @@ share_none_pct=27.4
 2026-11-26 | Role 3 | agent-mcp/9 | Kiro IDE chat called get_track from the flightmind workspace server three times, typed by Zahran: 8A0F21 (60 points, GIA123, raw_ref rec01:0 to rec01:2), ZZZZZZ (unknown-aircraft message), API stopped (unreachable message); clip in docs/kiro/scrum-34/. Kiro Crew 0.13.1 does not load .kiro/settings/mcp.json (flightmind absent from its 13 MCP servers) | by hand: Claude Code started and stopped the mock API, recorded and trimmed the clip (sped up 1.75x) and wrote the README, tasks.md and this line; Crew needs a manual Add Custom entry
 2026-11-26 | Role 3 | SCRUM-36 (chat) LLM provider | nothing | by hand, outside Kiro: switched the LLM in tech.md and the README provider table from gemini-3-8-flash via Coarena to the Claude API (claude-haiku-5-5, ANTHROPIC_API_KEY, model id in FLIGHTMIND_LLM_MODEL) before any LLM code existed; embeddings stay on gemini-embedding-001
 2026-11-26 | Role 3 | agent-mcp/10-21 (SCRUM-36) | kiro-cli chat extended the agent-mcp spec with Part 2 (requirements 7 to 17, tasks 10 to 25) and implemented tasks 10 to 21 in three runs: services/intel/agent (ApiClient shared with the MCP server, the tools query_tracks, search_events, get_track and get_raw, the Claude API tool-use loop on claude-haiku-5-5, the evidence rule that drops any claim whose citation no tool returned, the demo guard, the /api/ask wiring that stays canned without a key), the four MCP tools, and 86 tests with a fake client (153 in services/intel). Kiro found that the SDK's timeout class is APITimeoutError and that the SCRUM-34 tool-list test had to change | by hand, outside Kiro: the prompts fixed the design and gave the current anthropic SDK call shapes (output_config, strict tools, no thinking or sampling parameters); review found the Docker image did not copy the new agent package, which Kiro then fixed with a test; uv.lock regenerated with uv; one class name corrected in design.md. Later the same day, by hand: the PR #22 review fixes went through kiro-cli (altitude refs in query_tracks, tool batch inside the deadline, fan-out cap, catch-all for tool errors), and task 22 ran on the real Claude API with Zahran's key in his own terminal: the three demo questions answered with checked citations in 7.2 s, 8.0 s and 5.6 s for about $0.0012 each. Still open: the key on Vercel (task 23) and Haiku versus Opus (task 24)
-2026-11-26 | Fadil | kiro-proof/0 | Wrote the kiro-proof spec for SCRUM-70 (requirements in EARS style, design, 6 tasks) so our Kiro usage can be checked from the repo | nothing
-2026-11-26 | Fadil | kiro-proof/1 | Wrote .githooks/commit-msg (refuses a commit without a valid Kiro: trailer; merge, fixup and squash pass), scripts/install-hooks, the commit-trailer IDE hook and .gitattributes so the scripts keep LF; checked that a commit without a trailer, and one with 'Kiro: spec bad', are refused | nothing
-2026-11-26 | Fadil | kiro-proof/2 | Rewrote scripts/kiro-stats to read the Kiro: trailer of every non-merge commit, accept 'missing' as the 'was' value of a correction, and print commits_unclassified and the share of each type; added four correction lines for the commits that never had a trailer (all none); result is 0 unclassified of 120 non-merge commits | nothing
-2026-11-26 | Fadil | kiro-proof/3 | Wrote scripts/kiro-sessions-export (Python, standard library only) and exported the 9 Kiro CLI sessions of this repo and the main checkout to docs/kiro/sessions/cli/ with an index, plus the 8 prompt files they read to docs/kiro/sessions/prompts/; home and temp paths, secrets and emails are redacted; a second run on a frozen copy of the sessions gave identical files; grep for Pongo, @gmail, sk-, AKIA, ghp_ and BEGIN finds only the literal pattern text quoted in the prompt file K-kiro-proof.md and in one command line of the live session log, no secret; the bare user name is redacted as <user> | nothing
-2026-11-26 | Fadil | kiro-proof/4 | Wrote web/src/domain/kiroTimeline.ts (trailer, corrections, task count and title parsing), scripts/kiro-timeline.mjs (git log, KIRO.md corrections and .kiro/specs to web/src/kiro/timeline.json: 122 commits, 9 specs, mix 47 spec / 41 vibe / 0 hook / 34 none, 0 unclassified, the same counts as scripts/kiro-stats) and 11 tests, one of which checks that the script's copy of the parser agrees with the TypeScript copy; added the kiro:timeline npm script | nothing
-2026-11-26 | Fadil | kiro-proof/5 | Built the Built with Kiro page at ?tab=kiro (web/src/views/KiroView.tsx, styles/kiro.css, strings in strings.ts): commit mix card with a stacked bar and counts, one card per spec with tasks done linked to tasks.md and an expandable commit list, a timeline grouped by date with a kind filter and 'classified in KIRO.md' marks, and footer links to hooks, steering, session logs and KIRO.md; every commit and file links to GitHub. It renders from the generated timeline, so it works when the API is down. Added a Built with Kiro entry to the app bar. 8 new tests (123 in web), npm run build passes | not checked in a browser, only in jsdom; Figma has no frame for this page, so it reuses the existing card, badge and segmented-control styles
-2026-11-26 | Fadil | kiro-proof/6 | Put an Evidence section at the top of KIRO.md (specs, hooks, steering, the trailer check, kiro-stats output, session logs, clips and the Built with Kiro page), updated docs/kiro/README.md (install-hooks, the missing correction value, how to refresh session logs and the timeline), refreshed the session logs and regenerated web/src/kiro/timeline.json; npm test and npm run build pass | nothing
+2026-11-28 | Fadil | SCRUM-70 (chat) Kiro write-up | kiro-cli removed the trailer check, stats and timeline scripts, session exports and the Built with Kiro page from PR #31, kept one example prompt, and wrote this introduction from an outline in the prompt | by hand: the decision to simplify and the outline; reviewed before merge
 
 ## Week of 2026-11-16
 
@@ -163,7 +175,6 @@ e8d5d4d | none | vibe | Kiro chat session wrote it, see docs/kiro/sessions/2026-
 2026-11-27 | Fadil | upload-ui/merge | Resolved the merge conflicts with main in web/src/api/client.ts, web/src/api/mockClient.ts and web/src/styles/tokens.css. Kept main's ask and compression behaviour (compression keeps the 404 'No compression report' message; the mock returns a supplied report first) and added the recording parameter and the upload calls on top; tokens.css keeps both blocks (the same-name .bar rule is ours, and .cbars .bar gets width: auto so main's Reduction card looks as before; no token had two values); tests/smoke.test.ts now seeds a ready recording because the app opens a recording first | by hand: none
 2026-11-27 | Fadil | upload-ui/review | PR 26 review fixes: a recording opened in status uploading (picker or ?recording=) now shows 'This upload did not finish. Try another file.' with the Try another file button instead of polling forever; 408 and 429 part errors are retried; App.tsx falls back to no storage when localStorage throws; csvCell quotes cells with a carriage return; upload-ui requirements R3 and tasks drop the automatic-process wording and add R9 to R12 for the SCRUM-69 part; removed the stray figma-check log file. Tests added for the uploading case and 408/429/503 retries | by hand: none
 2026-11-27 | Fadil | load-page/capabilities | Load screen, choose phase: left-aligned title, one-line drop zone with a solid Choose file button, four capability cards (wording in strings.ts), and a Recent recordings list from listRecordings() (newest 5; ready shows event count and Open, processing shows stage, progress bar and Follow, failed shows Details with the error inline). Removed the intro, the three step cards and the What is CAT021 footer with their strings and CSS. New tests/loadPage.test.tsx. Screenshot at 1440 px in docs/design/load-page-built.png, taken on the local mock after uploading one file (the mock starts empty, so the ready and failed rows were checked by tests, not by eye). Build and 163 tests pass | by hand: none
-2026-11-28 | Fadil | kiro-proof (chat) PR #31 review fixes | Merged main into the branch (conflicts in KIRO.md, strings.ts and App.tsx resolved keeping both sides); ?tab=kiro now renders KiroView before the recording gate and keeps the Built with Kiro tab highlighted with no recording loaded; new smoke case opens ?tab=kiro with nothing seeded; refreshed web/src/kiro/timeline.json with npm run kiro:timeline (126 commits, spec=51 vibe=41 hook=0 none=34, unclassified=0); KiroView day keys made unique (the same date can appear twice after a merge) and steps.test.tsx tab lists now include Built with Kiro; build passes, 183 tests pass in 28 files | review by Claude Code found the merge conflicts with main and the Kiro tab being hidden behind the Load screen; nothing typed by hand
 c170f6a | missing | none | initial commit made by GitHub when the repository was created, two README lines, no Kiro involved
 7d3bf31 | missing | none | README roles and contracts section edited by hand (README.md only, 67 lines), made before the trailer rule existed
 fe9d090 | missing | none | Figma and prototype reference screenshots and the figma MCP server entry were added by hand, not written by Kiro

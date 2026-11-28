@@ -186,7 +186,8 @@ and the tunnel. Options:
 - `-NoTunnel` serves only `http://localhost:8000`.
 - `-SkipBuild` reuses the last web build.
 - `-DbPort 55432` moves the database when another Postgres uses port 5432.
-- `-DefaultRecording <id>` pins the recording the app opens first.
+- `-DefaultRecording <id>` pins the recording the app opens first. Use it for a demo: without
+  it, the app opens the recording uploaded last, so any upload changes what everyone sees.
 
 Details and measured times are in
 [infra/README.md](infra/README.md#run-the-full-app-with-upload-scrum-65).

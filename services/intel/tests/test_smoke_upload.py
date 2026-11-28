@@ -70,6 +70,17 @@ def test_a_failed_recording_is_a_failure(base, monkeypatch):
         smoke.run_upload(base)
 
 
+def test_upload_runs_the_read_checks_before_it_uploads(base, capsys, monkeypatch):
+    real = smoke.fetch
+    # The mock API serves no web UI at /; serve.py adds it in a real run.
+    monkeypatch.setattr(smoke, "fetch", lambda url: ("text/html", b"") if url == base + "/" else real(url))
+    assert smoke.main(["smoke.py", base, "--upload"]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    raw = next(i for i, line in enumerate(lines) if "/api/raw/" in line)
+    post = next(i for i, line in enumerate(lines) if line.startswith(f"ok {base}/api/recordings ("))
+    assert raw < post
+
+
 @pytest.mark.parametrize("argv", [
     ["smoke.py"],
     ["smoke.py", "--upload"],

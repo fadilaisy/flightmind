@@ -192,23 +192,33 @@ What it does, in order:
    - the decoder variables.
 
    It runs as **one process**, because the upload worker lives inside it.
-6. Starts `cloudflared tunnel --url http://localhost:8000` and prints the `trycloudflare.com`
+6. Starts `cloudflared tunnel --url http://127.0.0.1:8000` and prints the `trycloudflare.com`
    URL. Logs go to `data\logs\`. Ctrl+C stops the API and the tunnel. The database keeps
    running; stop it with `docker compose -f infra/docker-compose.yml stop`.
 
 A quick tunnel gets a new URL every time it starts. Cloudflare caps one request at 100 MB, and
 the API's 50 MB parts stay under that.
 
+**Anyone with the tunnel URL can upload.** The URL is hard to guess but not secret, so stop the
+script when you are not demoing.
+
+**Pin the demo recording.** Without `-DefaultRecording`, the app opens the recording ingested
+last, so every upload, `smoke.py --upload` included, changes what everyone sees. The script
+prints a warning then. For a demo, upload the demo recording, note its id, and restart the
+script with `-DefaultRecording <id>`.
+
 Check it from any machine:
 
 ```powershell
+python infra\smoke.py https://<name>.trycloudflare.com
 python infra\smoke.py https://<name>.trycloudflare.com --upload
 python infra\smoke.py https://<name>.trycloudflare.com --upload-file D:\recordings\day1.pcap
 ```
 
-- `--upload` sends `fixtures/adsb_sample_500.pcap` in parts, processes its stream and waits up
-  to 120 s for `ready`. The fixture has no events, so a database that holds only the fixture
-  has none either, and the event checks are skipped.
+- With no option it runs the read checks on the default recording.
+- `--upload` runs the read checks first, then sends `fixtures/adsb_sample_500.pcap` in parts,
+  processes its stream and waits up to 120 s for `ready`. On an empty database the event, raw
+  and track checks are skipped, since there are no events yet. The fixture has none either.
 - `--upload-file` does the same with a recording of your own. It allows an hour and prints the
   upload time and the time to ready.
 

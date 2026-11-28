@@ -8,7 +8,7 @@
   3. Adds the uploads and quarantine tables if the database is older than contract 1.2.
   4. Builds web/ with a same-origin API base.
   5. Starts the real API (uvicorn serve:app, one process) on -Port.
-  6. Starts "cloudflared tunnel --url http://localhost:<Port>" and prints the public URL.
+  6. Starts "cloudflared tunnel --url http://127.0.0.1:<Port>" and prints the public URL.
   Ctrl+C stops uvicorn and cloudflared. The database keeps running (docker compose -f infra/docker-compose.yml stop).
 
 .EXAMPLE
@@ -85,11 +85,15 @@ if (-not $Python) {
     $venv = Join-Path $Intel '.venv\Scripts\python.exe'
     $Python = if (Test-Path $venv) { $venv } else { 'python' }
 }
-& $Python -c "import fastapi, uvicorn, psycopg, flightmind_pipeline; flightmind_pipeline.run_recording" *> $null
+& $Python -c "import fastapi, uvicorn, psycopg, flightmind_pipeline" *> $null
 if ($LASTEXITCODE -ne 0) {
     Stop-Demo ("'$Python' cannot import the API and the pipeline. Use Python 3.12, then run:`n" +
         "  $Python -m pip install -r services\intel\requirements.txt -e services\pipeline`n" +
         "or pass -Python <path to python.exe>.")
+}
+& $Python -c "import flightmind_pipeline; flightmind_pipeline.run_recording" *> $null
+if ($LASTEXITCODE -ne 0) {
+    Stop-Demo 'The pipeline has no run_recording yet, so uploads cannot be processed. Merge SCRUM-63 (the pipeline entry point), then retry.'
 }
 if (-not $SkipBuild -and -not (Get-Command npm -ErrorAction SilentlyContinue)) {
     Stop-Demo 'npm was not found on PATH. Install Node.js 22, or pass -SkipBuild to reuse web\dist.'
@@ -171,7 +175,7 @@ if ($DefaultRecording) { $env:FLIGHTMIND_DEFAULT_RECORDING = $DefaultRecording }
 $api = $null
 $tunnel = $null
 try {
-    Write-Step "starting the real API on http://localhost:$Port (log: data\logs\api.log)"
+    Write-Step "starting the real API on http://127.0.0.1:$Port (log: data\logs\api.log)"
     # One process only: the upload worker runs inside it (see services/intel/README.md).
     $api = Start-Process -ErrorAction Stop -FilePath $Python -WorkingDirectory $Intel -PassThru -NoNewWindow `
         -ArgumentList '-m', 'uvicorn', 'serve:app', '--host', '127.0.0.1', '--port', "$Port" `
@@ -189,18 +193,19 @@ try {
         Stop-Demo 'The API did not answer /api/meta in 60 s (its log is above).'
     }
 
-    $public = "http://localhost:$Port"
+    $public = "http://127.0.0.1:$Port"
     if (-not $NoTunnel) {
         Write-Step 'starting the Cloudflare quick tunnel (log: data\logs\tunnel.log)'
         $tunnelLog = Join-Path $Logs 'tunnel.log'
         Remove-Item $tunnelLog -ErrorAction SilentlyContinue
         $tunnel = Start-Process -ErrorAction Stop -FilePath $Cloudflared.Source -PassThru -NoNewWindow `
-            -ArgumentList 'tunnel', '--no-autoupdate', '--url', "http://localhost:$Port" `
+            -ArgumentList 'tunnel', '--no-autoupdate', '--url', "http://127.0.0.1:$Port" `
             -RedirectStandardOutput (Join-Path $Logs 'tunnel.out.log') -RedirectStandardError $tunnelLog
         $public = $null
         foreach ($i in 1..60) {
             if ($tunnel.HasExited) { break }
-            $hit = Select-String -Path $tunnelLog -Pattern 'https://[a-z0-9-]+\.trycloudflare\.com' -ErrorAction SilentlyContinue | Select-Object -First 1
+            # Not api.trycloudflare.com, which the log names when cloudflared cannot get a tunnel.
+            $hit = Select-String -Path $tunnelLog -Pattern 'https://(?!api\.)[a-z0-9-]+\.trycloudflare\.com' -ErrorAction SilentlyContinue | Select-Object -First 1
             if ($hit) { $public = $hit.Matches[0].Value; break }
             Start-Sleep -Seconds 1
         }
@@ -212,7 +217,18 @@ try {
 
     Write-Host ''
     Write-Host "  FlightMind is running: $public" -ForegroundColor Green
-    Write-Host "  Check it:  python infra\smoke.py $public --upload"
+    if ($DefaultRecording) {
+        Write-Host "  The app opens recording '$DefaultRecording' by default."
+        Write-Host "  Check it:  python infra\smoke.py $public --upload"
+    } else {
+        Write-Host '  No -DefaultRecording: the app opens the recording ingested last, so every upload' -ForegroundColor Yellow
+        Write-Host '  (smoke.py --upload too) changes what everyone sees. For a demo, upload the demo' -ForegroundColor Yellow
+        Write-Host '  recording, then restart this script with -DefaultRecording <its id>.' -ForegroundColor Yellow
+        Write-Host "  Check it:  python infra\smoke.py $public"
+    }
+    if (-not $NoTunnel) {
+        Write-Host '  Anyone with this URL can upload. Stop the script when you are not demoing.'
+    }
     Write-Host '  Press Ctrl+C to stop the API and the tunnel.'
     Write-Host ''
     while (-not $api.HasExited -and ($NoTunnel -or -not $tunnel.HasExited)) { Start-Sleep -Seconds 1 }

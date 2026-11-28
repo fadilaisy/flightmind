@@ -6,9 +6,11 @@
 Prints "ok <url>" per passed check. On the first failure prints "FAIL <url>: <reason>"
 and exits 1. Exit 2 on bad usage, 0 when every check passes.
 
---upload first sends fixtures/adsb_sample_500.pcap in parts to the real API, processes its
-stream, waits for ready (UPLOAD_TIMEOUT seconds) and reads its events, then runs the read checks. Only use it against the
-real API (scripts/run-upload-demo.ps1); the public Vercel site runs the mock.
+--upload runs the read checks first, on the recording the app opens by default. Then it sends
+fixtures/adsb_sample_500.pcap in parts to the real API, processes its stream, waits for ready
+(UPLOAD_TIMEOUT seconds) and reads that recording's events. Only use it against the real API
+(scripts/run-upload-demo.ps1); the public Vercel site runs the mock. Unless the server pins
+FLIGHTMIND_DEFAULT_RECORDING (-DefaultRecording), the upload becomes the recording everyone opens.
 
 --upload-file <recording> does the same with a recording of your own (one hour to reach ready)
 and prints the upload time and the time to ready, for infra/README.md (SCRUM-65).
@@ -225,12 +227,13 @@ def main(argv: list) -> int:
         return 2
     base = args[0].rstrip("/")
     try:
-        if upload:  # first, so a fresh database has a recording for the read checks
+        # Before the uploads, while the default is still the recording with events, so the
+        # event, raw and track checks run. An empty database has none: skip them then.
+        run(base, allow_no_events=upload or bool(files))
+        if upload:
             run_upload(base)
         for path in files:  # a big recording: an hour for upload and processing each
             run_upload(base, path, timeout=LARGE_TIMEOUT)
-            upload = True
-        run(args[0], allow_no_events=upload)
     except Failure as f:
         print(f"FAIL {f.url}: {f.reason}")
         return 1

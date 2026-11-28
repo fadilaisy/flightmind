@@ -66,6 +66,17 @@ if _origins:
 
 # ---------- helpers ----------
 
+def _clock_now() -> datetime:
+    """Current time for data: the shared clock (contract C6). services/pipeline is optional
+    here (it needs Python 3.11+), so without it this is the wall clock, which is what the
+    shared clock returns by default."""
+    try:
+        from flightmind_pipeline import clock
+    except ImportError:
+        return datetime.now(timezone.utc)
+    return clock.now()
+
+
 def iso(value: Optional[datetime]) -> Optional[str]:
     if value is None:
         return None
@@ -195,7 +206,7 @@ def meta():
         )]
     return {
         "mode": "replay",
-        "sim_time": iso(last) or iso(datetime.now(timezone.utc)),
+        "sim_time": iso(last) or iso(_clock_now()),
         "recordings": recordings,
         "airports": airports,
     }

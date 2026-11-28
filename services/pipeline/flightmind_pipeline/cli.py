@@ -1,6 +1,7 @@
 """Command-line runner: one CAT021 pcap in, compressed telemetry and events out, plus a report.
 
 Usage: python -m flightmind_pipeline.cli run <pcap> [--report-dir DIR]
+       python -m flightmind_pipeline.cli replay --speed N <pcap or decoded .jsonl>
 
 The recording id is the file stem. The database connection comes from FLIGHTMIND_DSN.
 
@@ -293,13 +294,56 @@ def run_recording(
     return _process_pcap(pcap, recording_id, dsn, on_progress, ends)
 
 
+def replay_file(path: Path, speed: float, out: Any = None) -> dict[str, Any]:
+    """Replay a recording at `speed`, printing one JSON line per record.
+
+    With FLIGHTMIND_DSN set, a pcap is then stored through the same path as `run`
+    (run_recording) and its report is returned under "report". A decoded .jsonl cannot be
+    stored because the existing path reads the pcap, so that combination raises ValueError.
+    """
+    from flightmind_pipeline.replay import replay_recording
+
+    out = out if out is not None else sys.stdout
+    dsn = os.environ.get("FLIGHTMIND_DSN")
+    with path.open("rb") as f:
+        is_pcap = f.read(len(PCAP_LE_MAGIC)) == PCAP_LE_MAGIC
+    if dsn and not is_pcap:
+        raise ValueError("FLIGHTMIND_DSN is set, but only a pcap can be stored; pass the pcap file.")
+
+    def emit(record: Any) -> None:
+        cat = record.block.get("CAT021", {})
+        line = {
+            "raw_ref": record.raw_ref,
+            "ts": record.ts.isoformat(),
+            "icao24": cat.get("I080", {}).get("TAddr"),
+        }
+        print(json.dumps(line), file=out, flush=True)
+
+    count = replay_recording(path, speed, emit)
+    result: dict[str, Any] = {"records": count}
+    if dsn:
+        result["report"] = run_recording(path, path.stem, dsn)
+    return result
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m flightmind_pipeline.cli")
     commands = parser.add_subparsers(dest="command", required=True)
     run = commands.add_parser("run", help="decode, detect, compress and store one pcap")
     run.add_argument("pcap", type=Path)
     run.add_argument("--report-dir", type=Path, default=DEFAULT_REPORT_DIR)
+    replay = commands.add_parser("replay", help="feed the records of a recording at a chosen speed")
+    replay.add_argument("--speed", type=float, default=1.0, help="1 = real time, 60 = 60x")
+    replay.add_argument("file", type=Path, help="pcap or decoded .jsonl")
     args = parser.parse_args(argv)
+    if args.command == "replay":
+        try:
+            result = replay_file(args.file, args.speed)
+        except ValueError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(result, default=str), file=sys.stderr)
+        return 0
     run_pcap(args.pcap, args.report_dir)
     return 0
 

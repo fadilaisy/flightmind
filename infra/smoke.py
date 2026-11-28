@@ -6,9 +6,12 @@
 Prints "ok <url>" per passed check. On the first failure prints "FAIL <url>: <reason>"
 and exits 1. Exit 2 on bad usage, 0 when every check passes.
 
---upload also sends fixtures/adsb_sample_500.pcap in parts to the real API, processes its
-stream, waits for ready (UPLOAD_TIMEOUT seconds) and reads its events. Only use it against the
+--upload first sends fixtures/adsb_sample_500.pcap in parts to the real API, processes its
+stream, waits for ready (UPLOAD_TIMEOUT seconds) and reads its events, then runs the read checks. Only use it against the
 real API (scripts/run-upload-demo.ps1); the public Vercel site runs the mock.
+
+--upload-file <recording> does the same with a recording of your own (one hour to reach ready)
+and prints the upload time and the time to ready, for infra/README.md (SCRUM-65).
 """
 import json
 import sys
@@ -20,6 +23,8 @@ import urllib.request
 
 TIMEOUT = 10
 UPLOAD_TIMEOUT = 120
+LARGE_TIMEOUT = 3600
+PART_TIMEOUT = 600  # one 50 MB part on a slow uplink
 POLL_SECONDS = 2
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "adsb_sample_500.pcap"
 PROCESSING = ("queued", "decoding", "filtering", "detecting", "storing")
@@ -69,7 +74,7 @@ def fetch_json(url: str):
         raise Failure(url, "body is not valid JSON")
 
 
-def send(method: str, url: str, body=None, expect=(200,)):
+def send(method: str, url: str, body=None, expect=(200,), timeout: float = 60):
     """Send body (dict as JSON, or bytes) and return (status, parsed JSON or None)."""
     data, headers = None, {}
     if isinstance(body, dict):
@@ -78,7 +83,7 @@ def send(method: str, url: str, body=None, expect=(200,)):
         data, headers = body, {"Content-Type": "application/octet-stream"}
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
-        with OPENER.open(req, timeout=60) as r:
+        with OPENER.open(req, timeout=timeout) as r:
             status, raw = r.status, r.read()
     except urllib.error.HTTPError as e:
         status, raw = e.code, e.read()
@@ -96,10 +101,10 @@ def send(method: str, url: str, body=None, expect=(200,)):
     return status, parsed
 
 
-def wait_for(base: str, rid: str, done: tuple) -> dict:
-    """Poll the recording until its status is in done; fail on failed or after UPLOAD_TIMEOUT."""
+def wait_for(base: str, rid: str, done: tuple, timeout: float = UPLOAD_TIMEOUT) -> dict:
+    """Poll the recording until its status is in done; fail on failed or after timeout seconds."""
     url = f"{base}/api/recordings/{rid}"
-    deadline = time.monotonic() + UPLOAD_TIMEOUT
+    deadline = time.monotonic() + timeout
     while True:
         _, rec = send("GET", url)
         if rec["status"] in done:
@@ -107,19 +112,24 @@ def wait_for(base: str, rid: str, done: tuple) -> dict:
         if rec["status"] == "failed":
             raise Failure(url, f"recording failed: {rec.get('error')}")
         if time.monotonic() > deadline:
-            raise Failure(url, f"still {rec['status']} after {UPLOAD_TIMEOUT} s")
+            raise Failure(url, f"still {rec['status']} after {timeout:.0f} s")
         time.sleep(POLL_SECONDS)
 
 
-def run_upload(base: str) -> None:
-    content = FIXTURE.read_bytes()
+def run_upload(base: str, path: Path = FIXTURE, timeout: float = UPLOAD_TIMEOUT) -> None:
+    size = path.stat().st_size
     url = base + "/api/recordings"
-    _, rec = send("POST", url, {"filename": FIXTURE.name, "size_bytes": len(content)}, expect=(201,))
+    started = time.monotonic()
+    _, rec = send("POST", url, {"filename": path.name, "size_bytes": size}, expect=(201,))
     rid, part = rec["id"], rec["part_size_bytes"]
     print(f"ok {url} ({rid})")
 
-    for n in range(-(-len(content) // part)):
-        send("PUT", f"{url}/{rid}/parts/{n}", content[n * part:(n + 1) * part], expect=(204,))
+    parts = -(-size // part)
+    with path.open("rb") as f:
+        for n in range(parts):
+            send("PUT", f"{url}/{rid}/parts/{n}", f.read(part), expect=(204,), timeout=PART_TIMEOUT)
+            if parts > 3:
+                print(f"   part {n + 1}/{parts}", flush=True)
     print(f"ok {url}/{rid}/parts")
 
     status, rec = send("POST", f"{url}/{rid}/complete", expect=(200, 202))
@@ -127,14 +137,20 @@ def run_upload(base: str) -> None:
         rid = rec["id"]
     print(f"ok {url}/{rid}/complete ({rec['status']})")
 
-    rec = wait_for(base, rid, ("scanned", "ready") + PROCESSING)
+    uploaded = time.monotonic()
+
+    rec = wait_for(base, rid, ("scanned", "ready") + PROCESSING, timeout)
     if rec["status"] == "scanned":
         stream = next((s for s in rec["streams"] if s["supported"]), None)
         if stream is None:
-            raise Failure(f"{url}/{rid}", "no supported stream in the fixture")
+            raise Failure(f"{url}/{rid}", f"no supported stream in {path.name}")
         send("POST", f"{url}/{rid}/process", {"stream_id": stream["id"]}, expect=(202,))
-    rec = wait_for(base, rid, ("ready",))
+    rec = wait_for(base, rid, ("ready",), timeout)
     print(f"ok {url}/{rid} (ready)")
+    ready = time.monotonic()
+    mb = size / 1e6
+    print(f"   {path.name}: {mb:.1f} MB uploaded in {uploaded - started:.1f} s "
+          f"({mb / max(uploaded - started, 1e-3):.1f} MB/s); ready {ready - uploaded:.1f} s after the upload")
 
     events_url = f"{base}/api/events?recording={urllib.parse.quote(rid)}"
     events = fetch_json(events_url)
@@ -143,7 +159,7 @@ def run_upload(base: str) -> None:
     print(f"ok {events_url} ({len(events)} events)")
 
 
-def run(base: str) -> None:
+def run(base: str, allow_no_events: bool = False) -> None:
     base = base.rstrip("/")
 
     url = base + "/"
@@ -160,6 +176,10 @@ def run(base: str) -> None:
 
     url = base + "/api/events"
     events = fetch_json(url)
+    if isinstance(events, list) and not events and allow_no_events:
+        # The fixture has no detected events, so a database holding only it has none to read.
+        print(f"ok {url} (empty; skipping the event, raw and track checks)")
+        return
     if not isinstance(events, list) or not events:
         raise Failure(url, "expected a non-empty list of events")
     first = events[0]
@@ -185,17 +205,32 @@ def run(base: str) -> None:
     print(f"ok {url}")
 
 
+USAGE = "usage: python infra/smoke.py <base-url> [--upload] [--upload-file <recording>]"
+
+
 def main(argv: list) -> int:
-    args = argv[1:]
-    upload = "--upload" in args
-    args = [a for a in args if a != "--upload"]
+    args, upload, files = argv[1:], False, []
+    while "--upload-file" in args:
+        i = args.index("--upload-file")
+        if i + 1 >= len(args) or not Path(args[i + 1]).is_file():
+            print(USAGE, file=sys.stderr)
+            return 2
+        files.append(Path(args[i + 1]))
+        del args[i:i + 2]
+    if "--upload" in args:
+        upload = True
+        args.remove("--upload")
     if len(args) != 1:
-        print("usage: python infra/smoke.py <base-url> [--upload]", file=sys.stderr)
+        print(USAGE, file=sys.stderr)
         return 2
+    base = args[0].rstrip("/")
     try:
-        run(args[0])
-        if upload:
-            run_upload(args[0].rstrip("/"))
+        if upload:  # first, so a fresh database has a recording for the read checks
+            run_upload(base)
+        for path in files:  # a big recording: an hour for upload and processing each
+            run_upload(base, path, timeout=LARGE_TIMEOUT)
+            upload = True
+        run(args[0], allow_no_events=upload)
     except Failure as f:
         print(f"FAIL {f.url}: {f.reason}")
         return 1

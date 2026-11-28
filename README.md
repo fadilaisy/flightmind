@@ -153,6 +153,44 @@ $env:VITE_API_BASE="https://flightmind-roan.vercel.app"; npm run dev
 ```
 
 With `VITE_API_BASE` empty, the app uses the local mock and labels the numbers "sample data".
+## Run the full app with upload
+
+**The public site, https://flightmind.vercel.app, shows sample data.** It runs the mock API, and
+its upload screens do not keep or decode your file. To upload a real recording and see it
+decoded, run the full app on a Windows PC with one script. It can also give the PC a public
+`trycloudflare.com` address for a live demo.
+
+Prerequisites:
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/), running.
+- Python 3.12 with the API and the pipeline installed, from the repo root:
+  `python -m pip install -r services\intel\requirements.txt -e services\pipeline`.
+- [Node.js](https://nodejs.org/) 22 (with npm), to build the web UI.
+- [Cygwin](https://www.cygwin.com/), with the ASTERIX decoder
+  [CroatiaControlLtd/asterix](https://github.com/CroatiaControlLtd/asterix) (GPL-2.0) built in it.
+  The decoder folder holds `asterix.exe` and `config\asterix.ini`.
+- [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/),
+  for the public address (`winget install --id Cloudflare.cloudflared`). No Cloudflare account
+  is needed for a quick tunnel.
+
+Then, from the repo root in PowerShell:
+
+```powershell
+.\scripts\run-upload-demo.ps1 -AsterixDir E:\asterix -CygwinBin C:\cygwin64\bin
+```
+
+The script checks those prerequisites, starts the database, builds the web UI, starts the API,
+and prints the public URL. Open it and upload a `.pcap` on the Load page. Ctrl+C stops the API
+and the tunnel. Options:
+
+- `-NoTunnel` serves only `http://localhost:8000`.
+- `-SkipBuild` reuses the last web build.
+- `-DbPort 55432` moves the database when another Postgres uses port 5432.
+- `-DefaultRecording <id>` pins the recording the app opens first.
+
+Details and measured times are in
+[infra/README.md](infra/README.md#run-the-full-app-with-upload-scrum-65).
+
 ## Setup
 
 _To be written once `infra/` exists._

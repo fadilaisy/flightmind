@@ -31,7 +31,9 @@ param(
     [switch]$NoTunnel
 )
 
-$ErrorActionPreference = 'Stop'
+# Continue, not Stop: docker, npm and cloudflared write progress to stderr, which Stop would
+# turn into a fatal error once the output is redirected. Every step checks its own result.
+$ErrorActionPreference = 'Continue'
 $Root = Split-Path -Parent $PSScriptRoot
 $Intel = Join-Path $Root 'services\intel'
 $Web = Join-Path $Root 'web'
@@ -120,7 +122,7 @@ function Invoke-Sql([string]$Sql) {
 
 # A database made before contract 1.2 lacks the upload tables. Add only those
 # statements from contracts/schema.sql; the rest of the schema is not run again.
-$schema = (Get-Content -Raw (Join-Path $Root 'contracts\schema.sql')) -replace '--[^\r\n]*', ''  # comments may hold ';'
+$schema = (Get-Content -Raw -ErrorAction Stop (Join-Path $Root 'contracts\schema.sql')) -replace '--[^\r\n]*', ''  # comments may hold ';'
 foreach ($table in 'uploads', 'quarantine') {
     if ((Invoke-Sql "SELECT to_regclass('public.$table') IS NOT NULL;").Trim() -eq 't') { continue }
     $statements = foreach ($chunk in $schema -split ';') {
@@ -157,7 +159,7 @@ if ($SkipBuild) {
 
 # ---------- 4. API and tunnel ----------
 
-New-Item -ItemType Directory -Force $Logs, (Join-Path $Root 'data\uploads') | Out-Null
+New-Item -ItemType Directory -Force -ErrorAction Stop $Logs, (Join-Path $Root 'data\uploads') | Out-Null
 $env:FLIGHTMIND_API_APP = 'real_api.app:app'
 $env:FLIGHTMIND_DSN = $Dsn
 $env:FLIGHTMIND_WEB_DIST = Join-Path $Web 'dist'
@@ -171,14 +173,14 @@ $tunnel = $null
 try {
     Write-Step "starting the real API on http://localhost:$Port (log: data\logs\api.log)"
     # One process only: the upload worker runs inside it (see services/intel/README.md).
-    $api = Start-Process -FilePath $Python -WorkingDirectory $Intel -PassThru -NoNewWindow `
+    $api = Start-Process -ErrorAction Stop -FilePath $Python -WorkingDirectory $Intel -PassThru -NoNewWindow `
         -ArgumentList '-m', 'uvicorn', 'serve:app', '--host', '127.0.0.1', '--port', "$Port" `
         -RedirectStandardOutput (Join-Path $Logs 'api.out.log') -RedirectStandardError (Join-Path $Logs 'api.log')
     $up = $false
     foreach ($i in 1..60) {
         if ($api.HasExited) { break }
         try {
-            Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 "http://127.0.0.1:$Port/api/meta" | Out-Null
+            Invoke-WebRequest -ErrorAction Stop -UseBasicParsing -TimeoutSec 2 "http://127.0.0.1:$Port/api/meta" | Out-Null
             $up = $true; break
         } catch { Start-Sleep -Seconds 1 }
     }
@@ -192,7 +194,7 @@ try {
         Write-Step 'starting the Cloudflare quick tunnel (log: data\logs\tunnel.log)'
         $tunnelLog = Join-Path $Logs 'tunnel.log'
         Remove-Item $tunnelLog -ErrorAction SilentlyContinue
-        $tunnel = Start-Process -FilePath $Cloudflared.Source -PassThru -NoNewWindow `
+        $tunnel = Start-Process -ErrorAction Stop -FilePath $Cloudflared.Source -PassThru -NoNewWindow `
             -ArgumentList 'tunnel', '--no-autoupdate', '--url', "http://localhost:$Port" `
             -RedirectStandardOutput (Join-Path $Logs 'tunnel.out.log') -RedirectStandardError $tunnelLog
         $public = $null

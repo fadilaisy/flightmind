@@ -156,3 +156,78 @@ adds a same-origin base.
 Checked on 2026-11-26 in a Chromium 156 browser against the local image: the page called
 `/api/meta`, `/api/events`, `/api/events/<id>` and `/api/raw/<raw_ref>` on its own origin, all 200,
 and reloading on `/?tab=records` and `/?tab=events` worked. Not yet checked on the Vercel URL.
+
+## Run the full app with upload (SCRUM-65)
+
+The real API with upload runs on one Windows PC, exposed with a Cloudflare quick tunnel. Nothing
+is deployed to the cloud for it, and the Vercel site stays on sample data. Prerequisites are in
+the root [README](../README.md#run-the-full-app-with-upload).
+
+```powershell
+.\scripts\run-upload-demo.ps1 -AsterixDir E:\asterix -CygwinBin C:\cygwin64\bin
+```
+
+What it does, in order:
+
+1. Fails with a clear message when any of these is missing:
+   - Docker, installed and running;
+   - cloudflared;
+   - Cygwin's `bash.exe`;
+   - the decoder folder, with `asterix.exe` and `config\asterix.ini`;
+   - a Python that imports the API and `flightmind_pipeline.run_recording`;
+   - npm.
+
+   It also stops when the API port is already taken.
+2. Runs `docker compose up -d`, then waits for `pg_isready`. `FLIGHTMIND_DB_PORT`, or `-DbPort`,
+   moves the host port off 5432.
+3. A database made before contract 1.2 gets only the `uploads` and `quarantine` tables and
+   their indexes from `contracts/schema.sql`. The rest of the schema is not run again.
+4. Runs `npm run build` in `web/` with `VITE_API_BASE=/.`, the same-origin workaround from
+   `vercel_build.py`.
+5. Starts `uvicorn serve:app` on 127.0.0.1:8000. It sets:
+   - `FLIGHTMIND_API_APP=real_api.app:app`;
+   - the compose DSN;
+   - `FLIGHTMIND_WEB_DIST=web\dist`;
+   - `FLIGHTMIND_UPLOAD_DIR=data\uploads`;
+   - the decoder variables.
+
+   It runs as **one process**, because the upload worker lives inside it.
+6. Starts `cloudflared tunnel --url http://localhost:8000` and prints the `trycloudflare.com`
+   URL. Logs go to `data\logs\`. Ctrl+C stops the API and the tunnel. The database keeps
+   running; stop it with `docker compose -f infra/docker-compose.yml stop`.
+
+A quick tunnel gets a new URL every time it starts. Cloudflare caps one request at 100 MB, and
+the API's 50 MB parts stay under that.
+
+Check it from any machine:
+
+```powershell
+python infra\smoke.py https://<name>.trycloudflare.com --upload
+python infra\smoke.py https://<name>.trycloudflare.com --upload-file D:\recordings\day1.pcap
+```
+
+- `--upload` sends `fixtures/adsb_sample_500.pcap` in parts, processes its stream and waits up
+  to 120 s for `ready`. The fixture has no events, so a database that holds only the fixture
+  has none either, and the event checks are skipped.
+- `--upload-file` does the same with a recording of your own. It allows an hour and prints the
+  upload time and the time to ready.
+
+### Checks
+
+On 2026-11-28 on Zahran's PC, without the tunnel (`-NoTunnel`):
+
+- The script started the compose DB on port 55433 and built the web UI. It also added the
+  `uploads` and `quarantine` tables with their three indexes to a DB from which they had been
+  dropped. Then it started the real API.
+- `smoke.py --upload`: all checks passed. The fixture went from upload to `ready` in about 4 s.
+  This PC has no Cygwin, so a stand-in printed the decoded fixture in place of `asterix.exe`.
+- A 300 MB pcap uploaded in 6 parts and was scanned. It could not reach `ready` with the stand-in decoder.
+- The web UI loaded from the same origin and showed the uploaded recording, with no console error.
+- Each missing prerequisite stopped the script with its message.
+
+Still to do on Fadil's PC, which has Cygwin, the decoder and cloudflared: upload a recording of
+at least 300 MB through the tunnel with `--upload-file` and note the times here.
+
+| Recording | Size | Upload time | Time to ready | Date |
+| --- | --- | --- | --- | --- |
+| _not run yet_ | | | | |

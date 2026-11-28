@@ -33,6 +33,7 @@ By hand:
 - The deploys themselves.
 - Every fix in the "fixed by hand" column of the log.
 - Screen recordings.
+- The real API, the upload backend and the tunnel script were written with Claude Code, not Kiro.
 
 Some reviews, prompt drafts, screenshot checks and recordings were done with Claude Code; the log lines say so where it happened. To read the log, look at the last column of each line: it says what a person fixed, or "nothing".
 
@@ -177,7 +178,3 @@ e8d5d4d | none | vibe | Kiro chat session wrote it, see docs/kiro/sessions/2026-
 2026-11-27 | Fadil | upload-ui/merge | Resolved the merge conflicts with main in web/src/api/client.ts, web/src/api/mockClient.ts and web/src/styles/tokens.css. Kept main's ask and compression behaviour (compression keeps the 404 'No compression report' message; the mock returns a supplied report first) and added the recording parameter and the upload calls on top; tokens.css keeps both blocks (the same-name .bar rule is ours, and .cbars .bar gets width: auto so main's Reduction card looks as before; no token had two values); tests/smoke.test.ts now seeds a ready recording because the app opens a recording first | by hand: none
 2026-11-27 | Fadil | upload-ui/review | PR 26 review fixes: a recording opened in status uploading (picker or ?recording=) now shows 'This upload did not finish. Try another file.' with the Try another file button instead of polling forever; 408 and 429 part errors are retried; App.tsx falls back to no storage when localStorage throws; csvCell quotes cells with a carriage return; upload-ui requirements R3 and tasks drop the automatic-process wording and add R9 to R12 for the SCRUM-69 part; removed the stray figma-check log file. Tests added for the uploading case and 408/429/503 retries | by hand: none
 2026-11-27 | Fadil | load-page/capabilities | Load screen, choose phase: left-aligned title, one-line drop zone with a solid Choose file button, four capability cards (wording in strings.ts), and a Recent recordings list from listRecordings() (newest 5; ready shows event count and Open, processing shows stage, progress bar and Follow, failed shows Details with the error inline). Removed the intro, the three step cards and the What is CAT021 footer with their strings and CSS. New tests/loadPage.test.tsx. Screenshot at 1440 px in docs/design/load-page-built.png, taken on the local mock after uploading one file (the mock starts empty, so the ready and failed rows were checked by tests, not by eye). Build and 163 tests pass | by hand: none
-c170f6a | missing | none | initial commit made by GitHub when the repository was created, two README lines, no Kiro involved
-7d3bf31 | missing | none | README roles and contracts section edited by hand (README.md only, 67 lines), made before the trailer rule existed
-fe9d090 | missing | none | Figma and prototype reference screenshots and the figma MCP server entry were added by hand, not written by Kiro
-6dffc91 | missing | none | Figma design context text and SVG assets for frames 5 and 6 were saved by hand, not written by Kiro

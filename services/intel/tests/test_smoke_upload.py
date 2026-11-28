@@ -46,6 +46,8 @@ def test_upload_reaches_ready_and_a_second_upload_reuses_it(base, capsys):
     first = lines[0].split("(")[1].rstrip(")")
     assert any(line.endswith(f"/{first}/complete (ready)") for line in lines)
     assert sum("(ready)" in line and "/complete" not in line for line in lines) == 2
+    second = lines[lines.index(next(line for line in lines if "MB uploaded in" in line)) + 1:]
+    assert sum(line.startswith(f"   duplicate of {first},") for line in second) == 1
 
 
 def test_upload_file_prints_the_times(base, tmp_path, capsys):
@@ -56,6 +58,7 @@ def test_upload_file_prints_the_times(base, tmp_path, capsys):
     smoke.run_upload(base, copy, timeout=30)
     out = capsys.readouterr().out
     assert "day1.pcap:" in out and "MB uploaded in" in out and "after the upload" in out
+    assert "duplicate of" not in out
 
 
 def test_a_failed_recording_is_a_failure(base, monkeypatch):

@@ -135,7 +135,8 @@ def run_upload(base: str, path: Path = FIXTURE, timeout: float = UPLOAD_TIMEOUT)
     print(f"ok {url}/{rid}/parts")
 
     status, rec = send("POST", f"{url}/{rid}/complete", expect=(200, 202))
-    if status == 200:  # the same bytes were uploaded before: the server returns that upload
+    duplicate = status == 200  # the same bytes were uploaded before: the server returns that upload
+    if duplicate:
         rid = rec["id"]
     print(f"ok {url}/{rid}/complete ({rec['status']})")
 
@@ -153,6 +154,9 @@ def run_upload(base: str, path: Path = FIXTURE, timeout: float = UPLOAD_TIMEOUT)
     mb = size / 1e6
     print(f"   {path.name}: {mb:.1f} MB uploaded in {uploaded - started:.1f} s "
           f"({mb / max(uploaded - started, 1e-3):.1f} MB/s); ready {ready - uploaded:.1f} s after the upload")
+    if duplicate:
+        print(f"   duplicate of {rid}, which the server already had: these are not upload times, "
+              "so leave them out of the README table")
 
     events_url = f"{base}/api/events?recording={urllib.parse.quote(rid)}"
     events = fetch_json(events_url)

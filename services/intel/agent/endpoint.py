@@ -68,13 +68,23 @@ def _claude_failure(name: str) -> dict:
     return response
 
 
-async def answer_question(question: str, api_app: Any, *, client: Optional[Any] = None, clock: Optional[Any] = None) -> dict:
-    """Run the agent on the in-process API app. Claude API errors become not_enough_evidence."""
+async def answer_question(
+    question: str,
+    api_app: Any,
+    *,
+    client: Optional[Any] = None,
+    clock: Optional[Any] = None,
+    recording_id: Optional[str] = None,
+) -> dict:
+    """Run the agent on the in-process API app. Claude API errors become not_enough_evidence.
+
+    recording_id, when given, limits the agent's event and track tools to that recording.
+    """
     import anthropic
     import httpx
 
     ensure_log_output()
-    api = ApiClient(app=api_app)
+    api = ApiClient(app=api_app, recording=recording_id)
     if client is None:
         client = make_client()
     kwargs = {} if clock is None else {"clock": clock}

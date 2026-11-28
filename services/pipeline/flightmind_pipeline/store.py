@@ -67,15 +67,32 @@ _SCOPE_IN_RANGE = "ts BETWEEN %s AND %s AND left(raw_ref, length(%s) + 1) = %s |
 # Used when the recording has no packets, so there is no time range.
 _SCOPE_ID_ONLY = "left(raw_ref, length(%s) + 1) = %s || ':'"
 
-_DELETE_EVENTS = (
+# Remove only this recording's events whose id this run no longer produces. Events that are still
+# produced are upserted in place, so their event_embeddings rows survive (no ON DELETE CASCADE).
+_DELETE_STALE_EVENTS = (
     "DELETE FROM events "
-    "WHERE cardinality(raw_refs) > 0 AND left(raw_refs[1], length(%s) + 1) = %s || ':'"
+    "WHERE cardinality(raw_refs) > 0 AND left(raw_refs[1], length(%s) + 1) = %s || ':' "
+    "AND NOT (id = ANY(%s::uuid[]))"
 )
 
+# Upsert on id (event_id is stable across runs). The AFTER INSERT trigger fires only for new rows,
+# so events that were already stored are not announced again on re-run (review 2026-11-24).
 _INSERT_EVENT = """
 INSERT INTO events (id, type, icao24, callsign, start_ts, end_ts, airport, lat, lon,
                     severity, details, raw_refs)
 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT (id) DO UPDATE SET
+    type = EXCLUDED.type,
+    icao24 = EXCLUDED.icao24,
+    callsign = EXCLUDED.callsign,
+    start_ts = EXCLUDED.start_ts,
+    end_ts = EXCLUDED.end_ts,
+    airport = EXCLUDED.airport,
+    lat = EXCLUDED.lat,
+    lon = EXCLUDED.lon,
+    severity = EXCLUDED.severity,
+    details = EXCLUDED.details,
+    raw_refs = EXCLUDED.raw_refs
 """
 
 _STORED_BYTES = "SELECT coalesce(sum(pg_column_size(t.*)), 0) FROM telemetry t WHERE {scope}"
@@ -146,7 +163,8 @@ def write_recording(
                 ),
             )
             cur.execute(f"DELETE FROM telemetry WHERE {scope_sql}", scope_args)
-            cur.execute(_DELETE_EVENTS, (rec.id, rec.id))
+            produced_ids = [str(event_id(e)) for e in events]
+            cur.execute(_DELETE_STALE_EVENTS, (rec.id, rec.id, produced_ids))
 
             copy_sql = f"COPY telemetry ({', '.join(TELEMETRY_COLUMNS)}) FROM STDIN"
             with cur.copy(copy_sql) as copy:

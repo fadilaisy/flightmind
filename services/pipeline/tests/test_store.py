@@ -186,3 +186,70 @@ def test_empty_recording_writes_only_the_recording_row(conn: psycopg.Connection)
         "SELECT record_count FROM recording_files WHERE id = %s", (TEST_REC,)
     ).fetchone()
     assert row == (0,)
+
+
+def _embedding_vector() -> str:
+    return "[" + ",".join("0" for _ in range(1024)) + "]"
+
+
+def _notified_ids(conn: psycopg.Connection) -> list[str]:
+    return [n.payload for n in conn.notifies(timeout=0.5, stop_after=50)]
+
+
+def test_rerun_keeps_an_existing_event_embedding(conn: psycopg.Connection):
+    points = _points()
+    event = _event()
+    write_recording(conn, _recording(points), points, {f"{TEST_REC}:1"}, [event])
+    conn.execute(
+        "INSERT INTO event_embeddings (event_id, story, model, embedding) "
+        "VALUES (%s, 'story', 'test-model', %s::vector)",
+        (event_id(event), _embedding_vector()),
+    )
+    conn.commit()
+
+    write_recording(conn, _recording(points), points, {f"{TEST_REC}:1"}, [event])
+
+    row = conn.execute(
+        "SELECT count(*) FROM event_embeddings WHERE event_id = %s", (event_id(event),)
+    ).fetchone()
+    assert row is not None and row[0] == 1
+
+
+def test_rerun_deletes_only_the_events_it_no_longer_produces(conn: psycopg.Connection):
+    points = _points()
+    kept = {f"{TEST_REC}:1"}
+    kept_event = _event()
+    dropped_event = DetectedEvent(
+        type="squawk_7600",
+        icao24="8a09f6",
+        callsign="GIA123",
+        start_ts=T0 + timedelta(seconds=2),
+        end_ts=T0 + timedelta(seconds=2),
+        airport=None,
+        lat=-6.12,
+        lon=106.65,
+        severity=2,
+        details={"code": "7600"},
+        raw_refs=(f"{TEST_REC}:3",),
+    )
+    write_recording(conn, _recording(points), points, kept, [kept_event, dropped_event])
+    assert _counts(conn) == (3, 2)
+
+    write_recording(conn, _recording(points), points, kept, [kept_event])
+
+    assert _counts(conn) == (3, 1)
+    assert _event_ids(conn) == [event_id(kept_event)]
+
+
+def test_rerun_does_not_announce_existing_events_again(conn: psycopg.Connection):
+    points = _points()
+    event = _event()
+    conn.execute("LISTEN events_new")
+    conn.commit()
+    write_recording(conn, _recording(points), points, {f"{TEST_REC}:1"}, [event])
+    first = _notified_ids(conn)
+    assert first == [str(event_id(event))]
+
+    write_recording(conn, _recording(points), points, {f"{TEST_REC}:1"}, [event])
+
+    assert _notified_ids(conn) == []

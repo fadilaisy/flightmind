@@ -106,7 +106,11 @@ Upload (contract 1.2.0):
   plus 512 MB. Uploads idle for over an hour are deleted every 10 minutes, and a failed scan
   deletes its file. A failed upload does not block the same file again.
 - A file with more than one CAT021 stream answers 409 at process until `run_recording` can
-  be told which stream to use (open question on SCRUM-63).
+  be told which stream to use (open question on SCRUM-63). Scan the demo recording once
+  before a demo to check that it has one.
+- Upload accepts pcap, pcapng and raw `.atx`/`.ast`/`.bin`, but the `run_recording` drafted
+  for SCRUM-63 reads only little-endian classic pcap. Until it reads the others, they reach
+  `failed` at processing: use a classic `.pcap` for a demo.
 - `error` shows the message of our own `ValueError`/`RuntimeError` only, with paths reduced
   to file names; other failures show a generic sentence. The traceback goes to the log.
 - `/api/meta.recordings` and the default recording list only ready recordings (CLI loads, and

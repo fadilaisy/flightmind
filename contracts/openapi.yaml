@@ -1,12 +1,13 @@
 openapi: 3.0.3
 info:
   title: FlightMind API (contract C5)
-  version: 1.2.0
+  version: 1.3.0
   description: >-
     Changed 2026-11-12 for the recorded CAT021 pivot. 1.2.0 (2026-11-27, SCRUM-62) adds
     recording upload (in 50 MB parts, for the Cloudflare tunnel limit), stream pick, decoded
     preview, cleaning recipe, quarantine and export, and an optional `recording` filter on
-    the existing endpoints. Additive only.
+    the existing endpoints. 1.3.0 (2026-11-28, SCRUM-35) adds GET /api/events/{id}/similar and the
+    SimilarEvent schema. Additive only.
 paths:
   /api/meta:
     get:
@@ -55,6 +56,29 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/EventDetail' }
+  /api/events/{id}/similar:
+    get:
+      summary: Past events whose stories are closest to this one (vector search)
+      description: >-
+        Cosine distance over event_embeddings (contract C4), nearest first, never the event
+        itself. `similarity` is 1 minus that distance; the mock API has no embeddings and omits it.
+        Empty when the event has no stored embedding and the server has no embedding key.
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: k, schema: { type: integer, minimum: 1, maximum: 50, default: 5 } }
+        - { in: query, name: type, schema: { type: string }, description: 'Only events of this type' }
+        - { in: query, name: since, schema: { type: string, format: date-time }, description: 'Only events starting at or after this time' }
+        - { in: query, name: until, schema: { type: string, format: date-time }, description: 'Only events starting at or before this time' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SimilarEvent' }
+        '404':
+          description: Unknown event id
   /api/tracks/{icao24}:
     get:
       summary: 4D track points, each with its raw_ref
@@ -350,6 +374,12 @@ components:
         airport: { type: string, nullable: true }
         severity: { type: integer }
         raw_refs: { type: array, items: { type: string } }
+    SimilarEvent:
+      allOf:
+        - $ref: '#/components/schemas/Event'
+        - type: object
+          properties:
+            similarity: { type: number, description: '1 minus cosine distance; absent in the mock API' }
     EventDetail:
       allOf:
         - $ref: '#/components/schemas/Event'

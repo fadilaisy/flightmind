@@ -19,7 +19,7 @@ from agent.guard import AskGuard, client_key
 
 from . import data, uploads
 
-app = FastAPI(title="FlightMind mock API", version="1.2.0")
+app = FastAPI(title="FlightMind mock API", version="1.3.0")
 
 _guard = AskGuard()  # only used when the cited agent is on (SCRUM-36)
 
@@ -96,6 +96,30 @@ def event_detail(event_id: str):
         raise HTTPException(status_code=404, detail="Unknown event id")
     similar = [e for e in data.EVENTS if e["type"] == event["type"] and e["id"] != event["id"]]
     return {**event, "track": _track_slice(event["icao24"], None, None), "similar": similar}
+
+
+@app.get("/api/events/{event_id}/similar")
+def event_similar(
+    event_id: str,
+    k: int = Query(5, ge=1, le=50),
+    type: Optional[str] = None,
+    since: Optional[datetime] = None,
+    until: Optional[datetime] = None,
+):
+    """Mock: events of the same type, nearest in start time first. No embeddings, so no `similarity`."""
+    event = data.EVENTS_BY_ID.get(event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Unknown event id")
+    since, until = _parse(since), _parse(until)
+    here = _ts(event["start_ts"])
+    others = [
+        e for e in data.EVENTS
+        if e["id"] != event["id"] and e["type"] == event["type"] and (type is None or e["type"] == type)
+        and (since is None or _ts(e["start_ts"]) >= since)
+        and (until is None or _ts(e["start_ts"]) <= until)
+    ]
+    others.sort(key=lambda e: (abs((_ts(e["start_ts"]) - here).total_seconds()), e["id"]))
+    return others[:k]
 
 
 @app.get("/api/tracks/{icao24}")

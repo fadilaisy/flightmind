@@ -13,6 +13,7 @@ the same pull request.
 - **C3 `events`:** one row per detected event, with `raw_refs` for every record used.
   Insert triggers `NOTIFY events_new`.
 - **C4 `event_embeddings`:** one vector per event story.
+- **C5 similar events (v1.3, SCRUM-35):** `GET /api/events/{id}/similar` returns events nearest first by cosine distance over C4, each with an optional `similarity`.
 - **C5 HTTP API:** as in `openapi.yaml`. Citations are `{kind, id, label}`; kind is
   `cat021_record` (id = raw_ref) or `event` (id = event uuid).
 - **C5 compression report:** `GET /api/compression/{recording_id}` returns the `CompressionReport` with raw and stored size; `events_kept` must equal `events_total`. A recording with `raw_bytes` 0 returns 404, not a report with a made-up ratio.

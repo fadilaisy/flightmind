@@ -55,7 +55,7 @@ async def _lifespan(_app):
     yield
 
 
-app = FastAPI(title="FlightMind API", version="1.2.0", lifespan=_lifespan)
+app = FastAPI(title="FlightMind API", version="1.3.0", lifespan=_lifespan)
 app.include_router(uploads.router)  # recording upload and the worker (SCRUM-64)
 _guard = AskGuard()
 
@@ -258,6 +258,30 @@ def event_detail(event_id: str):
             (row["type"], row["id"]),
         ).fetchall()
     return {**_event(row), "track": track, "similar": [_event(s) for s in similar]}
+
+
+@app.get("/api/events/{event_id}/similar")
+def event_similar(
+    event_id: str,
+    k: int = Query(5, ge=1, le=50),
+    type: Optional[str] = None,
+    since: Optional[datetime] = None,
+    until: Optional[datetime] = None,
+):
+    """The k past events whose stories are closest to this one (pgvector cosine distance).
+
+    Empty when no Gemini key is set and the event has no stored embedding.
+    """
+    from embeddings import EmbeddingError, UnknownEvent, search_similar
+
+    with connect() as conn:
+        try:
+            rows = search_similar(conn, event_id=event_id, k=k, type=type, since=_utc(since), until=_utc(until))
+        except UnknownEvent:
+            raise HTTPException(status_code=404, detail="Unknown event id") from None
+        except EmbeddingError:
+            raise HTTPException(status_code=503, detail="The embedding service is not available.") from None
+    return [{**_event(r), "similarity": float(r["similarity"])} for r in rows]
 
 
 @app.get("/api/tracks/{icao24}")

@@ -159,6 +159,62 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/events/{id}/similar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Past events whose stories are closest to this one (vector search)
+         * @description Cosine distance over event_embeddings (contract C4), nearest first, never the event itself. `similarity` is 1 minus that distance; the mock API has no embeddings and omits it. Empty when the event has no stored embedding and the server has no embedding key.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    k?: number;
+                    /** @description Only events of this type */
+                    type?: string;
+                    /** @description Only events starting at or after this time */
+                    since?: string;
+                    /** @description Only events starting at or before this time */
+                    until?: string;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SimilarEvent"][];
+                    };
+                };
+                /** @description Unknown event id */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tracks/{icao24}": {
         parameters: {
             query?: never;
@@ -911,6 +967,10 @@ export interface components {
             airport?: string | null;
             severity?: number;
             raw_refs: string[];
+        };
+        SimilarEvent: components["schemas"]["Event"] & {
+            /** @description 1 minus cosine distance; absent in the mock API */
+            similarity?: number;
         };
         EventDetail: components["schemas"]["Event"] & {
             track?: components["schemas"]["Track"];

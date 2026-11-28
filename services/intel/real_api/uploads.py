@@ -347,6 +347,26 @@ def _process(row: dict) -> None:
     except Exception as exc:  # any failure is reported on the row, never raised
         log.exception("processing of %s failed", recording_id)
         _fail_processing(row, exc, report)
+        return
+    embed_events(recording_id)
+
+
+def embed_events(recording_id: str) -> None:
+    """Embed the new events after a recording is ready (SCRUM-35). Never raises.
+
+    Skips quietly when no Gemini key is set (GOOGLE_API_KEY or GEMINI_API_KEY). A failure is
+    only logged: the recording stays ready, and the next recording embeds what is still missing.
+    """
+    try:
+        from embeddings import embed_missing, from_env
+
+        embedder = from_env()
+        if embedder is None:
+            return
+        with connect() as conn:
+            embed_missing(conn, embedder)
+    except Exception:
+        log.exception("embedding the events of %s failed; they are embedded after the next recording", recording_id)
 
 
 def _set_ready(conn, recording_id: str, report: dict) -> None:

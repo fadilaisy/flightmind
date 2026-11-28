@@ -156,3 +156,34 @@ adds a same-origin base.
 Checked on 2026-11-26 in a Chromium 156 browser against the local image: the page called
 `/api/meta`, `/api/events`, `/api/events/<id>` and `/api/raw/<raw_ref>` on its own origin, all 200,
 and reloading on `/?tab=records` and `/?tab=events` worked. Not yet checked on the Vercel URL.
+
+
+## Native ASTERIX decoder image (SCRUM-71)
+
+`infra/Dockerfile.app` builds the pipeline with a native Linux decoder, so recordings can be
+decoded without Cygwin. A Debian build stage clones
+[CroatiaControlLtd/asterix](https://github.com/CroatiaControlLtd/asterix) at the release tag in
+`ARG ASTERIX_REF` (currently `v2.8.10`), builds the `asterix` tool with CMake, and the final image
+receives only the binary and its `config/` folder. The image sets `FLIGHTMIND_ASTERIX_BIN` and
+`FLIGHTMIND_ASTERIX_INI`; with `FLIGHTMIND_ASTERIX_BIN` set, `decode_blocks` runs that binary
+directly instead of going through Cygwin.
+
+```bash
+docker buildx build --platform linux/arm64,linux/amd64 -f infra/Dockerfile.app -t flightmind-app .
+```
+
+Use `--build-arg ASTERIX_REF=<tag>` to build another release. Add `--load` (one platform at a time)
+or `--push` to keep the result; a multi-platform build cannot be loaded into the local image store.
+
+**Licence:** the asterix tool is GPL-2.0 (the licence GitHub lists for the project; the source file
+headers say GPL version 3 or later, and the `COPYING` text is copied into the image at
+`/opt/asterix/COPYING`). It is downloaded at build time and never committed here, so the repo stays
+MIT. Anyone who distributes the built image also distributes the GPL binary and must offer its source
+(the tag above).
+
+To run the real-binary test against a local build:
+
+```bash
+export FLIGHTMIND_ASTERIX_BIN=/path/to/asterix FLIGHTMIND_ASTERIX_INI=/path/to/config/asterix.ini
+python -m pytest services/pipeline/tests/test_native_decoder.py
+```

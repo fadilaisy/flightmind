@@ -123,8 +123,31 @@ def _cygpath(windows_path: str) -> str:
     return f"/cygdrive/{windows_path[0].lower()}{windows_path[2:].replace(chr(92), '/')}"
 
 
-def decode_blocks(path: str | os.PathLike[str]) -> Iterator[dict]:
-    """Run the ASTERIX decoder in JSON-per-line mode and yield one dict per output line."""
+def native_decoder_command(path: str | os.PathLike[str]) -> tuple[list[str], str]:
+    """Command line and working directory for a native (Linux) asterix binary.
+
+    Used when FLIGHTMIND_ASTERIX_BIN is set. FLIGHTMIND_ASTERIX_INI must name the decoder's
+    asterix.ini; the XML category files it lists sit next to it, so the decoder runs from that
+    folder. Raises an error that names the missing variable or file.
+    """
+    binary = os.environ["FLIGHTMIND_ASTERIX_BIN"]
+    ini = os.environ.get("FLIGHTMIND_ASTERIX_INI")
+    if not ini:
+        raise KeyError(
+            "missing environment variable FLIGHTMIND_ASTERIX_INI "
+            "(required when FLIGHTMIND_ASTERIX_BIN is set)"
+        )
+    if not os.path.isfile(binary):
+        raise FileNotFoundError(f"FLIGHTMIND_ASTERIX_BIN does not name a file: {binary}")
+    if not os.path.isfile(ini):
+        raise FileNotFoundError(f"FLIGHTMIND_ASTERIX_INI does not name a file: {ini}")
+    ini = os.path.abspath(ini)
+    cmd = [os.path.abspath(binary), "-P", "-d", ini, "-j", "-f", os.path.abspath(path)]
+    return cmd, os.path.dirname(ini)
+
+
+def _cygwin_command(path: str | os.PathLike[str]) -> tuple[list[str], dict[str, str]]:
+    """Command line and environment for asterix.exe run through Cygwin bash (Windows)."""
     asterix_dir = _require_env("FLIGHTMIND_ASTERIX_DIR")
     cygwin_bin = _require_env("FLIGHTMIND_CYGWIN_BIN")
 
@@ -136,12 +159,25 @@ def decode_blocks(path: str | os.PathLike[str]) -> Iterator[dict]:
     env = dict(os.environ)
     env["PATH"] = cygwin_bin + os.pathsep + env.get("PATH", "")
     bash = os.path.join(cygwin_bin, "bash.exe")
+    return [bash, "-lc", script], env
+
+
+def decode_blocks(path: str | os.PathLike[str]) -> Iterator[dict]:
+    """Run the ASTERIX decoder in JSON-per-line mode and yield one dict per output line.
+
+    With FLIGHTMIND_ASTERIX_BIN set, runs that native binary directly (Linux, macOS);
+    otherwise runs asterix.exe through Cygwin (FLIGHTMIND_ASTERIX_DIR, FLIGHTMIND_CYGWIN_BIN).
+    """
+    cwd: str | None = None
+    if os.environ.get("FLIGHTMIND_ASTERIX_BIN"):
+        cmd, cwd = native_decoder_command(path)
+        env = None
+    else:
+        cmd, env = _cygwin_command(path)
 
     # stderr goes to a file so a chatty decoder cannot fill a pipe and block stdout.
     with tempfile.TemporaryFile() as err:
-        proc = subprocess.Popen(
-            [bash, "-lc", script], stdout=subprocess.PIPE, stderr=err, env=env
-        )
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=err, env=env, cwd=cwd)
         stdout = proc.stdout
         assert stdout is not None  # set by Popen because stdout=PIPE
         try:

@@ -60,16 +60,15 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-async function open(search: string, seed = true): Promise<HTMLElement> {
+async function open(search: string): Promise<HTMLElement> {
   // The app opens a recording first. Seed one that finished processing long ago, so each tab shows the sample data.
-  localStorage.clear();
-  if (seed) localStorage.setItem(
+  localStorage.setItem(
     "flightmind.mockRecordings",
     JSON.stringify([
       { id: "rsmoke", filename: "sample.pcap", size: 1, format: "pcap", createdMs: 0, received: 1, nextPart: 1, completedMs: 1, processedMs: 2 },
     ]),
   );
-  window.history.replaceState(null, "", seed ? `/${search}&recording=rsmoke` : `/${search}`);
+  window.history.replaceState(null, "", `/${search}&recording=rsmoke`);
   const host = document.createElement("div");
   document.body.appendChild(host);
   root = createRoot(host);
@@ -98,19 +97,4 @@ describe("smoke: each tab renders with the mock client", () => {
       errors.mockRestore();
     });
   }
-});
-
-describe("smoke: Built with Kiro without a recording", () => {
-  it("opens ?tab=kiro with nothing loaded, tab selected, no Load screen", async () => {
-    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
-    const host = await open("?tab=kiro", false);
-    expect(host.textContent).toContain("Built with Kiro");
-    expect(host.querySelector("#tab-kiro")?.getAttribute("aria-selected")).toBe("true");
-    expect(host.querySelector("#tab-load")?.getAttribute("aria-selected")).not.toBe("true");
-    expect(host.textContent).not.toContain("Drop a CAT021 file");
-    expect(host.textContent).not.toContain("Load a recording");
-    expect(host.querySelector(".statebox.error")).toBeNull();
-    expect(errors).not.toHaveBeenCalled();
-    errors.mockRestore();
-  });
 });

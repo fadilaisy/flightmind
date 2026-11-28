@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "vitest run",
-    "kiro:timeline": "node ../scripts/kiro-timeline.mjs"
+    "test": "vitest run"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",

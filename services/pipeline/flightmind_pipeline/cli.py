@@ -3,16 +3,21 @@
 Usage: python -m flightmind_pipeline.cli run <pcap> [--report-dir DIR]
 
 The recording id is the file stem. The database connection comes from FLIGHTMIND_DSN.
+
+`run_recording` is the same job as a callable for the upload worker: it takes the recording id
+and the DSN as arguments, reports progress through a callback, returns the report and neither
+prints nor writes a report file.
 """
 
 import argparse
+import datetime as dt
 import hashlib
 import json
 import os
 import sys
 import time
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -24,10 +29,13 @@ from flightmind_pipeline.detect_go_around import detect_go_around
 from flightmind_pipeline.detect_holding import detect_holding
 from flightmind_pipeline.detect_squawk import detect_squawk
 from flightmind_pipeline.events import DetectedEvent
-from flightmind_pipeline.pcap_source import decode_blocks, walk_pcap
+from flightmind_pipeline.pcap_source import PCAP_LE_MAGIC, decode_blocks, walk_pcap
 from flightmind_pipeline.points import Point, point_from_block
 from flightmind_pipeline.store import RecordingFile, write_recording
 from flightmind_pipeline.tracks import split_tracks
+
+ProgressCallback = Callable[[str, int, int], None]
+PROGRESS_EVERY = 1000
 
 # services/pipeline/flightmind_pipeline/cli.py -> repo root is parents[3]
 DEFAULT_REPORT_DIR = Path(__file__).resolve().parents[3] / "data" / "reports"
@@ -49,7 +57,10 @@ def _sha256(path: Path) -> str:
 
 
 def _decode_points(
-    pcap: Path, recording_id: str, packets: Sequence[tuple[int, int, datetime]]
+    pcap: Path,
+    recording_id: str,
+    packets: Sequence[tuple[int, int, datetime]],
+    on_progress: ProgressCallback | None = None,
 ) -> tuple[list[Point], int]:
     """Return the points built from the decoded blocks, and the count of blocks with no ICAO24.
 
@@ -72,11 +83,15 @@ def _decode_points(
             skipped_no_icao += 1
         else:
             points.append(point)
+        if on_progress is not None and decoded % PROGRESS_EVERY == 0 and decoded < len(packets):
+            on_progress("decoding", decoded, len(packets))
     if decoded != len(packets):
         raise RuntimeError(
             f"{pcap}: decoder produced {decoded} blocks for {len(packets)} packets. "
             "Nothing was written."
         )
+    if on_progress is not None:
+        on_progress("decoding", decoded, len(packets))
     return points, skipped_no_icao
 
 
@@ -99,28 +114,46 @@ def _ratio(numerator: float, denominator: float) -> float | None:
     return numerator / denominator if denominator else None
 
 
-def run_pcap(pcap: Path, report_dir: Path) -> dict[str, Any]:
-    """Decode, detect, compress and store one pcap. Write and return its report."""
-    dsn = _dsn()
-    recording_id = pcap.stem
+def _process_pcap(
+    pcap: Path, recording_id: str, dsn: str, on_progress: ProgressCallback | None
+) -> dict[str, Any]:
+    """Decode, detect, compress and store one pcap. Return its report.
+
+    Detection runs before compression because compression pins the raw_refs of event points,
+    so the work order is decode, split, detect, compress, write. Progress stages map as:
+    decode -> decoding, split -> filtering, detect -> detecting, compress and write -> storing.
+    """
     stage_seconds: dict[str, float] = {}
+
+    def progress(stage: str, done: int, total: int) -> None:
+        if on_progress is not None:
+            on_progress(stage, done, total)
 
     started = time.perf_counter()
     packets = list(walk_pcap(pcap))
-    points, skipped_no_icao = _decode_points(pcap, recording_id, packets)
+    total = len(packets)
+    points, skipped_no_icao = _decode_points(pcap, recording_id, packets, on_progress)
     stage_seconds["decode"] = time.perf_counter() - started
 
     started = time.perf_counter()
+    progress("filtering", 0, total)
     tracks = split_tracks(points)
+    progress("filtering", total, total)
+    split_seconds = time.perf_counter() - started
+
+    started = time.perf_counter()
+    progress("detecting", 0, total)
     events: list[DetectedEvent] = []
     for track in tracks:
         events.extend(detect_squawk(track))
         events.extend(detect_go_around(track))
         events.extend(detect_holding(track))
     pinned = {ref for event in events for ref in event.raw_refs}
-    stage_seconds["detect"] = time.perf_counter() - started
+    progress("detecting", total, total)
+    stage_seconds["detect"] = split_seconds + time.perf_counter() - started
 
     started = time.perf_counter()
+    progress("storing", 0, total)
     kept: list[Point] = []
     kept_by_reason: Counter[str] = Counter()
     dropped_by_nacp: Counter[int] = Counter()
@@ -154,9 +187,10 @@ def run_pcap(pcap: Path, report_dir: Path) -> dict[str, Any]:
     with psycopg.connect(dsn) as conn:
         stored_bytes = write_recording(conn, rec, kept, pinned, events)
     stage_seconds["write"] = time.perf_counter() - started
+    progress("storing", total, total)
 
     decoded_points = len(points)
-    report: dict[str, Any] = {
+    return {
         "recording_id": recording_id,
         "raw_bytes": raw_bytes,
         "raw_records": len(packets),
@@ -177,11 +211,41 @@ def run_pcap(pcap: Path, report_dir: Path) -> dict[str, Any]:
         "stage_seconds": {k: round(v, 3) for k, v in stage_seconds.items()},
     }
 
+
+def run_pcap(pcap: Path, report_dir: Path) -> dict[str, Any]:
+    """Decode, detect, compress and store one pcap. Write and return its report."""
+    dsn = _dsn()
+    recording_id = pcap.stem
+    report = _process_pcap(pcap, recording_id, dsn, None)
+
     report_dir.mkdir(parents=True, exist_ok=True)
     text = json.dumps(report, indent=2)
     (report_dir / f"{recording_id}.compression.json").write_text(text + "\n", encoding="utf-8")
     print(text)
     return report
+
+
+def run_recording(
+    path: str | os.PathLike[str],
+    recording_id: str,
+    dsn: str,
+    on_progress: ProgressCallback | None = None,
+    recording_date: dt.date | None = None,
+) -> dict[str, Any]:
+    """Process one uploaded recording and return its report; print and write nothing.
+
+    Only little-endian classic pcap is supported. `recording_date` is ignored because a pcap
+    carries its own timestamps. Failures propagate to the caller.
+    """
+    pcap = Path(path)
+    try:
+        with pcap.open("rb") as f:
+            magic = f.read(len(PCAP_LE_MAGIC))
+    except OSError as exc:
+        raise ValueError("The recording file could not be read.") from exc
+    if magic != PCAP_LE_MAGIC:
+        raise ValueError("Only classic pcap recordings can be processed on this server for now.")
+    return _process_pcap(pcap, recording_id, dsn, on_progress)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

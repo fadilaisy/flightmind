@@ -1,5 +1,6 @@
 """Cases from the PR #28 and #29 reviews: bad frames, retries, failed-then-retry, safe errors, agent scope."""
 import struct
+from contextlib import contextmanager
 
 import httpx
 import pytest
@@ -148,3 +149,27 @@ def test_users_never_see_server_paths(env, monkeypatch):
     rec = get(client, rid)
     assert rec["status"] == "failed" and rec["error"] == uploads.GENERIC_ERROR
     assert not (env["dir"] / f"{rid}.pcap").exists()  # a failed upload's file is deleted
+
+
+@pytest.mark.db
+def test_a_dropped_job_connection_still_marks_the_upload_failed(env, monkeypatch):
+    client, uploads = env["client"], env["uploads"]
+    opened, real_connect = [], uploads.connect
+
+    @contextmanager
+    def tracking_connect():
+        with real_connect() as conn:
+            opened.append(conn)
+            yield conn
+
+    def drops_mid_run(path, recording_id, dsn, on_progress=None, recording_date=None):
+        opened[-1].close()  # the job's own connection, as if Postgres dropped it
+        on_progress("decoding", 1000, 5000)
+
+    rid, _ = upload(client, drop_first(9))
+    uploads.run_pending_once()
+    client.post(f"/api/recordings/{rid}/process", json={"stream_id": "s1"})
+    monkeypatch.setattr(uploads, "connect", tracking_connect)
+    monkeypatch.setattr(uploads, "runner", drops_mid_run)
+    uploads.run_pending_once()
+    assert get(client, rid)["status"] == "failed"

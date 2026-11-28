@@ -314,29 +314,38 @@ def _scan(row: dict) -> None:
 def _process(row: dict) -> None:
     recording_id = row["id"]
     last = {"stage": None, "at": 0.0}
+    try:
+        with connect() as conn:  # one connection for every progress update of this job
 
-    with connect() as conn:  # one connection for every progress update of this job
+            def on_progress(stage: str, done: int, total: int) -> None:
+                if stage not in PROCESSING:
+                    return
+                now = time.monotonic()
+                if stage == last["stage"] and now - last["at"] < PROGRESS_EVERY_SECONDS and done < total:
+                    return  # SCRUM-63 reports every 1000 records; the UI polls every 2 s
+                last.update(stage=stage, at=now)
+                _set(conn, recording_id, status=stage, records_done=done, records_total=total)
 
-        def on_progress(stage: str, done: int, total: int) -> None:
-            if stage not in PROCESSING:
-                return
-            now = time.monotonic()
-            if stage == last["stage"] and now - last["at"] < PROGRESS_EVERY_SECONDS and done < total:
-                return  # SCRUM-63 reports every 1000 records; the UI polls every 2 s
-            last.update(stage=stage, at=now)
-            _set(conn, recording_id, status=stage, records_done=done, records_total=total)
-
-        try:
             report = _runner()(row["path"], recording_id, dsn(), on_progress, row["recording_date"])
             records = int(report.get("raw_records") or 0)
             _set(conn, recording_id, status="ready", report=report, error=None,
                  records_done=records, records_total=records)
-        except Exception as exc:  # any failure is reported on the row, never raised
-            log.exception("processing of %s failed", recording_id)
-            _set(conn, recording_id, status="failed", error=one_sentence(exc))
-            stored = conn.execute("SELECT 1 FROM recording_files WHERE id = %s", (recording_id,)).fetchone()
-            if stored is None:  # nothing cites the file, so it only takes disk space
-                Path(row["path"]).unlink(missing_ok=True)
+    except Exception as exc:  # any failure is reported on the row, never raised
+        log.exception("processing of %s failed", recording_id)
+        _fail_processing(row, exc)
+
+
+def _fail_processing(row: dict, exc: Exception) -> None:
+    """Mark the job failed on a fresh connection, since the job's own one may be what dropped."""
+    try:
+        with connect() as conn:
+            _set(conn, row["id"], status="failed", error=one_sentence(exc))
+            stored = conn.execute("SELECT 1 FROM recording_files WHERE id = %s", (row["id"],)).fetchone()
+    except Exception:
+        log.exception("could not mark %s failed; recover() does at the next start", row["id"])
+        return
+    if stored is None:  # nothing cites the file, so it only takes disk space
+        Path(row["path"]).unlink(missing_ok=True)
 
 
 def _loop() -> None:
@@ -480,6 +489,7 @@ def _append(recording_id: str, n: int, chunk: bytes) -> None:
             received = row["bytes_received"]
             stored_parts = -(-received // size)
             if received and n == stored_parts - 1 and len(chunk) == received - n * size:
+                # Only the length is compared: /complete checks the sha256 of the whole file.
                 return  # the response to this part was lost and the client sent it again
             if n * size != received:
                 raise HTTPException(status_code=409, detail=f"Part {n} is out of order; send part {received // size} next.")

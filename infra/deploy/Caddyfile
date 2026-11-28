@@ -1,0 +1,10 @@
+# SCRUM-72: HTTPS in front of the app. Caddy gets a Let's Encrypt certificate for
+# FLIGHTMIND_HOST on its own; ports 80 and 443 must reach this machine.
+{$FLIGHTMIND_HOST} {
+	encode zstd gzip
+	# flush_interval -1 sends the /api/stream events as they happen.
+	# No request size limit is set here: uploads come in 50 MB parts and the app enforces its own.
+	reverse_proxy app:8000 {
+		flush_interval -1
+	}
+}

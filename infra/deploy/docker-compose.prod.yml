@@ -1,0 +1,76 @@
+# SCRUM-72: FlightMind on one always-on host (Oracle Cloud Always Free Ampere A1, arm64).
+# Three services: db (Postgres + TimescaleDB + pgvector), app (real API, upload worker, decoder,
+# web UI) and caddy (automatic HTTPS). Nothing but caddy publishes a port.
+#
+# Run from anywhere with `infra/deploy/up.sh`, or by hand:
+#   docker compose -f infra/deploy/docker-compose.prod.yml --env-file infra/deploy/.env up -d --build
+#
+# Every secret is read from infra/deploy/.env (copy .env.example). No value is written here.
+# contracts/schema.sql loads only into an empty data volume (first start), like the dev stack.
+
+services:
+  db:
+    image: timescale/timescaledb-ha:pg16   # multi-arch: arm64 and amd64
+    restart: always
+    environment:
+      POSTGRES_USER: flightmind
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infra/deploy/.env}
+      POSTGRES_DB: flightmind
+    volumes:
+      - flightmind_pgdata:/home/postgres/pgdata
+      - ../db/init/00_extensions.sql:/docker-entrypoint-initdb.d/00_extensions.sql:ro
+      - ../../contracts/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flightmind -d flightmind"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build:
+      context: ../..
+      dockerfile: infra/Dockerfile.app
+      target: app
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      FLIGHTMIND_DSN: postgresql://flightmind:${POSTGRES_PASSWORD}@db:5432/flightmind
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      FLIGHTMIND_LLM_MODEL: ${FLIGHTMIND_LLM_MODEL:-claude-haiku-5-5}
+      FLIGHTMIND_DEFAULT_RECORDING: ${FLIGHTMIND_DEFAULT_RECORDING:-}
+      FLIGHTMIND_ASK_PER_MINUTE: ${FLIGHTMIND_ASK_PER_MINUTE:-5}
+      FLIGHTMIND_ASK_PER_DAY: ${FLIGHTMIND_ASK_PER_DAY:-300}
+      FLIGHTMIND_MAX_UPLOAD_MB: ${FLIGHTMIND_MAX_UPLOAD_MB:-2048}
+    volumes:
+      - flightmind_uploads:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/meta', timeout=5)"]
+      interval: 10s
+      timeout: 8s
+      retries: 6
+      start_period: 20s
+
+  caddy:
+    image: caddy:2   # multi-arch; gets and renews the certificate for FLIGHTMIND_HOST
+    restart: always
+    depends_on:
+      - app
+    environment:
+      FLIGHTMIND_HOST: ${FLIGHTMIND_HOST:?set FLIGHTMIND_HOST in infra/deploy/.env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  flightmind_pgdata:
+  flightmind_uploads:
+  caddy_data:
+  caddy_config:

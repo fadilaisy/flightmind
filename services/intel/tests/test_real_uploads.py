@@ -302,10 +302,110 @@ def test_worker_thread_takes_an_upload_to_ready(env, monkeypatch):
         uploads.stop_worker()
 
 
-@pytest.mark.parametrize("path", ["", "/preview", "/recipe", "/quarantine", "/export"])
-def test_unknown_id_is_404_and_scrum_68_paths_are_501(env, path):
+def to_scanned(env, content=None):
+    client, uploads = env["client"], env["uploads"]
+    rid, _ = upload(client, content or drop_first(5))
+    uploads.run_pending_once()
+    assert get(client, rid)["status"] == "scanned"
+    return rid
+
+
+def to_ready(env, content=None):
+    rid = to_scanned(env, content)
+    env["client"].post(f"/api/recordings/{rid}/process", json={"stream_id": "s1"})
+    env["uploads"].run_pending_once()
+    assert get(env["client"], rid)["status"] == "ready"
+    return rid
+
+
+@pytest.mark.parametrize("path", ["/preview?stream=s1", "/recipe", "/quarantine", "/export"])
+def test_unknown_id_is_404_and_a_recording_not_yet_scanned_is_409(env, path):
     client = env["client"]
     assert client.get(f"/api/recordings/rnope000000{path}").status_code == 404
-    if path:
-        rid = create(client, size=10)["id"]
-        assert client.get(f"/api/recordings/{rid}{path}").status_code == 501
+    rid = create(client, size=10)["id"]  # still uploading
+    assert client.get(f"/api/recordings/{rid}{path}").status_code == 409
+
+
+def test_failed_recording_is_409_and_its_sidecar_is_gone(env):
+    client, uploads = env["client"], env["uploads"]
+    rid, _ = upload(client, _without_cat021(FIXTURE), filename="other.pcap")
+    uploads.run_pending_once()
+    assert get(client, rid)["status"] == "failed"
+    for path in ("/preview?stream=s1", "/recipe", "/quarantine", "/export"):
+        assert client.get(f"/api/recordings/{rid}{path}").status_code == 409, path
+    assert not list(env["dir"].glob(f"{rid}*"))
+
+
+def test_scanned_recording_serves_preview_recipe_and_quarantine_from_the_dry_run(env):
+    client = env["client"]
+    rid = to_scanned(env)
+    assert (env["dir"] / f"{rid}.clean.json").exists()
+
+    r = client.get(f"/api/recordings/{rid}/preview", params={"stream": "s1", "limit": 3})
+    assert r.status_code == 200, r.text
+    check(r.json(), "/api/recordings/{id}/preview")
+    body = r.json()
+    assert [x["raw_ref"] for x in body["records"]] == [f"{rid}:{i}" for i in (1, 2, 3)]
+    assert body["records"][0]["recording_file_id"] == rid and "items" in body["records"][0]["decoded"]
+    assert "sample_size" not in body and len(body["field_quality"]) == 8
+    assert client.get(f"/api/recordings/{rid}/preview", params={"stream": "s9"}).status_code == 409
+    assert client.get(f"/api/recordings/{rid}/preview", params={"stream": "s1", "limit": 201}).status_code == 422
+
+    r = client.get(f"/api/recordings/{rid}/recipe")
+    assert r.status_code == 200
+    check(r.json(), "/api/recordings/{id}/recipe")
+    recipe = r.json()
+    assert [s["code"] for s in recipe["steps"]] == ["no_address", "no_position", "duplicates"]
+    assert recipe["stored_bytes"] is None and recipe["ratio"] is None
+    assert recipe["raw_bytes"] == len(drop_first(5)) and recipe["input_sha256"]
+
+    r = client.get(f"/api/recordings/{rid}/quarantine", params={"limit": 5})
+    assert r.status_code == 200
+    check(r.json(), "/api/recordings/{id}/quarantine")
+    assert r.json()["total"] == sum(s["set_aside"] for s in recipe["steps"][:2])
+
+    # an upload from before the sidecar existed gets one computed on demand
+    (env["dir"] / f"{rid}.clean.json").unlink()
+    assert client.get(f"/api/recordings/{rid}/recipe").json() == recipe
+    assert (env["dir"] / f"{rid}.clean.json").exists()
+    assert client.get(f"/api/recordings/{rid}/export").status_code == 409  # only ready
+
+
+def test_ready_recording_adds_compression_and_exports_a_zip(env):
+    import csv
+    import io
+    import json
+    import tempfile
+    import zipfile
+
+    import psycopg
+
+    client = env["client"]
+    rid = to_ready(env, drop_first(6))
+    recipe = client.get(f"/api/recordings/{rid}/recipe").json()
+    check(recipe, "/api/recordings/{id}/recipe")
+    assert recipe["steps"][-1]["code"] == "compression"
+    assert recipe["stored_bytes"] and 0 < recipe["ratio"] < 1
+    total = client.get(f"/api/recordings/{rid}/quarantine").json()["total"]
+
+    preview = client.get(f"/api/recordings/{rid}/preview", params={"stream": "s1", "limit": 200}).json()
+    check(preview, "/api/recordings/{id}/preview")
+    assert any("ts" in r["decoded"] and "items" in r["decoded"] for r in preview["records"])
+
+    r = client.get(f"/api/recordings/{rid}/export")
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "application/zip"
+    assert r.headers["content-disposition"] == 'attachment; filename="flight-flightmind.zip"'
+    with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+        assert sorted(z.namelist()) == ["cleaned.csv", "events.csv", "quarantine.csv", "recipe.json"]
+        assert json.loads(z.read("recipe.json")) == recipe
+        quarantined = list(csv.DictReader(io.StringIO(z.read("quarantine.csv").decode())))
+        cleaned = list(csv.DictReader(io.StringIO(z.read("cleaned.csv").decode())))
+        events = list(csv.DictReader(io.StringIO(z.read("events.csv").decode())))
+    assert len(quarantined) == total
+    with psycopg.connect(env["dsn"]) as conn:
+        stored = conn.execute("SELECT count(*) FROM telemetry WHERE raw_ref LIKE %s", (rid + ":%",)).fetchone()[0]
+        n_events = conn.execute("SELECT count(*) FROM events WHERE raw_refs[1] LIKE %s", (rid + ":%",)).fetchone()[0]
+    assert len(cleaned) == stored and len(events) == n_events
+    assert {"raw_ref", "flags", "ts", "icao24"} <= set(cleaned[0])
+    assert not list(Path(tempfile.gettempdir()).glob("flightmind-export-*"))  # the temp zip is deleted after sending

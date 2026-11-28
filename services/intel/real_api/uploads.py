@@ -24,7 +24,10 @@ Errors shown to users come only from ValueError and RuntimeError (our own and th
 messages), with file paths reduced to file names; anything else shows a generic sentence and
 the traceback goes to the log.
 
-Preview, recipe, quarantine and export are SCRUM-68 and answer 501 until then.
+Preview, recipe, quarantine and export (SCRUM-68) read a sidecar `<upload_dir>/<id>.clean.json`,
+written by the scan: a dry run that counts, from the file and with the pipeline's own rules, the
+records it will set aside (see clean.py). Once ready, the pipeline report's numbers are used.
+The sidecar is deleted wherever the upload file is.
 
 Environment:
     FLIGHTMIND_UPLOAD_DIR        where uploaded files are kept (default <repo>/data/uploads)
@@ -32,26 +35,33 @@ Environment:
     FLIGHTMIND_PART_SIZE_BYTES   part size given to clients (default 52428800; tests lower it)
     FLIGHTMIND_UPLOAD_WORKER     "off" keeps the worker thread from starting (tests)
 """
+import csv
 import hashlib
 import importlib
+import io
+import json
 import logging
 import os
 import re
 import secrets
 import shutil
 import struct
+import tempfile
 import threading
 import time
+import zipfile
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 from fastapi import Path as PathParam
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from starlette.background import BackgroundTask
 from starlette.concurrency import run_in_threadpool
 
-from . import raw_file
+from . import clean, raw_file
 from .db import connect, dsn
 
 log = logging.getLogger("flightmind.uploads")
@@ -241,12 +251,7 @@ def scan_streams(path: str) -> list:
 
 def _udp_with_ends(packet: bytes, link_type: int) -> tuple:
     """(ASTERIX payload, (src ip:port, dst ip:port)) of one UDP packet."""
-    ip = raw_file.udp_ipv4(packet, link_type)  # checks that ip holds the full UDP header
-    ihl = (ip[0] & 0x0F) * 4
-    sport, dport = struct.unpack(">HH", ip[ihl:ihl + 4])
-    src = ".".join(str(b) for b in ip[12:16]) + f":{sport}"
-    dst = ".".join(str(b) for b in ip[16:20]) + f":{dport}"
-    return ip[ihl + 8:], (src, dst)
+    return raw_file.udp_with_ends(packet, link_type)
 
 
 # ---------- worker ----------
@@ -271,11 +276,11 @@ def sweep_stale() -> None:
     """Delete uploads idle in uploading for over an hour, with their files."""
     with connect() as conn:
         stale = conn.execute(
-            "DELETE FROM uploads WHERE status = 'uploading' AND updated_at < now() - %s RETURNING path",
+            "DELETE FROM uploads WHERE status = 'uploading' AND updated_at < now() - %s RETURNING id, path",
             (STALE_UPLOAD,),
         ).fetchall()
     for row in stale:
-        Path(row["path"]).unlink(missing_ok=True)
+        clean.remove_files(row["path"], row["id"])
 
 
 def run_pending_once() -> bool:
@@ -300,15 +305,25 @@ def run_pending_once() -> bool:
 def _scan(row: dict) -> None:
     try:
         streams = scan_streams(row["path"])
-        if not any(s["supported"] for s in streams):
+        supported = [s for s in streams if s["supported"]]
+        if not supported:
             raise ValueError(f"No CAT021 records found in {row['filename']}")
+        _make_clean(row, supported[0])
         with connect() as conn:
             _set(conn, row["id"], status="scanned", streams=streams, error=None)
     except Exception as exc:  # any failure is reported on the row, never raised
         log.exception("scan of %s failed", row["id"])
         with connect() as conn:
             _set(conn, row["id"], status="failed", error=one_sentence(exc))
-        Path(row["path"]).unlink(missing_ok=True)  # nothing can use the file now
+        clean.remove_files(row["path"], row["id"])  # nothing can use the file now
+
+
+def _make_clean(row: dict, stream: dict) -> dict:
+    """Run the cleaning dry run on one stream and save the sidecar next to the upload."""
+    data = clean.dry_run(row["path"], stream, row["id"])
+    data["stream_id"] = stream["id"]
+    clean.save(clean.sidecar_path(row["path"], row["id"]), data)
+    return data
 
 
 def _process(row: dict) -> None:
@@ -359,7 +374,7 @@ def _fail_processing(row: dict, exc: Exception, report: Optional[dict] = None) -
         log.exception("could not mark %s failed; recover() does at the next start", row["id"])
         return
     if stored is None:  # nothing cites the file, so it only takes disk space
-        Path(row["path"]).unlink(missing_ok=True)
+        clean.remove_files(row["path"], row["id"])
 
 
 def _loop() -> None:
@@ -558,7 +573,7 @@ def complete_recording(recording_id: str, response: Response):
                     ).fetchone()
             if earlier is not None:
                 conn.execute("DELETE FROM uploads WHERE id = %s", (recording_id,))
-                path.unlink(missing_ok=True)
+                clean.remove_files(str(path), recording_id)
                 response.status_code = 200
                 return _view_of(conn, earlier["id"])
             result = _view_of(conn, recording_id)
@@ -603,27 +618,170 @@ def process_recording(recording_id: str, body: ProcessRecordingRequest):
     return result
 
 
-def _not_built(recording_id: str) -> None:
-    with connect() as conn:
-        _get(conn, recording_id)
-    raise HTTPException(status_code=501, detail="Not built yet in the real API (SCRUM-68).")
+def _require_scanned(row: dict) -> None:
+    if row["status"] in ("uploading", "scanning", "failed"):
+        raise HTTPException(status_code=409, detail=f"Recording '{row['id']}' is {row['status']}, not scanned yet.")
+
+
+def _supported(row: dict) -> list:
+    return [s for s in row["streams"] or [] if s["supported"]]
+
+
+def _clean_of(row: dict) -> dict:
+    """The sidecar of a scanned upload. One made before the sidecar existed is computed once and saved."""
+    data = clean.load(clean.sidecar_path(row["path"], row["id"]))
+    if data is not None:
+        return data
+    supported = _supported(row)
+    if not supported:
+        raise HTTPException(status_code=409, detail=f"Recording '{row['id']}' has no supported stream.")
+    if not Path(row["path"]).is_file():
+        raise HTTPException(status_code=409, detail="The recording file is no longer on this server.")
+    return _make_clean(row, supported[0])
+
+
+def _kept_refs(conn, data: dict) -> set:
+    """raw_refs of no_position records the pipeline stored anyway (an event pinned them), so they were not set aside."""
+    refs = [q["raw_ref"] for q in data["quarantine"] if q["step_code"] == "no_position"]
+    kept: set = set()
+    for i in range(0, len(refs), 5000):
+        found = conn.execute("SELECT raw_ref FROM telemetry WHERE raw_ref = ANY(%s)", (refs[i:i + 5000],))
+        kept.update(r["raw_ref"] for r in found)
+    return kept
+
+
+def _quarantine_and_recipe(conn, row: dict) -> tuple:
+    """(quarantine items, Recipe body) of a scanned or later upload; one source for both and for the export."""
+    data = _clean_of(row)
+    ready = row["status"] == "ready"
+    report = row["report"] if ready else None
+    kept = _kept_refs(conn, data) if ready else None
+    items = clean.quarantine_items(data, kept)
+    return items, clean.recipe(data, row["sha256"], row["size_bytes"], report, kept)
+
+
+def _decoded(row: dict) -> dict:
+    """Decoded telemetry columns of one stored row, the same ones GET /api/raw returns."""
+    decoded = {k: row[k] for k in ("icao24", "callsign", "lat", "lon", "baro_alt_ft", "geo_alt_ft",
+                                    "gs_kt", "track_deg", "vrate_fpm", "squawk", "on_ground")
+               if row[k] is not None}
+    decoded["ts"] = _iso(row["ts"])
+    return decoded
 
 
 @router.get("/api/recordings/{recording_id}/preview")
-def preview(recording_id: str):
-    _not_built(recording_id)
+def preview(recording_id: str, stream: str, limit: int = Query(8, ge=1, le=200)):
+    with connect() as conn:
+        row = _get(conn, recording_id)
+        _require_scanned(row)
+        if not any(s["id"] == stream for s in _supported(row)):
+            raise HTTPException(status_code=409, detail=f"Stream '{stream}' is not a supported CAT021 stream.")
+        data = _clean_of(row)
+        if data.get("stream_id", stream) != stream:
+            raise HTTPException(status_code=409, detail=f"Only stream '{data['stream_id']}' of this file is read.")
+        records = clean.preview_records(data, recording_id, limit)
+        if row["status"] == "ready" and records:
+            stored = conn.execute(
+                "SELECT raw_ref, ts, icao24, callsign, lat, lon, baro_alt_ft, geo_alt_ft, gs_kt, track_deg, "
+                "vrate_fpm, squawk, on_ground FROM telemetry WHERE raw_ref = ANY(%s)",
+                ([r["raw_ref"] for r in records],),
+            ).fetchall()
+            by_ref = {r["raw_ref"]: r for r in stored}
+            for rec in records:
+                if rec["raw_ref"] in by_ref:
+                    rec["decoded"] = {**rec["decoded"], **_decoded(by_ref[rec["raw_ref"]])}
+    return {"records": records, "field_quality": clean.field_quality(data)}
 
 
 @router.get("/api/recordings/{recording_id}/recipe")
 def recipe(recording_id: str):
-    _not_built(recording_id)
+    with connect() as conn:
+        row = _get(conn, recording_id)
+        _require_scanned(row)
+        return _quarantine_and_recipe(conn, row)[1]
 
 
 @router.get("/api/recordings/{recording_id}/quarantine")
-def quarantine(recording_id: str):
-    _not_built(recording_id)
+def quarantine(recording_id: str, offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=500)):
+    with connect() as conn:
+        row = _get(conn, recording_id)
+        _require_scanned(row)
+        return clean.page(_quarantine_and_recipe(conn, row)[0], offset, limit)
+
+
+TELEMETRY_COLUMNS = ("ts", "icao24", "callsign", "lat", "lon", "baro_alt_ft", "geo_alt_ft", "gs_kt", "track_deg",
+                     "vrate_fpm", "squawk", "on_ground", "sac", "sic", "track_number", "raw_ref", "raw_offset", "flags")
+EVENT_COLUMNS = ("id", "type", "icao24", "callsign", "start_ts", "end_ts", "airport", "severity", "raw_refs")
+EXPORT_BATCH = 2000
+
+
+def _cell(value: Any) -> Any:
+    if value is None:
+        return ""
+    if isinstance(value, datetime):
+        return _iso(value)
+    if isinstance(value, (list, tuple)):
+        return " ".join(str(v) for v in value)
+    return value
+
+
+def _write_csv_member(zf: zipfile.ZipFile, name: str, header: tuple, rows) -> None:
+    with zf.open(name, "w", force_zip64=True) as member:
+        text = io.TextIOWrapper(member, encoding="utf-8", newline="")
+        writer = csv.writer(text, lineterminator="\n")
+        writer.writerow(header)
+        for r in rows:
+            writer.writerow(r)
+        text.flush()
+        text.detach()
+
+
+def _build_export(conn, row: dict, target) -> None:
+    items, body = _quarantine_and_recipe(conn, row)
+    rid = row["id"]
+    scope = "left({col}, length(%s) + 1) = %s || ':'"
+    with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as zf:
+        with conn.transaction():  # a named (server-side) cursor lives inside a transaction
+            with conn.cursor(name="export_telemetry") as cur:
+                cur.itersize = EXPORT_BATCH
+                cur.execute(
+                    f"SELECT {', '.join(TELEMETRY_COLUMNS)} FROM telemetry WHERE {scope.format(col='raw_ref')} "
+                    "ORDER BY ts, raw_ref",
+                    (rid, rid),
+                )
+                _write_csv_member(zf, "cleaned.csv", TELEMETRY_COLUMNS,
+                                  ([_cell(r[c]) for c in TELEMETRY_COLUMNS] for r in cur))
+            with conn.cursor(name="export_events") as cur:
+                cur.itersize = EXPORT_BATCH
+                cur.execute(
+                    f"SELECT {', '.join(EVENT_COLUMNS)} FROM events WHERE cardinality(raw_refs) > 0 AND "
+                    f"{scope.format(col='raw_refs[1]')} ORDER BY start_ts, id",
+                    (rid, rid),
+                )
+                _write_csv_member(zf, "events.csv", EVENT_COLUMNS,
+                                  ([_cell(r[c]) for c in EVENT_COLUMNS] for r in cur))
+        _write_csv_member(zf, "quarantine.csv", ("raw_ref", "step_code", "reason"),
+                          ([q["raw_ref"], q["step_code"], q["reason"]] for q in items))
+        zf.writestr("recipe.json", json.dumps(body, indent=2))
 
 
 @router.get("/api/recordings/{recording_id}/export")
 def export(recording_id: str):
-    _not_built(recording_id)
+    with connect() as conn:
+        row = _get(conn, recording_id)
+        if row["status"] != "ready":
+            raise HTTPException(status_code=409, detail=f"Recording '{recording_id}' is {row['status']}, not ready.")
+        stem = re.sub(r"[^A-Za-z0-9._-]", "_", os.path.splitext(row["filename"])[0]) or recording_id
+        tmp = tempfile.NamedTemporaryFile(prefix="flightmind-export-", suffix=".zip", delete=False)
+        try:
+            with tmp:
+                _build_export(conn, row, tmp)
+        except BaseException:
+            os.unlink(tmp.name)
+            raise
+    return FileResponse(
+        tmp.name,
+        media_type="application/zip",
+        filename=f"{stem}-flightmind.zip",
+        background=BackgroundTask(os.unlink, tmp.name),
+    )

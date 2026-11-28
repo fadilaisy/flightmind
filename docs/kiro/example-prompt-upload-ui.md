@@ -1,3 +1,7 @@
+# Example: a Kiro CLI prompt (SCRUM-66 upload screen)
+
+Fadil wrote this prompt and ran it with `kiro-cli chat --no-interactive`; Kiro wrote the upload-ui spec and implemented its tasks, committing one step at a time (see the upload-ui lines in KIRO.md). `<temp>` stands for a local temp folder.
+
 # Kiro prompt U: SCRUM-66 load recording screen, chunked upload, recording picker
 
 Branch `role1/upload-ui` (already created from main). Work only in `web/`, `.kiro/specs/upload-ui/`, `KIRO.md` and `docs/kiro/`. Do not touch `contracts/`, `services/`, `.kiro/agents/` (never `git add` its change or the `.bak` file) or `.kiro/settings/mcp.json`. A dev server runs at http://127.0.0.1:5173 with hot reload; do not start another or stop it.

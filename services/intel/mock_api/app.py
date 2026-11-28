@@ -17,15 +17,25 @@ from pydantic import BaseModel
 from agent.endpoint import agent_enabled, answer_question
 from agent.guard import AskGuard, client_key
 
-from . import data
+from . import data, uploads
 
-app = FastAPI(title="FlightMind mock API", version="1.1.0")
+app = FastAPI(title="FlightMind mock API", version="1.2.0")
 
 _guard = AskGuard()  # only used when the cited agent is on (SCRUM-36)
 
 # Mock only: lets the web UI on another local port call it. The real API (SCRUM-37)
 # should restrict origins.
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.include_router(uploads.router)  # recording upload flow (SCRUM-62)
+
+
+def _has_sample(recording: Optional[str]) -> bool:
+    """True when the ?recording= filter selects the sample dataset.
+
+    No filter or rec01 is the sample. A ready upload also serves the sample, because the
+    mock never decodes the bytes sent. Any other id has no data yet.
+    """
+    return recording is None or recording == data.RECORDING_ID or uploads.is_ready(recording)
 
 
 def _parse(dt: Optional[datetime]) -> Optional[datetime]:
@@ -54,13 +64,20 @@ def meta():
     return {
         "mode": "replay",
         "sim_time": data.SIM_TIME,
-        "recordings": [data.RECORDING_ID],
+        "recordings": [data.RECORDING_ID, *uploads.ready_ids()],
         "airports": [data.AIRPORT],
     }
 
 
 @app.get("/api/events")
-def events(since: Optional[datetime] = None, type: Optional[str] = None, airport: Optional[str] = None):
+def events(
+    since: Optional[datetime] = None,
+    type: Optional[str] = None,
+    airport: Optional[str] = None,
+    recording: Optional[str] = None,
+):
+    if not _has_sample(recording):
+        return []
     since = _parse(since)
     out = data.EVENTS
     if since is not None:
@@ -82,7 +99,14 @@ def event_detail(event_id: str):
 
 
 @app.get("/api/tracks/{icao24}")
-def track(icao24: str, from_: Optional[datetime] = Query(None, alias="from"), to: Optional[datetime] = None):
+def track(
+    icao24: str,
+    from_: Optional[datetime] = Query(None, alias="from"),
+    to: Optional[datetime] = None,
+    recording: Optional[str] = None,
+):
+    if not _has_sample(recording):
+        raise HTTPException(status_code=404, detail="Unknown icao24")
     return _track_slice(icao24, _parse(from_), _parse(to))
 
 
@@ -97,6 +121,8 @@ def raw(raw_ref: str):
 @app.get("/api/compression/{recording_id}")
 def compression(recording_id: str):
     report = data.COMPRESSION.get(recording_id)
+    if report is None and uploads.is_ready(recording_id):
+        report = {**data.COMPRESSION[data.RECORDING_ID], "recording_id": recording_id}
     if report is None:
         raise HTTPException(status_code=404, detail="Unknown recording_id")
     if report["raw_bytes"] == 0:
@@ -105,7 +131,7 @@ def compression(recording_id: str):
 
 
 @app.get("/api/stream")
-async def stream():
+async def stream(recording: Optional[str] = None):
     """Finite replay of the sample recording as server-sent events.
 
     The contract does not define the payload. The web UI does not use this endpoint
@@ -117,10 +143,12 @@ async def stream():
     """
     delay = float(os.environ.get("MOCK_STREAM_DELAY", "0.05"))
     items = []
-    for t in data.TRACKS.values():
+    tracks = data.TRACKS.values() if _has_sample(recording) else []
+    events = data.EVENTS if _has_sample(recording) else []
+    for t in tracks:
         for p in t["points"]:
             items.append((p["ts"], "position", {"icao24": t["icao24"], "callsign": t["callsign"], **p}))
-    for e in data.EVENTS:
+    for e in events:
         items.append((e["end_ts"], "event", e))
     items.sort(key=lambda x: x[0])
 
@@ -134,6 +162,7 @@ async def stream():
 
 class AskRequest(BaseModel):
     question: str
+    recording_id: Optional[str] = None
 
 
 def _first_ref(event):
@@ -142,15 +171,20 @@ def _first_ref(event):
 
 @app.post("/api/ask")
 async def ask(body: AskRequest, request: Request):
-    """Cited agent when ANTHROPIC_API_KEY is set (SCRUM-36); otherwise canned answers by keyword."""
+    """Cited agent when ANTHROPIC_API_KEY is set (SCRUM-36); otherwise canned answers by keyword.
+
+    recording_id limits the agent's event and track tools to that recording.
+    """
     if agent_enabled():
         if len(body.question) > 500:
             raise HTTPException(status_code=422, detail="Question is longer than 500 characters.")
         host = request.client.host if request.client else None
         if not _guard.check(client_key(request.headers, host)):
             raise HTTPException(status_code=429, detail="Too many questions. Try again in a minute.")
-        return await answer_question(body.question, request.app)
+        return await answer_question(body.question, request.app, recording_id=body.recording_id)
     q = body.question.lower()
+    if not _has_sample(body.recording_id):
+        q = ""  # nothing loaded for that recording, so no keyword can match
     if any(w in q for w in ("7700", "emergency", "squawk", "mayday")):
         etype = "squawk_7700"
     elif "go-around" in q or "go around" in q or "goaround" in q:

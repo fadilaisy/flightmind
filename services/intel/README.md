@@ -31,6 +31,25 @@ Notes for the UI:
   Speed is set with `MOCK_STREAM_DELAY` seconds between items (default 0.05).
 - `/api/ask` answers by keyword (7700 / go-around / hold) and otherwise returns
   `not_enough_evidence`. The real agent is SCRUM-36.
+
+Recording upload (SCRUM-62, contract 1.2.0, `mock_api/uploads.py`):
+
+- `POST /api/recordings`, `PUT .../parts/{n}`, `POST .../complete`, `POST .../process`,
+  then preview, recipe, quarantine and export. The order checks, the sha256 (same file twice
+  returns the first upload) and the first-bytes check (pcap, pcapng or a CAT021 block) are
+  real. The bytes are then dropped. A failed upload does not block the same file again,
+  re-sending the last stored part is a no-op (204), a part over the part size is 413, and
+  raw ASTERIX bytes in a `.pcap` (or a capture in a `.atx`) are 415. Set
+  `FLIGHTMIND_PART_SIZE_BYTES` to use smaller parts locally.
+- The recipe's `stored_bytes` and `ratio` are null until the recording is ready.
+- Status after complete: `scanning` for 1.5 s, then `scanned` with one CAT021 stream (`s1`)
+  and one CAT062 stream (`s2`, not supported); a raw `.atx`/`.ast`/`.bin` file has one
+  stream, `raw`. After process: queued, decoding, filtering, detecting, storing, then
+  `ready` about 10 s later.
+- A ready upload serves the rec01 sample through `?recording=<id>`, so its raw_refs still
+  start with `rec01:`. A file named `bad.pcap` fails after scanning, for the UI's failed state.
+- Uploads live in memory and only work against a local mock: on Vercel each instance has its
+  own memory and requests are capped at 4.5 MB.
 - `/api/compression/{recording_id}` returns a `CompressionReport`. Counts and byte sizes are
   computed from the synthetic records (kept = event points plus each track's first and last
   point), `/api/tracks` still returns every point, and `max_position_error_m` is an invented
@@ -39,6 +58,77 @@ Notes for the UI:
   differ. Do not quote the mock ratio (for example in the video). A recording with no data
   (`raw_bytes` 0) returns 404 with `Recording '<id>' has no data yet.`, the same status as an
   unknown id, so the UI needs only one "no report" state.
+
+## Real API and recording upload (SCRUM-37, SCRUM-64)
+
+`real_api/` serves `contracts/openapi.yaml` from Postgres, the tables the pipeline writes.
+Rows belong to a recording by the prefix of their raw_ref (`<recording_id>:`; for events the
+first raw_ref). `?recording=<id>` picks one; without it the API uses
+`FLIGHTMIND_DEFAULT_RECORDING`, else the recording ingested last. `AskRequest.recording_id`
+limits the agent's event and track tools to that recording.
+
+```powershell
+docker compose -f infra/docker-compose.yml up -d          # Postgres with TimescaleDB + pgvector
+$env:FLIGHTMIND_DSN = "postgresql://flightmind:flightmind@localhost:5432/flightmind"
+.\.venv\Scripts\python.exe -m uvicorn real_api.app:app --port 8000
+# or behind serve.py: $env:FLIGHTMIND_API_APP = "real_api.app:app"
+```
+
+- `/api/raw/{raw_ref}` reads the original ASTERIX block from the recording file (pcap in
+  either byte order, pcapng, or raw `.atx`/`.ast`/`.bin`), at the stored `raw_offset` for
+  kept points or by walking the file headers for records compression dropped (those come
+  back with `decoded: {stored: false}`). Link, IP and UDP headers are removed.
+- `/api/compression/{id}` comes from the pipeline report: `uploads.report` for an upload,
+  else `<FLIGHTMIND_REPORT_DIR>/<id>.compression.json` written by the CLI.
+- `/api/ask` needs `ANTHROPIC_API_KEY`; without it the answer says the agent is off.
+- CORS is closed unless `FLIGHTMIND_CORS_ORIGINS` lists origins (serve.py is same origin).
+
+Upload (contract 1.2.0):
+
+- Create, then parts in order (every part but the last is `part_size_bytes`, 50 MB), then
+  complete. Parts are appended to `FLIGHTMIND_UPLOAD_DIR/<id>.<ext>` (default
+  `<repo>/data/uploads`, ignored by git). Complete checks the size, the first bytes and the
+  sha256: the same file twice returns the first upload (200), unless that one failed.
+- One worker thread per process: it scans a completed file for streams (UDP source and
+  destination, ASTERIX category, SAC/SIC; only CAT021 is supported), then runs
+  `flightmind_pipeline.run_recording(path, id, dsn, on_progress, recording_date)` from
+  SCRUM-63 on a processed upload. Status follows `on_progress`; any exception sets `failed`
+  with one sentence. On start, rows left in decoding..storing become failed ("Server restarted
+  during processing. Upload again.") and uploads idle in `uploading` for over an hour are
+  deleted with their file.
+- The worker starts with the server (uvicorn, or serve.py, which passes the app its startup).
+  If Postgres is not up yet, startup goes on and the worker starts on the first upload request.
+  Run **one server process only** (no `--workers 2`): each process has its own worker, and its
+  restart cleanup would fail the other's running job. A long job delays the scan of newer
+  uploads until it ends.
+- Re-sending the last stored part is a no-op (204), a part over the part size is 413, a
+  negative part number is 422, and create answers 413 when the disk lacks room for the file
+  plus 512 MB. Uploads idle for over an hour are deleted every 10 minutes, and a failed scan
+  deletes its file. A failed upload does not block the same file again.
+- A file with more than one CAT021 stream answers 409 at process until `run_recording` can
+  be told which stream to use (open question on SCRUM-63).
+- `error` shows the message of our own `ValueError`/`RuntimeError` only, with paths reduced
+  to file names; other failures show a generic sentence. The traceback goes to the log.
+- `/api/meta.recordings` and the default recording list only ready recordings (CLI loads, and
+  uploads whose status is ready). Pin `FLIGHTMIND_DEFAULT_RECORDING` for a demo.
+- Preview, recipe, quarantine and export answer 501 until SCRUM-68.
+- Until SCRUM-63 merges, `run_recording` does not exist and processing fails with "The
+  pipeline job (run_recording, SCRUM-63) is not installed on this server."
+
+Tests: `tests/test_real_api.py` and `tests/test_real_uploads.py` need a Postgres and the
+pipeline package (Python 3.11+, `pip install -e services/pipeline`). Set
+`FLIGHTMIND_TEST_DSN` to a server with TimescaleDB and pgvector; each run creates and drops
+its own database. Without it they are skipped. If a local Windows PostgreSQL already holds
+port 5432, run a second container on another port for the tests:
+
+```powershell
+docker run -d --name fm-test-db -p 55432:5432 -e POSTGRES_USER=flightmind -e POSTGRES_PASSWORD=flightmind -e POSTGRES_DB=flightmind timescale/timescaledb-ha:pg16
+$env:FLIGHTMIND_TEST_DSN = "postgresql://flightmind:flightmind@127.0.0.1:55432/flightmind"
+```
+
+The decoder is not needed: the pipeline is fed the committed decoder output for the fixture
+(`fixtures/adsb_sample_500.decoded.jsonl`). The upload tests use a stand-in for
+`run_recording` that runs the pipeline CLI on the uploaded bytes.
 
 ## MCP server (SCRUM-34)
 

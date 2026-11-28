@@ -159,6 +159,16 @@ def udp_ipv4(packet: bytes, link_type: int) -> bytes:
     return ip
 
 
+def udp_with_ends(packet: bytes, link_type: int) -> Tuple[bytes, Tuple[str, str]]:
+    """(UDP payload, (src ip:port, dst ip:port)) of one packet. RawFileError when it is not UDP over IPv4."""
+    ip = udp_ipv4(packet, link_type)  # checks that ip holds the full UDP header
+    ihl = (ip[0] & 0x0F) * 4
+    sport, dport = struct.unpack(">HH", ip[ihl:ihl + 4])
+    src = ".".join(str(b) for b in ip[12:16]) + f":{sport}"
+    dst = ".".join(str(b) for b in ip[16:20]) + f":{dport}"
+    return ip[ihl + 8:], (src, dst)
+
+
 def _udp_payload(packet: bytes, link_type: int) -> bytes:
     """Strip link, IPv4 and UDP headers."""
     ip = udp_ipv4(packet, link_type)

@@ -111,7 +111,16 @@ Upload (contract 1.2.0):
   to file names; other failures show a generic sentence. The traceback goes to the log.
 - `/api/meta.recordings` and the default recording list only ready recordings (CLI loads, and
   uploads whose status is ready). Pin `FLIGHTMIND_DEFAULT_RECORDING` for a demo.
-- Preview, recipe, quarantine and export answer 501 until SCRUM-68.
+- Preview, recipe, quarantine and export (SCRUM-68) are built. The scan writes a sidecar
+  `<upload_dir>/<id>.clean.json` (deleted with the upload file; made on demand for an upload
+  that has none) holding a dry run of the cleaning the pipeline really does: records with no
+  I021/080 (`no_address`) and with no I021/130 (`no_position`) are set aside, and byte-for-byte
+  copies are flagged but kept. `real_api/cat021.py` reads each record's FSPEC to know which
+  items it carries, so no decoder is needed at scan time. Once ready, the pipeline report's
+  counts and stored size replace the dry run's, and a `compression` step is added. Export is a
+  zip built on disk (`cleaned.csv`, `events.csv`, `quarantine.csv`, `recipe.json`) and deleted
+  after it is sent. The mock's position-jump, altitude-spike and fragment steps do not exist
+  in the pipeline yet (SCRUM-67), so the real recipe does not list them.
 - Until SCRUM-63 merges, `run_recording` does not exist and processing fails with "The
   pipeline job (run_recording, SCRUM-63) is not installed on this server."
 

@@ -173,7 +173,7 @@ def _first_ref(event):
 async def ask(body: AskRequest, request: Request):
     """Cited agent when ANTHROPIC_API_KEY is set (SCRUM-36); otherwise canned answers by keyword.
 
-    The agent does not read recording_id yet: it always answers from the default recording.
+    recording_id limits the agent's event and track tools to that recording.
     """
     if agent_enabled():
         if len(body.question) > 500:
@@ -181,7 +181,7 @@ async def ask(body: AskRequest, request: Request):
         host = request.client.host if request.client else None
         if not _guard.check(client_key(request.headers, host)):
             raise HTTPException(status_code=429, detail="Too many questions. Try again in a minute.")
-        return await answer_question(body.question, request.app)
+        return await answer_question(body.question, request.app, recording_id=body.recording_id)
     q = body.question.lower()
     if not _has_sample(body.recording_id):
         q = ""  # nothing loaded for that recording, so no keyword can match

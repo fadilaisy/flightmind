@@ -314,6 +314,7 @@ def _scan(row: dict) -> None:
 def _process(row: dict) -> None:
     recording_id = row["id"]
     last = {"stage": None, "at": 0.0}
+    report = None
     try:
         with connect() as conn:  # one connection for every progress update of this job
 
@@ -327,18 +328,31 @@ def _process(row: dict) -> None:
                 _set(conn, recording_id, status=stage, records_done=done, records_total=total)
 
             report = _runner()(row["path"], recording_id, dsn(), on_progress, row["recording_date"])
-            records = int(report.get("raw_records") or 0)
-            _set(conn, recording_id, status="ready", report=report, error=None,
-                 records_done=records, records_total=records)
+            _set_ready(conn, recording_id, report)
     except Exception as exc:  # any failure is reported on the row, never raised
         log.exception("processing of %s failed", recording_id)
-        _fail_processing(row, exc)
+        _fail_processing(row, exc, report)
 
 
-def _fail_processing(row: dict, exc: Exception) -> None:
-    """Mark the job failed on a fresh connection, since the job's own one may be what dropped."""
+def _set_ready(conn, recording_id: str, report: dict) -> None:
+    records = int(report.get("raw_records") or 0)
+    _set(conn, recording_id, status="ready", report=report, error=None,
+         records_done=records, records_total=records)
+
+
+def _fail_processing(row: dict, exc: Exception, report: Optional[dict] = None) -> None:
+    """Record the outcome on a fresh connection, since the job's own one may be what dropped.
+
+    A report means the run finished and its data is stored, so the job is ready, not failed.
+    """
     try:
         with connect() as conn:
+            if isinstance(report, dict):
+                try:
+                    _set_ready(conn, row["id"], report)
+                    return
+                except Exception:
+                    log.exception("could not mark %s ready", row["id"])
             _set(conn, row["id"], status="failed", error=one_sentence(exc))
             stored = conn.execute("SELECT 1 FROM recording_files WHERE id = %s", (row["id"],)).fetchone()
     except Exception:

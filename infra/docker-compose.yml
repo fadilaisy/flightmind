@@ -25,7 +25,8 @@ services:
       POSTGRES_PASSWORD: flightmind
       POSTGRES_DB: flightmind
     ports:
-      - "5432:5432"
+      # FLIGHTMIND_DB_PORT moves the host port when another Postgres already uses 5432.
+      - "${FLIGHTMIND_DB_PORT:-5432}:5432"
     volumes:
       - flightmind_pgdata:/var/lib/postgresql/data
       - ./db/init/00_extensions.sql:/docker-entrypoint-initdb.d/00_extensions.sql:ro

@@ -125,7 +125,7 @@ Libraries that do real work in the web app:
 
 | Library | Used for |
 | --- | --- |
-| [MapLibre GL JS](https://maplibre.org/) | Map view. Basemap tiles are OpenStreetMap raster tiles (`tile.openstreetmap.org`); the map shows "WGS-84 · basemap © OpenStreetMap contributors". |
+| [MapLibre GL JS](https://maplibre.org/) | Map view. Basemap tiles are OpenStreetMap raster tiles (`tile.openstreetmap.org`); the map shows "WGS-84 Â· basemap Â© OpenStreetMap contributors". |
 | [three.js](https://threejs.org/) | 3D trajectory view (WebGL, orbit controls, fat lines). |
 | [uPlot](https://github.com/leeoniya/uPlot) | Altitude, ground speed and vertical-rate charts. |
 | [React](https://react.dev/) 19 | UI. |
@@ -157,6 +157,10 @@ With `VITE_API_BASE` empty, the app uses the local mock and labels the numbers "
 
 _To be written once `infra/` exists._
 
-## License
+## Data and licences
+
+- **Code:** [MIT] licence, see `LICENSE`.
+- **Sample recording:** `adsb_5minute.pcap` (5 minutes, 86,660 packets of ASTERIX CAT021) was provided by an aviation advisor for this project and is used with permission. [It is not redistributed in this repo / It may be shared for demo use only.]
+- **Third-party tools:** the asterix decoder and `aviconv-asterix` (used only as a dev-time cross-check of our decoder) keep their own licences.
 
 See [LICENSE](LICENSE).
